@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master differential calculus for quantitative trading. Learn derivatives, sensitivity analysis, delta hedging, and rate of change concepts for finance.">
+  <title>3.1 Differential Calculus | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
+  <style>
+    .derivative-display {
+      font-family: 'Times New Roman', serif;
+      font-size: 1.5rem;
+      color: #818cf8;
+      text-align: center;
+      padding: 20px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .rule-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+    .rule-card h4 {
+      color: #10b981;
+      margin-bottom: 10px;
+    }
+    .rule-card .formula {
+      font-family: 'Times New Roman', serif;
+      font-size: 1.2rem;
+      color: #e2e8f0;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .tangent-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .tangent-info .info-item {
+      background: rgba(99, 102, 241, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .tangent-info .info-item .value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #818cf8;
+    }
+    .tangent-info .info-item .label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .sensitivity-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    .sensitivity-table th,
+    .sensitivity-table td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .sensitivity-table th {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 3.1</span>
+          <span class="nav-module-title">Differential Calculus</span>
+        </div>
+        <a href="3.2_integral_calculus.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 3: Calculus</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>3.1 Differential Calculus</span>
+        </div>
+        <h1>Differential Calculus & Derivatives</h1>
+        <p class="module-subtitle">
+          Master the mathematics of change. Learn how derivatives power option pricing,
+          sensitivity analysis, and risk management in quantitative trading.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 25 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💻 Interactive Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">The Delta Problem</div>
+        <p>
+          You own a call option on AAPL. The stock price moves up $1. How much does your option value change?
+          This is the <strong>delta</strong> - the derivative of option price with respect to stock price.
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          Delta = ∂V/∂S ≈ 0.6 means your option gains ~$0.60 for every $1 stock increase.
+          <br><strong>Without derivatives, you cannot hedge, size positions, or manage risk properly.</strong>
+        </p>
+      </div>
+
+      <h3>Where Derivatives Appear in Trading</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Option Greeks</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Delta, Gamma, Theta, Vega, Rho - all are derivatives of option price
+            with respect to different variables (S, S², t, σ, r).
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📈 Rate of Change</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Momentum indicators measure how fast prices change.
+            ROC = dP/dt is literally a derivative.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">⚖️ Portfolio Sensitivity</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            How does portfolio value change with interest rates?
+            Duration = -dP/dr measures bond sensitivity.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2: BUILDING INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: Building Intuition</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">The Slope of a Curve</div>
+        <p>
+          A derivative measures the instantaneous rate of change - the slope of a curve at a single point.
+          For a stock price P(t), the derivative dP/dt tells you how fast the price is changing right now.
+        </p>
+      </div>
+
+      <svg viewBox="0 0 700 350" class="svg-diagram">
+        <!-- Axes -->
+        <line x1="80" y1="280" x2="650" y2="280" stroke="#94a3b8" stroke-width="2"/>
+        <line x1="80" y1="280" x2="80" y2="50" stroke="#94a3b8" stroke-width="2"/>
+
+        <!-- Axis labels -->
+        <text x="360" y="320" text-anchor="middle" fill="#94a3b8" font-size="14">Stock Price (S)</text>
+        <text x="40" y="165" text-anchor="middle" fill="#94a3b8" font-size="14" transform="rotate(-90, 40, 165)">Option Value (V)</text>
+
+        <!-- Curved function (option payoff-like) -->
+        <path d="M 100 260 Q 200 250 300 200 T 500 80 T 620 40"
+              fill="none" stroke="#6366f1" stroke-width="3"/>
+
+        <!-- Point on curve -->
+        <circle cx="350" cy="160" r="8" fill="#10b981"/>
+
+        <!-- Tangent line at point -->
+        <line x1="250" y1="220" x2="450" y2="100" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,4"/>
+
+        <!-- Annotations -->
+        <text x="360" y="145" fill="#10b981" font-size="12">Point (S₀, V₀)</text>
+
+        <!-- Slope visualization -->
+        <line x1="300" y1="190" x2="400" y2="190" stroke="#f59e0b" stroke-width="1"/>
+        <line x1="400" y1="190" x2="400" y2="130" stroke="#f59e0b" stroke-width="1"/>
+        <text x="350" y="205" fill="#f59e0b" font-size="11">ΔS</text>
+        <text x="410" y="165" fill="#f59e0b" font-size="11">ΔV</text>
+
+        <!-- Formula -->
+        <text x="520" y="200" fill="#e2e8f0" font-size="14">Derivative = lim</text>
+        <text x="520" y="220" fill="#94a3b8" font-size="12">ΔS→0</text>
+        <text x="580" y="200" fill="#e2e8f0" font-size="14">ΔV/ΔS</text>
+
+        <!-- Legend -->
+        <rect x="480" y="250" width="15" height="3" fill="#6366f1"/>
+        <text x="500" y="255" fill="#94a3b8" font-size="11">f(x) = Option Value</text>
+        <line x1="480" y1="270" x2="495" y2="270" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="500" y="275" fill="#94a3b8" font-size="11">Tangent (slope = f'(x))</text>
+      </svg>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Secant → Tangent</h4>
+          <p>A secant line connects two points on a curve. As the points get closer together, the secant becomes the tangent - the instantaneous slope.</p>
+        </div>
+        <div class="card">
+          <h4>Rate of Change</h4>
+          <p>f'(x) > 0 means f is increasing. f'(x) < 0 means f is decreasing. f'(x) = 0 is a potential maximum or minimum.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <div class="formula-box">
+        <h3>Definition of the Derivative</h3>
+        <div class="formula">
+          f'(x) = lim[h→0] (f(x+h) - f(x)) / h
+        </div>
+        <p>The derivative is the limit of the difference quotient as h approaches zero</p>
+      </div>
+
+      <h3>Essential Derivative Rules</h3>
+
+      <div class="rule-card">
+        <h4>Power Rule</h4>
+        <div class="formula">d/dx [xⁿ] = n·xⁿ⁻¹</div>
+        <p>Example: d/dx [x³] = 3x²</p>
+      </div>
+
+      <div class="rule-card">
+        <h4>Product Rule</h4>
+        <div class="formula">d/dx [f·g] = f'·g + f·g'</div>
+        <p>Example: d/dx [x²·eˣ] = 2x·eˣ + x²·eˣ</p>
+      </div>
+
+      <div class="rule-card">
+        <h4>Chain Rule</h4>
+        <div class="formula">d/dx [f(g(x))] = f'(g(x))·g'(x)</div>
+        <p>Example: d/dx [e^(x²)] = e^(x²)·2x</p>
+      </div>
+
+      <div class="rule-card">
+        <h4>Quotient Rule</h4>
+        <div class="formula">d/dx [f/g] = (f'·g - f·g') / g²</div>
+        <p>Example: d/dx [x/(x+1)] = 1·(x+1) - x·1 / (x+1)² = 1/(x+1)²</p>
+      </div>
+
+      <h3>Common Derivatives for Finance</h3>
+
+      <table class="sensitivity-table">
+        <thead>
+          <tr>
+            <th>Function</th>
+            <th>Derivative</th>
+            <th>Application</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>eˣ</td>
+            <td>eˣ</td>
+            <td>Continuous compounding</td>
+          </tr>
+          <tr>
+            <td>ln(x)</td>
+            <td>1/x</td>
+            <td>Log returns</td>
+          </tr>
+          <tr>
+            <td>e^(rt)</td>
+            <td>r·e^(rt)</td>
+            <td>Growth rate</td>
+          </tr>
+          <tr>
+            <td>N(x) (CDF)</td>
+            <td>n(x) (PDF)</td>
+            <td>Black-Scholes</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties for Trading</h2>
+
+      <div class="properties-list">
+        <div class="property-item">
+          <span class="property-name">Linearity</span>
+          <span class="property-desc">d/dx [af + bg] = a·f' + b·g' — derivatives distribute over addition</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Critical Points</span>
+          <span class="property-desc">Where f'(x) = 0 or undefined — potential maxima, minima, or inflection points</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Second Derivative</span>
+          <span class="property-desc">f''(x) > 0 means concave up (accelerating), f''(x) < 0 means concave down</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Numerical Approximation</span>
+          <span class="property-desc">f'(x) ≈ [f(x+h) - f(x-h)] / 2h — central difference is more accurate</span>
+        </div>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Option Greeks as Derivatives</div>
+        <table class="sensitivity-table">
+          <thead>
+            <tr>
+              <th>Greek</th>
+              <th>Definition</th>
+              <th>Measures</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Delta (Δ)</strong></td>
+              <td>∂V/∂S</td>
+              <td>Price sensitivity to underlying</td>
+            </tr>
+            <tr>
+              <td><strong>Gamma (Γ)</strong></td>
+              <td>∂²V/∂S²</td>
+              <td>Rate of change of Delta</td>
+            </tr>
+            <tr>
+              <td><strong>Theta (Θ)</strong></td>
+              <td>∂V/∂t</td>
+              <td>Time decay</td>
+            </tr>
+            <tr>
+              <td><strong>Vega (ν)</strong></td>
+              <td>∂V/∂σ</td>
+              <td>Volatility sensitivity</td>
+            </tr>
+            <tr>
+              <td><strong>Rho (ρ)</strong></td>
+              <td>∂V/∂r</td>
+              <td>Interest rate sensitivity</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Numerical Derivatives</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.optimize import approx_fprime
+from typing import Callable, Union
+
+def numerical_derivative(
+    f: Callable[[float], float],
+    x: float,
+    h: float = 1e-8,
+    method: str = 'central'
+) -> float:
+    """
+    Calculate numerical derivative using finite differences.
+
+    Parameters:
+    -----------
+    f : Callable
+        Function to differentiate
+    x : float
+        Point at which to evaluate derivative
+    h : float
+        Step size (smaller = more accurate but more numerical error)
+    method : str
+        'forward', 'backward', or 'central' (most accurate)
+
+    Returns:
+    --------
+    float : Approximate derivative f'(x)
+    """
+    if method == 'forward':
+        return (f(x + h) - f(x)) / h
+    elif method == 'backward':
+        return (f(x) - f(x - h)) / h
+    elif method == 'central':
+        return (f(x + h) - f(x - h)) / (2 * h)
+    else:
+        raise ValueError(f"Unknown method: {method}")
+
+def second_derivative(
+    f: Callable[[float], float],
+    x: float,
+    h: float = 1e-5
+) -> float:
+    """
+    Calculate second derivative using central difference.
+
+    f''(x) ≈ [f(x+h) - 2f(x) + f(x-h)] / h²
+    """
+    return (f(x + h) - 2 * f(x) + f(x - h)) / (h ** 2)
+
+# Example: Black-Scholes Call Option Value
+def black_scholes_call(S: float, K: float = 100, T: float = 0.25,
+                       r: float = 0.05, sigma: float = 0.2) -> float:
+    """Calculate Black-Scholes call option price."""
+    from scipy.stats import norm
+
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    return S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# Calculate Delta numerically
+S = 100  # Stock price
+call_price = lambda s: black_scholes_call(s)
+
+delta_numerical = numerical_derivative(call_price, S)
+gamma_numerical = second_derivative(call_price, S)
+
+print("=" * 50)
+print("NUMERICAL DERIVATIVES - OPTION GREEKS")
+print("=" * 50)
+print(f"\nStock Price: ${S}")
+print(f"Option Price: ${call_price(S):.4f}")
+print(f"\nDelta (∂V/∂S): {delta_numerical:.6f}")
+print(f"Gamma (∂²V/∂S²): {gamma_numerical:.6f}")
+print(f"\nInterpretation:")
+print(f"  - $1 stock increase → ~${delta_numerical:.2f} option increase")
+print(f"  - Delta changes by {gamma_numerical:.4f} per $1 stock move")</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Symbolic Derivatives with SymPy</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">from sympy import symbols, diff, exp, log, sqrt, simplify, lambdify
+from sympy.stats import Normal, density
+
+def symbolic_derivative_demo():
+    """
+    Demonstrate symbolic differentiation for exact derivatives.
+    """
+    # Define symbol
+    x, S, K, r, T, sigma = symbols('x S K r T sigma', positive=True)
+
+    # Example 1: Power function
+    f1 = x**3 + 2*x**2 - 5*x + 3
+    f1_prime = diff(f1, x)
+    print("f(x) = x³ + 2x² - 5x + 3")
+    print(f"f'(x) = {f1_prime}")
+
+    # Example 2: Exponential growth
+    f2 = exp(r * T)
+    f2_prime_r = diff(f2, r)
+    f2_prime_T = diff(f2, T)
+    print(f"\nf(r,T) = e^(rT)")
+    print(f"∂f/∂r = {f2_prime_r}")
+    print(f"∂f/∂T = {f2_prime_T}")
+
+    # Example 3: Log return
+    P0, P1 = symbols('P0 P1', positive=True)
+    log_return = log(P1 / P0)
+    d_log_return = diff(log_return, P1)
+    print(f"\nLog return = ln(P1/P0)")
+    print(f"∂(log return)/∂P1 = {d_log_return}")
+
+    # Example 4: Portfolio variance (2 assets)
+    w1, w2, sigma1, sigma2, rho = symbols('w1 w2 sigma1 sigma2 rho')
+    port_var = (w1**2 * sigma1**2 + w2**2 * sigma2**2 +
+                2 * w1 * w2 * sigma1 * sigma2 * rho)
+
+    d_var_w1 = diff(port_var, w1)
+    print(f"\nPortfolio Variance = w1²σ1² + w2²σ2² + 2w1w2σ1σ2ρ")
+    print(f"∂Var/∂w1 = {simplify(d_var_w1)}")
+
+    return f1, f1_prime
+
+# Run symbolic demo
+f, f_prime = symbolic_derivative_demo()
+
+# Convert to numerical function
+x = symbols('x')
+f_numeric = lambdify(x, f, 'numpy')
+f_prime_numeric = lambdify(x, f_prime, 'numpy')
+
+# Evaluate at a point
+x_val = 2.0
+print(f"\n\nNumerical evaluation at x = {x_val}:")
+print(f"f({x_val}) = {f_numeric(x_val)}")
+print(f"f'({x_val}) = {f_prime_numeric(x_val)}")</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Delta Hedging Example</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.stats import norm
+
+def calculate_delta(S: float, K: float, T: float,
+                    r: float, sigma: float, option_type: str = 'call') -> float:
+    """
+    Calculate Black-Scholes Delta analytically.
+
+    Delta = N(d1) for calls, N(d1) - 1 for puts
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+
+    if option_type == 'call':
+        return norm.cdf(d1)
+    else:
+        return norm.cdf(d1) - 1
+
+def delta_hedge_simulation(
+    S0: float = 100,
+    K: float = 100,
+    T: float = 0.25,
+    r: float = 0.05,
+    sigma: float = 0.2,
+    n_steps: int = 63,  # Daily for quarter
+    n_options: int = 100
+) -> dict:
+    """
+    Simulate delta hedging a short call position.
+    """
+    dt = T / n_steps
+    np.random.seed(42)
+
+    # Generate stock price path (GBM)
+    Z = np.random.standard_normal(n_steps)
+    S = np.zeros(n_steps + 1)
+    S[0] = S0
+
+    for i in range(n_steps):
+        S[i+1] = S[i] * np.exp((r - 0.5*sigma**2)*dt + sigma*np.sqrt(dt)*Z[i])
+
+    # Track hedge
+    hedge_shares = np.zeros(n_steps + 1)
+    cash = np.zeros(n_steps + 1)
+    portfolio_value = np.zeros(n_steps + 1)
+
+    # Initial position: short n_options calls, delta hedge
+    time_remaining = np.linspace(T, 0, n_steps + 1)
+
+    for i in range(n_steps + 1):
+        t_remain = max(time_remaining[i], 1e-10)
+        delta = calculate_delta(S[i], K, t_remain, r, sigma, 'call')
+        hedge_shares[i] = delta * n_options
+
+        if i == 0:
+            # Initial: buy delta shares, borrow cash
+            cash[i] = -hedge_shares[i] * S[i]
+        else:
+            # Rebalance: adjust shares, update cash
+            share_change = hedge_shares[i] - hedge_shares[i-1]
+            cash[i] = cash[i-1] * np.exp(r * dt) - share_change * S[i]
+
+        # Option value (liability)
+        if t_remain > 1e-10:
+            option_val = black_scholes_call(S[i], K, t_remain, r, sigma)
+        else:
+            option_val = max(S[i] - K, 0)
+
+        portfolio_value[i] = hedge_shares[i] * S[i] + cash[i] - n_options * option_val
+
+    return {
+        'stock_prices': S,
+        'hedge_shares': hedge_shares,
+        'cash': cash,
+        'portfolio_value': portfolio_value,
+        'final_pnl': portfolio_value[-1]
+    }
+
+# Run simulation
+result = delta_hedge_simulation()
+
+print("\n" + "=" * 50)
+print("DELTA HEDGING SIMULATION")
+print("=" * 50)
+print(f"\nInitial stock: ${result['stock_prices'][0]:.2f}")
+print(f"Final stock: ${result['stock_prices'][-1]:.2f}")
+print(f"Initial hedge: {result['hedge_shares'][0]:.2f} shares")
+print(f"Final hedge: {result['hedge_shares'][-1]:.2f} shares")
+print(f"\nHedging P&L: ${result['final_pnl']:.2f}")
+print("(Should be close to 0 for perfect hedge)")</code></pre>
+      </div>
+    </section>
+
+    <!-- PART 6: INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Interactive Derivative Calculator</h2>
+
+      <div class="calculator">
+        <h3>Function Derivative & Tangent Line</h3>
+
+        <div class="input-group">
+          <label for="funcSelect">Select Function:</label>
+          <select id="funcSelect" onchange="updateFunction()">
+            <option value="poly">f(x) = x³ - 3x² + 2x (Polynomial)</option>
+            <option value="exp">f(x) = e^x (Exponential)</option>
+            <option value="log">f(x) = ln(x) (Logarithm)</option>
+            <option value="sin">f(x) = sin(x) (Sine)</option>
+            <option value="quad">f(x) = x² - 4x + 3 (Quadratic)</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="xPoint">Point x₀: <span id="xPointValue">2</span></label>
+          <input type="range" id="xPoint" min="-3" max="5" step="0.1" value="2" oninput="updateDerivative()">
+        </div>
+
+        <div class="tangent-info">
+          <div class="info-item">
+            <div class="value" id="fxValue">2.00</div>
+            <div class="label">f(x₀)</div>
+          </div>
+          <div class="info-item">
+            <div class="value" id="fprimeValue">1.00</div>
+            <div class="label">f'(x₀) = slope</div>
+          </div>
+          <div class="info-item">
+            <div class="value" id="tangentEq">y = x</div>
+            <div class="label">Tangent Line</div>
+          </div>
+        </div>
+
+        <div class="derivative-display" id="derivativeFormula">
+          f'(x) = 3x² - 6x + 2
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Function and Tangent Line</h3>
+        <canvas id="derivativeChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 7: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Trading Applications</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Delta Hedging</h4>
+          <p>Hold Δ shares to offset option exposure. As stock moves, Δ changes (gamma), requiring rebalancing.</p>
+          <div class="highlight">Hedge ratio = -Δ × position size</div>
+        </div>
+        <div class="card">
+          <h4>Duration & Convexity</h4>
+          <p>Bond price sensitivity to interest rates. Duration is first derivative, convexity is second.</p>
+          <div class="highlight">ΔP/P ≈ -D·Δy + ½C·(Δy)²</div>
+        </div>
+        <div class="card">
+          <h4>Momentum Indicators</h4>
+          <p>Rate of Change (ROC), MACD, and RSI derivatives all measure price velocity and acceleration.</p>
+          <div class="highlight">ROC = dP/dt ≈ (P_t - P_{t-n})/n</div>
+        </div>
+        <div class="card">
+          <h4>Sensitivity Analysis</h4>
+          <p>How does PnL change with market moves? Derivatives quantify exposure to each risk factor.</p>
+          <div class="highlight">∂Portfolio/∂Factor = exposure</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Option Delta vs Stock Price</h3>
+        <canvas id="deltaChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h3>Gamma Profile</h3>
+        <canvas id="gammaChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 8: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Common Mistakes to Avoid</h2>
+
+      <div class="warning-box">
+        <h3>Mistake 1: Wrong Step Size for Numerical Derivatives</h3>
+        <p>Too large h = inaccurate. Too small h = numerical errors. Sweet spot: h ≈ √ε ≈ 10⁻⁸ for forward/backward, h ≈ ε^(1/3) ≈ 10⁻⁵ for central.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span>Finding Optimal Step Size</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code class="language-python"># Machine epsilon for float64
+eps = np.finfo(float).eps  # ≈ 2.2e-16
+
+# Optimal h for different methods
+h_forward = np.sqrt(eps)    # ≈ 1.5e-8
+h_central = eps ** (1/3)    # ≈ 6e-6</code></pre>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 2: Forgetting Chain Rule</h3>
+        <p>d/dt[f(S(t))] = f'(S)·S'(t), not just f'(S). When S depends on t, you must apply chain rule.</p>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 3: Confusing Partial vs Total Derivatives</h3>
+        <p>∂V/∂t holds S constant. dV/dt includes S changes over time. For options, theta (∂V/∂t) ≠ actual daily PnL.</p>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 4: Ignoring Higher-Order Terms</h3>
+        <p>Delta-only hedging ignores gamma. For large moves or high gamma, second-order effects matter significantly.</p>
+        <div class="formula-box">
+          <div class="formula">ΔV ≈ Δ·ΔS + ½Γ·(ΔS)² + Θ·Δt + ν·Δσ</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Summary</h2>
+
+      <div class="key-concept">
+        <h3>Key Takeaways</h3>
+        <ul>
+          <li><strong>Derivatives measure instantaneous rate of change</strong> - the slope at a point</li>
+          <li><strong>Option Greeks are all derivatives</strong> - Delta, Gamma, Theta, Vega, Rho</li>
+          <li><strong>Numerical derivatives</strong> use finite differences; central difference is most accurate</li>
+          <li><strong>Chain rule is critical</strong> when variables depend on each other</li>
+          <li><strong>Second derivatives</strong> (gamma, convexity) measure curvature and acceleration</li>
+        </ul>
+      </div>
+
+      <div class="nav-buttons">
+        <a href="../module_2_linear_algebra/2.4_linear_systems.html" class="nav-btn">← Previous: Linear Systems</a>
+        <a href="3.2_integral_calculus.html" class="nav-btn">Next: Integral Calculus →</a>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Knowledge</h2>
+
+      <div class="quiz-container" id="quiz">
+        <div class="quiz-question">
+          <h4>Question 1: What does Delta (Δ) measure for an option?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q1" value="a"> Time decay of option value</label>
+            <label><input type="radio" name="q1" value="b"> Sensitivity to underlying price changes</label>
+            <label><input type="radio" name="q1" value="c"> Sensitivity to volatility changes</label>
+            <label><input type="radio" name="q1" value="d"> Interest rate sensitivity</label>
+          </div>
+          <div class="quiz-feedback" id="feedback1"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 2: What is the derivative of f(x) = e^(2x)?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q2" value="a"> e^(2x)</label>
+            <label><input type="radio" name="q2" value="b"> 2e^(2x)</label>
+            <label><input type="radio" name="q2" value="c"> 2x·e^(2x)</label>
+            <label><input type="radio" name="q2" value="d"> e^(2x)/2</label>
+          </div>
+          <div class="quiz-feedback" id="feedback2"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 3: Which numerical differentiation method is most accurate?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q3" value="a"> Forward difference</label>
+            <label><input type="radio" name="q3" value="b"> Backward difference</label>
+            <label><input type="radio" name="q3" value="c"> Central difference</label>
+            <label><input type="radio" name="q3" value="d"> All are equally accurate</label>
+          </div>
+          <div class="quiz-feedback" id="feedback3"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 4: Gamma (Γ) is the derivative of what with respect to stock price?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q4" value="a"> Option price (V)</label>
+            <label><input type="radio" name="q4" value="b"> Delta (Δ)</label>
+            <label><input type="radio" name="q4" value="c"> Theta (Θ)</label>
+            <label><input type="radio" name="q4" value="d"> Vega (ν)</label>
+          </div>
+          <div class="quiz-feedback" id="feedback4"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 5: If f'(x) = 0 and f''(x) < 0, what does x represent?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q5" value="a"> Local minimum</label>
+            <label><input type="radio" name="q5" value="b"> Local maximum</label>
+            <label><input type="radio" name="q5" value="c"> Inflection point</label>
+            <label><input type="radio" name="q5" value="d"> Cannot determine</label>
+          </div>
+          <div class="quiz-feedback" id="feedback5"></div>
+        </div>
+
+        <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+        <div class="quiz-score" id="quizScore"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    // Function definitions
+    const functions = {
+      poly: {
+        f: x => x**3 - 3*x**2 + 2*x,
+        df: x => 3*x**2 - 6*x + 2,
+        formula: "f'(x) = 3x² - 6x + 2",
+        name: "x³ - 3x² + 2x"
+      },
+      exp: {
+        f: x => Math.exp(x),
+        df: x => Math.exp(x),
+        formula: "f'(x) = eˣ",
+        name: "eˣ"
+      },
+      log: {
+        f: x => x > 0 ? Math.log(x) : NaN,
+        df: x => x > 0 ? 1/x : NaN,
+        formula: "f'(x) = 1/x",
+        name: "ln(x)"
+      },
+      sin: {
+        f: x => Math.sin(x),
+        df: x => Math.cos(x),
+        formula: "f'(x) = cos(x)",
+        name: "sin(x)"
+      },
+      quad: {
+        f: x => x**2 - 4*x + 3,
+        df: x => 2*x - 4,
+        formula: "f'(x) = 2x - 4",
+        name: "x² - 4x + 3"
+      }
+    };
+
+    let currentFunc = 'poly';
+    let derivativeChart, deltaChart, gammaChart;
+
+    function initializeCharts() {
+      // Derivative chart
+      const ctx1 = document.getElementById('derivativeChart').getContext('2d');
+      derivativeChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          datasets: [
+            {
+              label: 'f(x)',
+              data: [],
+              borderColor: '#6366f1',
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 0
+            },
+            {
+              label: 'Tangent Line',
+              data: [],
+              borderColor: '#f59e0b',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0
+            },
+            {
+              label: 'Point',
+              data: [],
+              backgroundColor: '#10b981',
+              borderColor: '#10b981',
+              pointRadius: 8,
+              showLine: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0' } }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              title: { display: true, text: 'x', color: '#94a3b8' },
+              ticks: { color: '#94a3b8' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            },
+            y: {
+              title: { display: true, text: 'y', color: '#94a3b8' },
+              ticks: { color: '#94a3b8' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            }
+          }
+        }
+      });
+
+      // Delta chart
+      const ctx2 = document.getElementById('deltaChart').getContext('2d');
+      const stockPrices = [];
+      const deltas = [];
+      for (let s = 60; s <= 140; s += 2) {
+        stockPrices.push(s);
+        const d1 = (Math.log(s/100) + (0.05 + 0.5*0.04)*0.25) / (0.2*0.5);
+        deltas.push(0.5 * (1 + erf(d1 / Math.sqrt(2))));
+      }
+
+      deltaChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: stockPrices,
+          datasets: [{
+            label: 'Call Delta',
+            data: deltas,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0' } },
+            title: { display: true, text: 'Delta increases as option goes in-the-money', color: '#94a3b8' }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Stock Price ($)', color: '#94a3b8' },
+              ticks: { color: '#94a3b8' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            },
+            y: {
+              min: 0,
+              max: 1,
+              title: { display: true, text: 'Delta', color: '#94a3b8' },
+              ticks: { color: '#94a3b8' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            }
+          }
+        }
+      });
+
+      // Gamma chart
+      const ctx3 = document.getElementById('gammaChart').getContext('2d');
+      const gammas = [];
+      for (let s = 60; s <= 140; s += 2) {
+        const d1 = (Math.log(s/100) + (0.05 + 0.5*0.04)*0.25) / (0.2*0.5);
+        const pdf = Math.exp(-d1*d1/2) / Math.sqrt(2*Math.PI);
+        gammas.push(pdf / (s * 0.2 * 0.5));
+      }
+
+      gammaChart = new Chart(ctx3, {
+        type: 'line',
+        data: {
+          labels: stockPrices,
+          datasets: [{
+            label: 'Gamma',
+            data: gammas,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0' } },
+            title: { display: true, text: 'Gamma peaks at-the-money', color: '#94a3b8' }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Stock Price ($)', color: '#94a3b8' },
+              ticks: { color: '#94a3b8' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            },
+            y: {
+              title: { display: true, text: 'Gamma', color: '#94a3b8' },
+              ticks: { color: '#94a3b8' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            }
+          }
+        }
+      });
+
+      updateDerivative();
+    }
+
+    // Error function approximation
+    function erf(x) {
+      const a1 =  0.254829592;
+      const a2 = -0.284496736;
+      const a3 =  1.421413741;
+      const a4 = -1.453152027;
+      const a5 =  1.061405429;
+      const p  =  0.3275911;
+      const sign = x < 0 ? -1 : 1;
+      x = Math.abs(x);
+      const t = 1.0/(1.0 + p*x);
+      const y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+      return sign*y;
+    }
+
+    function updateFunction() {
+      currentFunc = document.getElementById('funcSelect').value;
+      updateDerivative();
+    }
+
+    function updateDerivative() {
+      const x0 = parseFloat(document.getElementById('xPoint').value);
+      document.getElementById('xPointValue').textContent = x0.toFixed(1);
+
+      const func = functions[currentFunc];
+      const fx = func.f(x0);
+      const fpx = func.df(x0);
+
+      document.getElementById('fxValue').textContent = isNaN(fx) ? 'undefined' : fx.toFixed(4);
+      document.getElementById('fprimeValue').textContent = isNaN(fpx) ? 'undefined' : fpx.toFixed(4);
+      document.getElementById('derivativeFormula').textContent = func.formula;
+
+      // Tangent line: y = f(x0) + f'(x0)(x - x0)
+      const b = fx - fpx * x0;
+      const sign = b >= 0 ? '+' : '-';
+      document.getElementById('tangentEq').textContent =
+        `y = ${fpx.toFixed(2)}x ${sign} ${Math.abs(b).toFixed(2)}`;
+
+      // Generate data
+      const xMin = currentFunc === 'log' ? 0.1 : -3;
+      const xMax = 5;
+      const funcData = [];
+      const tangentData = [];
+
+      for (let x = xMin; x <= xMax; x += 0.1) {
+        const y = func.f(x);
+        if (!isNaN(y) && isFinite(y) && Math.abs(y) < 50) {
+          funcData.push({x: x, y: y});
+        }
+        const yTangent = fx + fpx * (x - x0);
+        if (Math.abs(yTangent) < 50) {
+          tangentData.push({x: x, y: yTangent});
+        }
+      }
+
+      derivativeChart.data.datasets[0].data = funcData;
+      derivativeChart.data.datasets[1].data = tangentData;
+      derivativeChart.data.datasets[2].data = [{x: x0, y: fx}];
+      derivativeChart.update();
+    }
+
+    function checkQuiz() {
+      const answers = {
+        q1: { correct: 'b', explanation: 'Delta (Δ = ∂V/∂S) measures how much option price changes per $1 change in underlying price.' },
+        q2: { correct: 'b', explanation: 'Using chain rule: d/dx[e^(2x)] = e^(2x) · 2 = 2e^(2x)' },
+        q3: { correct: 'c', explanation: 'Central difference [f(x+h) - f(x-h)]/(2h) has error O(h²) vs O(h) for forward/backward.' },
+        q4: { correct: 'b', explanation: 'Gamma (Γ = ∂Δ/∂S = ∂²V/∂S²) is the rate of change of Delta.' },
+        q5: { correct: 'b', explanation: 'f\'(x)=0 is a critical point. f\'\'(x)<0 means concave down, so it\'s a local maximum.' }
+      };
+
+      let score = 0;
+      const total = Object.keys(answers).length;
+
+      for (const [q, data] of Object.entries(answers)) {
+        const selected = document.querySelector(`input[name="${q}"]:checked`);
+        const feedback = document.getElementById(`feedback${q.slice(1)}`);
+
+        if (selected && selected.value === data.correct) {
+          score++;
+          feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+        } else {
+          feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+        }
+        feedback.style.display = 'block';
+      }
+
+      const pct = (score / total * 100).toFixed(0);
+      document.getElementById('quizScore').innerHTML = `
+        <h3>Score: ${score}/${total} (${pct}%)</h3>
+        <p>${pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Good progress!' : 'Review the material and try again.'}</p>
+      `;
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+  </script>
+</body>
+</html>

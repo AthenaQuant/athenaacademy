@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master non-parametric statistical tests for quantitative trading. Learn Mann-Whitney U, Wilcoxon, Kruskal-Wallis, and Kolmogorov-Smirnov tests.">
+    <title>5.10 Non-Parametric Tests | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .data-table { width: 100%; margin: 1rem 0; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .result-value.positive { color: var(--success); }
+        .result-value.negative { color: var(--error); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; }
+        .score-container h3 { color: white; margin: 0; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.10</span>
+                    <span class="nav-module-title">Non-Parametric Tests</span>
+                </div>
+                <a href="../module_6_machine_learning/6.1_supervised_learning.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.10 Non-Parametric Tests</span>
+                </div>
+                <h1>Non-Parametric Tests</h1>
+                <p class="module-subtitle">
+                    Distribution-free hypothesis tests for robust statistical inference.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 50 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Interactive Lab</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Section 1: Introduction -->
+        <section class="content-section fade-in">
+            <h2>1. Introduction to Non-Parametric Tests</h2>
+
+            <p>Non-parametric tests make <strong>no assumptions about the underlying distribution</strong> of the data. Unlike t-tests and ANOVA that assume normality, non-parametric tests work with ranks and are robust to outliers, skewness, and heavy tails—exactly the characteristics of financial data.</p>
+
+            <div class="key-concept">
+                <h3>Why Non-Parametric Tests in Finance?</h3>
+                <ul>
+                    <li><strong>Fat Tails:</strong> Financial returns have heavier tails than normal—standard tests underestimate extreme events</li>
+                    <li><strong>Outliers:</strong> Rank-based tests are robust to extreme values that skew means</li>
+                    <li><strong>Skewness:</strong> Returns are often asymmetric; non-parametric tests don't assume symmetry</li>
+                    <li><strong>Small Samples:</strong> Works well when normality is hard to verify with limited data</li>
+                    <li><strong>Ordinal Data:</strong> Can handle rankings, ratings, and categorized data</li>
+                </ul>
+            </div>
+
+            <div class="important-note">
+                <h3>Parametric vs Non-Parametric</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Parametric Test</th>
+                            <th>Non-Parametric Alternative</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>One-sample t-test</td>
+                            <td>Wilcoxon signed-rank</td>
+                            <td>Test if median differs from value</td>
+                        </tr>
+                        <tr>
+                            <td>Two-sample t-test</td>
+                            <td>Mann-Whitney U</td>
+                            <td>Compare two independent groups</td>
+                        </tr>
+                        <tr>
+                            <td>Paired t-test</td>
+                            <td>Wilcoxon signed-rank (paired)</td>
+                            <td>Compare paired observations</td>
+                        </tr>
+                        <tr>
+                            <td>One-way ANOVA</td>
+                            <td>Kruskal-Wallis</td>
+                            <td>Compare 3+ groups</td>
+                        </tr>
+                        <tr>
+                            <td>Normality test</td>
+                            <td>Kolmogorov-Smirnov</td>
+                            <td>Test distributional fit</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 2: Mann-Whitney U Test -->
+        <section class="content-section fade-in">
+            <h2>2. Mann-Whitney U Test</h2>
+
+            <h3>Purpose</h3>
+            <p>The Mann-Whitney U test (also called Wilcoxon rank-sum) compares two independent groups to determine if they come from populations with the same distribution. It tests whether one group tends to have larger values than the other.</p>
+
+            <div class="formula-box">
+                <h4>Mann-Whitney U Statistic</h4>
+                <p><strong>Algorithm:</strong></p>
+                <ol>
+                    <li>Combine both samples and rank all observations from 1 to N</li>
+                    <li>Sum the ranks for each group: R₁ and R₂</li>
+                    <li>Calculate U statistics:</li>
+                </ol>
+                <p>\[U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1\]</p>
+                <p>\[U_2 = n_1 n_2 + \frac{n_2(n_2+1)}{2} - R_2\]</p>
+                <p>\[U = \min(U_1, U_2)\]</p>
+                <p><strong>Interpretation:</strong> U counts how many times a value from group 1 precedes a value from group 2 in the ranking.</p>
+            </div>
+
+            <h3>Large Sample Approximation</h3>
+            <div class="formula-box">
+                <h4>Normal Approximation (n₁, n₂ > 20)</h4>
+                <p>\[\mu_U = \frac{n_1 n_2}{2}\]</p>
+                <p>\[\sigma_U = \sqrt{\frac{n_1 n_2 (n_1 + n_2 + 1)}{12}}\]</p>
+                <p>\[Z = \frac{U - \mu_U}{\sigma_U}\]</p>
+            </div>
+
+            <div class="key-concept">
+                <h3>Trading Application</h3>
+                <p><strong>Example:</strong> Compare returns of Strategy A vs Strategy B</p>
+                <ul>
+                    <li>H₀: Strategy A and B returns come from the same distribution</li>
+                    <li>H₁: One strategy tends to have higher returns</li>
+                    <li>Non-parametric approach handles the fat tails and outliers in returns</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Wilcoxon Signed-Rank Test -->
+        <section class="content-section fade-in">
+            <h2>3. Wilcoxon Signed-Rank Test</h2>
+
+            <h3>Purpose</h3>
+            <p>The Wilcoxon signed-rank test compares paired observations or tests if a sample median differs from a hypothesized value. Unlike the paired t-test, it doesn't assume normally distributed differences.</p>
+
+            <div class="formula-box">
+                <h4>Wilcoxon Signed-Rank Procedure</h4>
+                <ol>
+                    <li>Calculate differences: \(d_i = x_i - y_i\) (or \(d_i = x_i - \mu_0\))</li>
+                    <li>Remove zero differences</li>
+                    <li>Rank absolute differences: assign ranks 1, 2, ... to |d|</li>
+                    <li>Assign signs to ranks based on sign of original difference</li>
+                    <li>Calculate test statistic:</li>
+                </ol>
+                <p>\[W^+ = \sum_{\{d_i > 0\}} R_i \quad \text{(sum of positive ranks)}\]</p>
+                <p>\[W^- = \sum_{\{d_i < 0\}} R_i \quad \text{(sum of negative ranks)}\]</p>
+                <p>\[W = \min(W^+, W^-)\]</p>
+            </div>
+
+            <h3>Large Sample Approximation</h3>
+            <div class="formula-box">
+                <h4>Normal Approximation (n > 25)</h4>
+                <p>\[\mu_W = \frac{n(n+1)}{4}\]</p>
+                <p>\[\sigma_W = \sqrt{\frac{n(n+1)(2n+1)}{24}}\]</p>
+                <p>\[Z = \frac{W - \mu_W}{\sigma_W}\]</p>
+            </div>
+
+            <div class="key-concept">
+                <h3>Trading Application</h3>
+                <p><strong>Example:</strong> Test if strategy returns are significantly positive</p>
+                <ul>
+                    <li>H₀: Median return = 0</li>
+                    <li>H₁: Median return ≠ 0 (or > 0 for one-sided)</li>
+                    <li>Robust to outliers that would inflate t-statistics</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Kruskal-Wallis and KS Test -->
+        <section class="content-section fade-in">
+            <h2>4. Kruskal-Wallis and Kolmogorov-Smirnov Tests</h2>
+
+            <h3>Kruskal-Wallis Test</h3>
+            <p>The non-parametric alternative to one-way ANOVA, comparing 3 or more independent groups.</p>
+
+            <div class="formula-box">
+                <h4>Kruskal-Wallis H Statistic</h4>
+                <p>\[H = \frac{12}{N(N+1)} \sum_{i=1}^{k} \frac{R_i^2}{n_i} - 3(N+1)\]</p>
+                <p>Where:</p>
+                <ul>
+                    <li>k = number of groups</li>
+                    <li>N = total sample size</li>
+                    <li>nᵢ = sample size of group i</li>
+                    <li>Rᵢ = sum of ranks in group i</li>
+                </ul>
+                <p>Under H₀, H follows χ² distribution with k-1 degrees of freedom.</p>
+            </div>
+
+            <h3>Kolmogorov-Smirnov Test</h3>
+            <p>Tests whether a sample follows a specific distribution, or whether two samples come from the same distribution.</p>
+
+            <div class="formula-box">
+                <h4>KS Statistic</h4>
+                <p><strong>One-Sample (vs theoretical distribution F):</strong></p>
+                <p>\[D = \sup_x |F_n(x) - F(x)|\]</p>
+                <p>Where F_n(x) is the empirical CDF.</p>
+
+                <p><strong>Two-Sample:</strong></p>
+                <p>\[D = \sup_x |F_{n_1}(x) - F_{n_2}(x)|\]</p>
+                <p>Maximum vertical distance between two empirical CDFs.</p>
+            </div>
+
+            <div class="key-concept">
+                <h3>Trading Applications</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Test</th>
+                            <th>Application</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Kruskal-Wallis</td>
+                            <td>Compare returns across market regimes (bull, bear, sideways)</td>
+                        </tr>
+                        <tr>
+                            <td>KS Test (one-sample)</td>
+                            <td>Test if returns follow a specific distribution (normal, t, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td>KS Test (two-sample)</td>
+                            <td>Compare in-sample vs out-of-sample return distributions</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>5. Python Implementation</h2>
+
+            <div class="code-block">
+                <h3>Complete Non-Parametric Testing Framework</h3>
+                <pre><code class="language-python">"""
+Non-Parametric Statistical Tests for Quantitative Trading
+Covers: Mann-Whitney, Wilcoxon, Kruskal-Wallis, KS Test
+"""
+
+import numpy as np
+from dataclasses import dataclass
+from typing import Tuple, List, Dict, Optional
+from scipy import stats
+
+
+@dataclass
+class TestResult:
+    """Generic statistical test result."""
+    test_name: str
+    statistic: float
+    p_value: float
+    effect_size: Optional[float]
+    conclusion: str
+
+    def __str__(self) -> str:
+        sig = "SIGNIFICANT" if self.p_value < 0.05 else "NOT SIGNIFICANT"
+        effect = f", Effect Size: {self.effect_size:.3f}" if self.effect_size else ""
+        return (f"{self.test_name}: stat={self.statistic:.4f}, "
+                f"p={self.p_value:.4f}{effect} -> {sig}")
+
+
+def mann_whitney_test(group1: np.ndarray, group2: np.ndarray,
+                      alternative: str = 'two-sided') -> TestResult:
+    """
+    Mann-Whitney U test for comparing two independent groups.
+
+    Tests whether the distributions of two groups differ.
+
+    Args:
+        group1: First group of observations
+        group2: Second group of observations
+        alternative: 'two-sided', 'greater', or 'less'
+
+    Returns:
+        TestResult with U statistic and p-value
+    """
+    group1 = np.asarray(group1).flatten()
+    group2 = np.asarray(group2).flatten()
+
+    n1, n2 = len(group1), len(group2)
+
+    # Combine and rank
+    combined = np.concatenate([group1, group2])
+    ranks = stats.rankdata(combined)
+
+    # Sum of ranks for group 1
+    R1 = np.sum(ranks[:n1])
+
+    # U statistics
+    U1 = n1 * n2 + n1 * (n1 + 1) / 2 - R1
+    U2 = n1 * n2 - U1
+
+    # Use scipy for accurate p-value
+    U, p_value = stats.mannwhitneyu(group1, group2, alternative=alternative)
+
+    # Effect size (rank-biserial correlation)
+    effect_size = 1 - (2 * U) / (n1 * n2)
+
+    conclusion = "Group 1 tends to have larger values" if U < n1*n2/2 else "Group 2 tends to have larger values"
+    if p_value >= 0.05:
+        conclusion = "No significant difference between groups"
+
+    return TestResult(
+        test_name="Mann-Whitney U Test",
+        statistic=U,
+        p_value=p_value,
+        effect_size=effect_size,
+        conclusion=conclusion
+    )
+
+
+def wilcoxon_signed_rank_test(x: np.ndarray, y: np.ndarray = None,
+                              mu: float = 0,
+                              alternative: str = 'two-sided') -> TestResult:
+    """
+    Wilcoxon signed-rank test.
+
+    Tests whether the median of differences (or single sample) differs from mu.
+
+    Args:
+        x: First sample or single sample
+        y: Second sample (for paired comparison) or None
+        mu: Hypothesized median (for one-sample test)
+        alternative: 'two-sided', 'greater', or 'less'
+
+    Returns:
+        TestResult with W statistic and p-value
+    """
+    x = np.asarray(x).flatten()
+
+    if y is not None:
+        y = np.asarray(y).flatten()
+        d = x - y
+    else:
+        d = x - mu
+
+    # Remove zeros
+    d = d[d != 0]
+    n = len(d)
+
+    if n == 0:
+        return TestResult(
+            test_name="Wilcoxon Signed-Rank Test",
+            statistic=0,
+            p_value=1.0,
+            effect_size=0,
+            conclusion="All differences are zero"
+        )
+
+    # Rank absolute differences
+    ranks = stats.rankdata(np.abs(d))
+
+    # Sum of positive and negative ranks
+    W_plus = np.sum(ranks[d > 0])
+    W_minus = np.sum(ranks[d < 0])
+    W = min(W_plus, W_minus)
+
+    # Use scipy for accurate p-value
+    if y is not None:
+        stat, p_value = stats.wilcoxon(x, y, alternative=alternative)
+    else:
+        stat, p_value = stats.wilcoxon(x - mu, alternative=alternative)
+
+    # Effect size (matched-pairs rank-biserial)
+    effect_size = (W_plus - W_minus) / (n * (n + 1) / 2)
+
+    if p_value < 0.05:
+        if W_plus > W_minus:
+            conclusion = "Positive differences predominate (median > hypothesized)"
+        else:
+            conclusion = "Negative differences predominate (median < hypothesized)"
+    else:
+        conclusion = "No significant difference from hypothesized median"
+
+    return TestResult(
+        test_name="Wilcoxon Signed-Rank Test",
+        statistic=stat,
+        p_value=p_value,
+        effect_size=effect_size,
+        conclusion=conclusion
+    )
+
+
+def kruskal_wallis_test(*groups) -> TestResult:
+    """
+    Kruskal-Wallis H test for comparing 3+ independent groups.
+
+    Non-parametric alternative to one-way ANOVA.
+
+    Args:
+        *groups: Variable number of group arrays
+
+    Returns:
+        TestResult with H statistic and p-value
+    """
+    groups = [np.asarray(g).flatten() for g in groups]
+    k = len(groups)
+
+    if k < 2:
+        raise ValueError("Need at least 2 groups")
+
+    # Calculate H statistic using scipy
+    H, p_value = stats.kruskal(*groups)
+
+    # Effect size (epsilon-squared)
+    N = sum(len(g) for g in groups)
+    effect_size = (H - k + 1) / (N - k)
+
+    if p_value < 0.05:
+        conclusion = f"Significant differences exist among {k} groups"
+    else:
+        conclusion = f"No significant differences among {k} groups"
+
+    return TestResult(
+        test_name="Kruskal-Wallis H Test",
+        statistic=H,
+        p_value=p_value,
+        effect_size=effect_size,
+        conclusion=conclusion
+    )
+
+
+def ks_test_one_sample(data: np.ndarray, distribution: str = 'norm',
+                       args: Tuple = ()) -> TestResult:
+    """
+    One-sample Kolmogorov-Smirnov test.
+
+    Tests if data follows a specific distribution.
+
+    Args:
+        data: Sample data
+        distribution: Distribution name ('norm', 't', 'expon', etc.)
+        args: Distribution parameters
+
+    Returns:
+        TestResult with D statistic and p-value
+    """
+    data = np.asarray(data).flatten()
+
+    # If no args provided, fit the distribution
+    if len(args) == 0:
+        if distribution == 'norm':
+            args = (np.mean(data), np.std(data))
+        elif distribution == 't':
+            # Fit degrees of freedom
+            df, loc, scale = stats.t.fit(data)
+            args = (df, loc, scale)
+
+    D, p_value = stats.kstest(data, distribution, args=args)
+
+    if p_value < 0.05:
+        conclusion = f"Data does NOT follow {distribution} distribution"
+    else:
+        conclusion = f"Cannot reject that data follows {distribution} distribution"
+
+    return TestResult(
+        test_name="Kolmogorov-Smirnov Test (One-Sample)",
+        statistic=D,
+        p_value=p_value,
+        effect_size=D,  # D itself is a measure of effect
+        conclusion=conclusion
+    )
+
+
+def ks_test_two_sample(data1: np.ndarray, data2: np.ndarray) -> TestResult:
+    """
+    Two-sample Kolmogorov-Smirnov test.
+
+    Tests if two samples come from the same distribution.
+
+    Args:
+        data1: First sample
+        data2: Second sample
+
+    Returns:
+        TestResult with D statistic and p-value
+    """
+    data1 = np.asarray(data1).flatten()
+    data2 = np.asarray(data2).flatten()
+
+    D, p_value = stats.ks_2samp(data1, data2)
+
+    if p_value < 0.05:
+        conclusion = "Samples come from different distributions"
+    else:
+        conclusion = "Cannot reject that samples come from same distribution"
+
+    return TestResult(
+        test_name="Kolmogorov-Smirnov Test (Two-Sample)",
+        statistic=D,
+        p_value=p_value,
+        effect_size=D,
+        conclusion=conclusion
+    )
+
+
+class TradingStatisticalTests:
+    """
+    Comprehensive statistical testing for trading strategies.
+    """
+
+    def __init__(self, alpha: float = 0.05):
+        self.alpha = alpha
+
+    def compare_strategies(self, returns_a: np.ndarray,
+                          returns_b: np.ndarray) -> Dict:
+        """
+        Compare two trading strategies using multiple tests.
+        """
+        returns_a = np.asarray(returns_a).flatten()
+        returns_b = np.asarray(returns_b).flatten()
+
+        results = {}
+
+        # Mann-Whitney (are distributions different?)
+        results['mann_whitney'] = mann_whitney_test(returns_a, returns_b)
+
+        # KS test (distributional difference)
+        results['ks_test'] = ks_test_two_sample(returns_a, returns_b)
+
+        # Compare medians
+        median_a = np.median(returns_a)
+        median_b = np.median(returns_b)
+        results['median_a'] = median_a
+        results['median_b'] = median_b
+
+        # Compare risk-adjusted metrics
+        def sharpe(r):
+            return np.sqrt(252) * np.mean(r) / np.std(r) if np.std(r) > 0 else 0
+
+        results['sharpe_a'] = sharpe(returns_a)
+        results['sharpe_b'] = sharpe(returns_b)
+
+        # Overall conclusion
+        mw_sig = results['mann_whitney'].p_value < self.alpha
+        ks_sig = results['ks_test'].p_value < self.alpha
+
+        if mw_sig and median_a > median_b:
+            results['conclusion'] = "Strategy A significantly outperforms Strategy B"
+        elif mw_sig and median_b > median_a:
+            results['conclusion'] = "Strategy B significantly outperforms Strategy A"
+        else:
+            results['conclusion'] = "No significant difference between strategies"
+
+        return results
+
+    def test_strategy_profitability(self, returns: np.ndarray) -> Dict:
+        """
+        Test if a strategy is significantly profitable using non-parametric tests.
+        """
+        returns = np.asarray(returns).flatten()
+
+        results = {}
+
+        # Wilcoxon: Is median return > 0?
+        results['wilcoxon'] = wilcoxon_signed_rank_test(returns, mu=0, alternative='greater')
+
+        # Sign test (even more robust)
+        n_positive = np.sum(returns > 0)
+        n_negative = np.sum(returns < 0)
+        n_total = n_positive + n_negative
+
+        # Binomial test
+        sign_p_value = stats.binom_test(n_positive, n_total, 0.5, alternative='greater')
+        results['sign_test_p'] = sign_p_value
+
+        # Summary statistics
+        results['n_trades'] = len(returns)
+        results['win_rate'] = np.mean(returns > 0)
+        results['median_return'] = np.median(returns)
+        results['mean_return'] = np.mean(returns)
+
+        # Conclusion
+        if results['wilcoxon'].p_value < self.alpha:
+            results['conclusion'] = "Strategy is significantly profitable"
+        else:
+            results['conclusion'] = "Cannot confirm strategy profitability"
+
+        return results
+
+    def compare_regime_returns(self, returns: np.ndarray,
+                               regimes: np.ndarray) -> Dict:
+        """
+        Compare strategy returns across different market regimes.
+
+        Args:
+            returns: Strategy returns
+            regimes: Array of regime labels (e.g., 0=bear, 1=neutral, 2=bull)
+        """
+        returns = np.asarray(returns).flatten()
+        regimes = np.asarray(regimes).flatten()
+
+        unique_regimes = np.unique(regimes)
+        regime_returns = {r: returns[regimes == r] for r in unique_regimes}
+
+        results = {}
+
+        # Kruskal-Wallis test
+        groups = [regime_returns[r] for r in unique_regimes]
+        results['kruskal_wallis'] = kruskal_wallis_test(*groups)
+
+        # Pairwise comparisons (if significant)
+        if results['kruskal_wallis'].p_value < self.alpha:
+            pairwise = {}
+            for i, r1 in enumerate(unique_regimes):
+                for r2 in unique_regimes[i+1:]:
+                    key = f"{r1}_vs_{r2}"
+                    pairwise[key] = mann_whitney_test(
+                        regime_returns[r1],
+                        regime_returns[r2]
+                    )
+            results['pairwise_comparisons'] = pairwise
+
+        # Summary by regime
+        results['regime_summaries'] = {}
+        for r in unique_regimes:
+            rets = regime_returns[r]
+            results['regime_summaries'][r] = {
+                'n': len(rets),
+                'median': np.median(rets),
+                'mean': np.mean(rets),
+                'win_rate': np.mean(rets > 0)
+            }
+
+        return results
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("MANN-WHITNEY U TEST: COMPARING TWO STRATEGIES")
+    print("=" * 60)
+
+    # Strategy A: Slightly better returns
+    strategy_a = np.random.normal(0.002, 0.02, 100)
+    # Strategy B: Lower returns
+    strategy_b = np.random.normal(0.001, 0.02, 100)
+
+    result = mann_whitney_test(strategy_a, strategy_b)
+    print(f"\n{result}")
+
+    print("\n" + "=" * 60)
+    print("WILCOXON SIGNED-RANK: TESTING PROFITABILITY")
+    print("=" * 60)
+
+    # Strategy returns (test if median > 0)
+    returns = np.random.normal(0.0015, 0.02, 100)
+
+    result = wilcoxon_signed_rank_test(returns, mu=0, alternative='greater')
+    print(f"\n{result}")
+
+    print("\n" + "=" * 60)
+    print("KRUSKAL-WALLIS: COMPARING ACROSS REGIMES")
+    print("=" * 60)
+
+    # Returns in different regimes
+    bull_returns = np.random.normal(0.003, 0.015, 50)
+    bear_returns = np.random.normal(-0.001, 0.025, 50)
+    sideways_returns = np.random.normal(0.0005, 0.010, 50)
+
+    result = kruskal_wallis_test(bull_returns, bear_returns, sideways_returns)
+    print(f"\n{result}")
+
+    print("\n" + "=" * 60)
+    print("KOLMOGOROV-SMIRNOV: DISTRIBUTION TESTING")
+    print("=" * 60)
+
+    # Test if returns are normally distributed
+    returns = np.random.standard_t(5, 200) * 0.02  # Fat-tailed returns
+
+    result_norm = ks_test_one_sample(returns, 'norm')
+    print(f"\nTest vs Normal: {result_norm}")
+
+    result_t = ks_test_one_sample(returns, 't')
+    print(f"Test vs Student-t: {result_t}")
+
+    print("\n" + "=" * 60)
+    print("COMPREHENSIVE STRATEGY TESTING")
+    print("=" * 60)
+
+    tester = TradingStatisticalTests(alpha=0.05)
+
+    # Test profitability
+    strategy_returns = np.random.normal(0.001, 0.015, 200)
+    profit_results = tester.test_strategy_profitability(strategy_returns)
+
+    print(f"\nStrategy Profitability Test:")
+    print(f"  Win Rate: {profit_results['win_rate']:.1%}")
+    print(f"  Median Return: {profit_results['median_return']:.4f}")
+    print(f"  Wilcoxon: {profit_results['wilcoxon']}")
+    print(f"  {profit_results['conclusion']}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>6. Interactive Non-Parametric Testing Lab</h2>
+
+            <div class="calculator-container">
+                <h3>Strategy Comparison Test</h3>
+
+                <div class="input-group">
+                    <label for="testType">Test Type:</label>
+                    <select id="testType" onchange="updateTestInputs()">
+                        <option value="mann_whitney">Mann-Whitney U (Compare Two Strategies)</option>
+                        <option value="wilcoxon">Wilcoxon Signed-Rank (Test vs Zero)</option>
+                        <option value="kruskal">Kruskal-Wallis (Compare 3 Groups)</option>
+                        <option value="ks">Kolmogorov-Smirnov (Test Normality)</option>
+                    </select>
+                </div>
+
+                <div id="twoGroupInputs">
+                    <h4>Strategy A</h4>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="meanA">Mean Return (%):</label>
+                            <input type="number" id="meanA" value="0.1" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label for="volA">Volatility (%):</label>
+                            <input type="number" id="volA" value="2" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label for="nA">Sample Size:</label>
+                            <input type="number" id="nA" value="100" min="20" max="500">
+                        </div>
+                    </div>
+
+                    <h4>Strategy B</h4>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="meanB">Mean Return (%):</label>
+                            <input type="number" id="meanB" value="0.05" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label for="volB">Volatility (%):</label>
+                            <input type="number" id="volB" value="2" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label for="nB">Sample Size:</label>
+                            <input type="number" id="nB" value="100" min="20" max="500">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="singleGroupInputs" style="display:none;">
+                    <h4>Strategy Returns</h4>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="meanSingle">Mean Return (%):</label>
+                            <input type="number" id="meanSingle" value="0.08" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label for="volSingle">Volatility (%):</label>
+                            <input type="number" id="volSingle" value="1.5" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label for="nSingle">Sample Size:</label>
+                            <input type="number" id="nSingle" value="100" min="20" max="500">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="threeGroupInputs" style="display:none;">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Bull Market Mean (%):</label>
+                            <input type="number" id="meanBull" value="0.15" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label>Sideways Mean (%):</label>
+                            <input type="number" id="meanSideways" value="0.02" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label>Bear Market Mean (%):</label>
+                            <input type="number" id="meanBear" value="-0.05" step="0.01">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="nRegime">Samples per Regime:</label>
+                        <input type="number" id="nRegime" value="50" min="20" max="200">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="runNonParametricTest()">Run Test</button>
+
+                <div class="results-container" id="npResults">
+                    <h4>Test Results</h4>
+                    <div id="npOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="npChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Practical Application -->
+        <section class="content-section fade-in">
+            <h2>7. Practical Application: Complete Strategy Validation</h2>
+
+            <div class="code-block">
+                <h3>Non-Parametric Strategy Validation Framework</h3>
+                <pre><code class="language-python">"""
+Non-Parametric Strategy Validation Framework
+"""
+
+import numpy as np
+from typing import Dict, List
+from dataclasses import dataclass
+
+
+@dataclass
+class ValidationReport:
+    """Complete strategy validation report."""
+    is_profitable: bool
+    profitability_p_value: float
+    beats_benchmark: bool
+    benchmark_p_value: float
+    distribution_normal: bool
+    regime_dependent: bool
+    warnings: List[str]
+    recommendations: List[str]
+
+
+class StrategyValidator:
+    """
+    Comprehensive non-parametric strategy validation.
+    """
+
+    def __init__(self, alpha: float = 0.05):
+        self.alpha = alpha
+        self.tester = TradingStatisticalTests(alpha)
+
+    def validate(self, strategy_returns: np.ndarray,
+                benchmark_returns: np.ndarray = None,
+                regimes: np.ndarray = None) -> ValidationReport:
+        """
+        Run complete validation suite.
+        """
+        warnings = []
+        recommendations = []
+
+        # 1. Test profitability
+        profit_results = self.tester.test_strategy_profitability(strategy_returns)
+        is_profitable = profit_results['wilcoxon'].p_value < self.alpha
+        profitability_p = profit_results['wilcoxon'].p_value
+
+        if not is_profitable:
+            warnings.append("Strategy not significantly profitable")
+
+        # 2. Compare to benchmark
+        beats_benchmark = False
+        benchmark_p = 1.0
+        if benchmark_returns is not None:
+            comparison = self.tester.compare_strategies(
+                strategy_returns, benchmark_returns
+            )
+            benchmark_p = comparison['mann_whitney'].p_value
+            beats_benchmark = (benchmark_p < self.alpha and
+                             np.median(strategy_returns) > np.median(benchmark_returns))
+
+            if not beats_benchmark:
+                warnings.append("Does not significantly outperform benchmark")
+
+        # 3. Test distribution
+        ks_result = ks_test_one_sample(strategy_returns, 'norm')
+        is_normal = ks_result.p_value >= self.alpha
+
+        if not is_normal:
+            recommendations.append("Consider non-normal risk models (fat tails detected)")
+
+        # 4. Check regime dependence
+        regime_dependent = False
+        if regimes is not None:
+            regime_results = self.tester.compare_regime_returns(
+                strategy_returns, regimes
+            )
+            regime_dependent = regime_results['kruskal_wallis'].p_value < self.alpha
+
+            if regime_dependent:
+                recommendations.append("Strategy performance varies by regime - consider regime-switching")
+
+        # 5. Additional checks
+        win_rate = np.mean(strategy_returns > 0)
+        if win_rate < 0.45:
+            warnings.append(f"Low win rate ({win_rate:.1%})")
+
+        # Check for consistency
+        n = len(strategy_returns)
+        first_half = strategy_returns[:n//2]
+        second_half = strategy_returns[n//2:]
+        ks_halves = ks_test_two_sample(first_half, second_half)
+        if ks_halves.p_value < self.alpha:
+            warnings.append("Performance differs between first and second half (regime change?)")
+
+        return ValidationReport(
+            is_profitable=is_profitable,
+            profitability_p_value=profitability_p,
+            beats_benchmark=beats_benchmark,
+            benchmark_p_value=benchmark_p,
+            distribution_normal=is_normal,
+            regime_dependent=regime_dependent,
+            warnings=warnings,
+            recommendations=recommendations
+        )
+
+    def print_report(self, report: ValidationReport) -> None:
+        """Print formatted validation report."""
+        print("\n" + "=" * 50)
+        print("STRATEGY VALIDATION REPORT")
+        print("=" * 50)
+
+        print(f"\nProfitability: {'PASS' if report.is_profitable else 'FAIL'}")
+        print(f"  p-value: {report.profitability_p_value:.4f}")
+
+        print(f"\nBenchmark Comparison: {'PASS' if report.beats_benchmark else 'FAIL'}")
+        print(f"  p-value: {report.benchmark_p_value:.4f}")
+
+        print(f"\nNormality: {'NORMAL' if report.distribution_normal else 'NON-NORMAL'}")
+        print(f"Regime Dependent: {'YES' if report.regime_dependent else 'NO'}")
+
+        if report.warnings:
+            print("\n⚠ WARNINGS:")
+            for w in report.warnings:
+                print(f"  - {w}")
+
+        if report.recommendations:
+            print("\n💡 RECOMMENDATIONS:")
+            for r in report.recommendations:
+                print(f"  - {r}")
+
+        # Overall verdict
+        print("\n" + "-" * 50)
+        n_issues = len(report.warnings)
+        if report.is_profitable and n_issues == 0:
+            print("VERDICT: ✓ Strategy passes validation")
+        elif report.is_profitable and n_issues <= 2:
+            print("VERDICT: ⚡ Strategy passes with caveats")
+        else:
+            print("VERDICT: ✗ Strategy fails validation")
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Generate strategy and benchmark returns
+    n = 252  # 1 year
+    strategy = np.random.normal(0.001, 0.015, n)
+    benchmark = np.random.normal(0.0005, 0.012, n)
+
+    # Add some regime structure
+    regimes = np.array([0] * 84 + [1] * 84 + [2] * 84)  # Bear, Sideways, Bull
+    strategy[:84] += -0.0005  # Worse in bear
+    strategy[168:] += 0.0005  # Better in bull
+
+    validator = StrategyValidator(alpha=0.05)
+    report = validator.validate(strategy, benchmark, regimes)
+    validator.print_report(report)
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 8: Quiz -->
+        <section class="content-section fade-in">
+            <h2>8. Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>Question 1: When should you prefer the Mann-Whitney U test over a two-sample t-test?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'A')">A) When you want more statistical power</button>
+                        <button onclick="checkAnswer(1, 'B')">B) When data has outliers, skewness, or non-normal distributions</button>
+                        <button onclick="checkAnswer(1, 'C')">C) When sample sizes are very large</button>
+                        <button onclick="checkAnswer(1, 'D')">D) When comparing more than two groups</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>Question 2: The Wilcoxon signed-rank test is appropriate for testing:</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'A')">A) If two independent samples have different variances</button>
+                        <button onclick="checkAnswer(2, 'B')">B) If the median of paired differences or single sample differs from zero</button>
+                        <button onclick="checkAnswer(2, 'C')">C) If data follows a normal distribution</button>
+                        <button onclick="checkAnswer(2, 'D')">D) If three or more groups have equal means</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>Question 3: The KS statistic measures:</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'A')">A) The difference in sample means</button>
+                        <button onclick="checkAnswer(3, 'B')">B) The maximum vertical distance between CDFs</button>
+                        <button onclick="checkAnswer(3, 'C')">C) The correlation between two samples</button>
+                        <button onclick="checkAnswer(3, 'D')">D) The sum of ranks</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>Question 4: Which test would you use to compare a strategy's performance across bull, bear, and sideways markets?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'A')">A) Mann-Whitney U test</button>
+                        <button onclick="checkAnswer(4, 'B')">B) Wilcoxon signed-rank test</button>
+                        <button onclick="checkAnswer(4, 'C')">C) Kruskal-Wallis test</button>
+                        <button onclick="checkAnswer(4, 'D')">D) Kolmogorov-Smirnov test</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>Question 5: Non-parametric tests work with ranks instead of raw values because:</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'A')">A) Ranks are easier to compute</button>
+                        <button onclick="checkAnswer(5, 'B')">B) Ranks are robust to outliers and don't require distributional assumptions</button>
+                        <button onclick="checkAnswer(5, 'C')">C) Ranks always follow a normal distribution</button>
+                        <button onclick="checkAnswer(5, 'D')">D) Ranks preserve more information than raw values</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+            </div>
+
+            <div class="score-container" id="scoreContainer" style="display:none;">
+                <h3>Your Score: <span id="finalScore"></span>/5</h3>
+            </div>
+        </section>
+
+        <!-- Congratulations Section -->
+        <section class="content-section" style="text-align: center; padding: 40px;">
+            <h2>Congratulations!</h2>
+            <p style="font-size: 1.2em; margin: 20px 0;">You have completed <strong>Module 5: Statistics for Quantitative Trading</strong></p>
+            <p>You've mastered essential statistical concepts from descriptive statistics through advanced non-parametric methods. These tools will help you rigorously evaluate trading strategies and make data-driven decisions.</p>
+            <div style="margin-top: 30px;">
+                <a href="../module_6_machine_learning/6.1_supervised_learning.html" class="nav-btn" style="font-size: 1.1em; padding: 15px 30px;">Continue to Module 6: Machine Learning →</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script>
+        let npChart;
+        let quizAnswers = {};
+        const correctAnswers = {
+            1: 'B',
+            2: 'B',
+            3: 'B',
+            4: 'C',
+            5: 'B'
+        };
+
+        const explanations = {
+            1: {
+                'A': 'Incorrect. The t-test actually has more power when normality holds.',
+                'B': 'Correct! Mann-Whitney is preferred when data violates normality assumptions—outliers, skewness, heavy tails. It\'s robust because it works with ranks rather than actual values.',
+                'C': 'Incorrect. With large samples, both tests work, but the t-test may still be preferred.',
+                'D': 'Incorrect. Mann-Whitney is for two groups. Kruskal-Wallis is for 3+ groups.'
+            },
+            2: {
+                'A': 'Incorrect. That\'s comparing variances, not what Wilcoxon tests.',
+                'B': 'Correct! Wilcoxon signed-rank tests if the median of paired differences (or single sample) differs from a specified value, typically zero. It\'s the non-parametric alternative to the paired t-test.',
+                'C': 'Incorrect. That would be a Shapiro-Wilk or KS test.',
+                'D': 'Incorrect. That\'s Kruskal-Wallis territory.'
+            },
+            3: {
+                'A': 'Incorrect. The KS test compares entire distributions, not just means.',
+                'B': 'Correct! The KS statistic (D) is the maximum absolute difference between two cumulative distribution functions. A large D indicates the distributions differ.',
+                'C': 'Incorrect. Correlation measures linear association, not distributional similarity.',
+                'D': 'Incorrect. Sum of ranks is used in Mann-Whitney and Wilcoxon tests.'
+            },
+            4: {
+                'A': 'Incorrect. Mann-Whitney only compares two groups.',
+                'B': 'Incorrect. Wilcoxon is for paired/single sample tests.',
+                'C': 'Correct! Kruskal-Wallis is the non-parametric alternative to one-way ANOVA, designed to compare 3 or more independent groups (like bull, bear, and sideways markets).',
+                'D': 'Incorrect. KS test compares distributions, not group differences directly.'
+            },
+            5: {
+                'A': 'Incorrect. Computational ease isn\'t the main reason.',
+                'B': 'Correct! Using ranks makes tests robust to outliers (a value of 1000 vs 10 both just get "highest rank") and removes the need to assume specific distributions like normality.',
+                'C': 'Incorrect. Ranks don\'t follow a normal distribution.',
+                'D': 'Incorrect. Ranks actually lose information (magnitude), which is the trade-off for robustness.'
+            }
+        };
+
+        function updateTestInputs() {
+            const testType = document.getElementById('testType').value;
+            document.getElementById('twoGroupInputs').style.display = 'none';
+            document.getElementById('singleGroupInputs').style.display = 'none';
+            document.getElementById('threeGroupInputs').style.display = 'none';
+
+            if (testType === 'mann_whitney') {
+                document.getElementById('twoGroupInputs').style.display = 'block';
+            } else if (testType === 'wilcoxon' || testType === 'ks') {
+                document.getElementById('singleGroupInputs').style.display = 'block';
+            } else if (testType === 'kruskal') {
+                document.getElementById('threeGroupInputs').style.display = 'block';
+            }
+        }
+
+        function randn() {
+            const u1 = Math.random();
+            const u2 = Math.random();
+            return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        function generateData(mean, vol, n) {
+            const data = [];
+            for (let i = 0; i < n; i++) {
+                data.push(mean / 100 + (vol / 100) * randn());
+            }
+            return data;
+        }
+
+        function rankData(data) {
+            const indexed = data.map((v, i) => ({ v, i }));
+            indexed.sort((a, b) => a.v - b.v);
+            const ranks = new Array(data.length);
+            for (let i = 0; i < indexed.length; i++) {
+                ranks[indexed[i].i] = i + 1;
+            }
+            return ranks;
+        }
+
+        function mannWhitneyU(group1, group2) {
+            const n1 = group1.length;
+            const n2 = group2.length;
+
+            const combined = [...group1.map(v => ({ v, g: 1 })), ...group2.map(v => ({ v, g: 2 }))];
+            combined.sort((a, b) => a.v - b.v);
+
+            // Assign ranks
+            for (let i = 0; i < combined.length; i++) {
+                combined[i].rank = i + 1;
+            }
+
+            // Handle ties
+            let i = 0;
+            while (i < combined.length) {
+                let j = i;
+                while (j < combined.length && combined[j].v === combined[i].v) j++;
+                const avgRank = (combined.slice(i, j).reduce((s, x) => s + x.rank, 0)) / (j - i);
+                for (let k = i; k < j; k++) combined[k].rank = avgRank;
+                i = j;
+            }
+
+            const R1 = combined.filter(x => x.g === 1).reduce((s, x) => s + x.rank, 0);
+            const U1 = n1 * n2 + n1 * (n1 + 1) / 2 - R1;
+            const U2 = n1 * n2 - U1;
+            const U = Math.min(U1, U2);
+
+            // Normal approximation for p-value
+            const muU = n1 * n2 / 2;
+            const sigmaU = Math.sqrt(n1 * n2 * (n1 + n2 + 1) / 12);
+            const z = (U - muU) / sigmaU;
+            const pValue = 2 * (1 - normalCDF(Math.abs(z)));
+
+            return { U, pValue, z, R1 };
+        }
+
+        function wilcoxonSignedRank(data, mu = 0) {
+            const d = data.map(x => x - mu).filter(x => x !== 0);
+            const n = d.length;
+
+            if (n === 0) return { W: 0, pValue: 1 };
+
+            // Rank absolute differences
+            const indexed = d.map((v, i) => ({ v, absV: Math.abs(v), sign: v > 0 ? 1 : -1, i }));
+            indexed.sort((a, b) => a.absV - b.absV);
+
+            for (let i = 0; i < indexed.length; i++) {
+                indexed[i].rank = i + 1;
+            }
+
+            const Wplus = indexed.filter(x => x.sign > 0).reduce((s, x) => s + x.rank, 0);
+            const Wminus = indexed.filter(x => x.sign < 0).reduce((s, x) => s + x.rank, 0);
+            const W = Math.min(Wplus, Wminus);
+
+            // Normal approximation
+            const muW = n * (n + 1) / 4;
+            const sigmaW = Math.sqrt(n * (n + 1) * (2 * n + 1) / 24);
+            const z = (W - muW) / sigmaW;
+            const pValue = 2 * (1 - normalCDF(Math.abs(z)));
+
+            return { W, Wplus, Wminus, pValue, z };
+        }
+
+        function kruskalWallis(groups) {
+            const k = groups.length;
+            const ns = groups.map(g => g.length);
+            const N = ns.reduce((a, b) => a + b, 0);
+
+            // Combine all and rank
+            const combined = [];
+            groups.forEach((g, gi) => {
+                g.forEach(v => combined.push({ v, g: gi }));
+            });
+            combined.sort((a, b) => a.v - b.v);
+
+            for (let i = 0; i < combined.length; i++) {
+                combined[i].rank = i + 1;
+            }
+
+            // Sum of ranks per group
+            const Rs = groups.map((_, gi) =>
+                combined.filter(x => x.g === gi).reduce((s, x) => s + x.rank, 0)
+            );
+
+            // H statistic
+            let H = 0;
+            for (let i = 0; i < k; i++) {
+                H += (Rs[i] * Rs[i]) / ns[i];
+            }
+            H = (12 / (N * (N + 1))) * H - 3 * (N + 1);
+
+            // Chi-squared approximation
+            const pValue = 1 - chiSquaredCDF(H, k - 1);
+
+            return { H, pValue, Rs };
+        }
+
+        function normalCDF(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+            const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.sqrt(2);
+            const t = 1 / (1 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return 0.5 * (1 + sign * y);
+        }
+
+        function chiSquaredCDF(x, k) {
+            if (x <= 0) return 0;
+            // Approximation using incomplete gamma function
+            return gammaCDF(x / 2, k / 2);
+        }
+
+        function gammaCDF(x, a) {
+            // Simple approximation
+            if (x <= 0) return 0;
+            const n = 100;
+            let sum = 0;
+            for (let i = 0; i < n; i++) {
+                sum += Math.pow(x, a + i) / (gamma(a + i + 1));
+            }
+            return Math.exp(-x) * sum;
+        }
+
+        function gamma(z) {
+            const g = 7;
+            const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                      771.32342877765313, -176.61502916214059, 12.507343278686905,
+                      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+
+            if (z < 0.5) {
+                return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+            }
+
+            z -= 1;
+            let x = c[0];
+            for (let i = 1; i < g + 2; i++) {
+                x += c[i] / (z + i);
+            }
+
+            const t = z + g + 0.5;
+            return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+        }
+
+        function ksTest(data) {
+            const n = data.length;
+            const sorted = [...data].sort((a, b) => a - b);
+
+            // Fit normal
+            const mean = data.reduce((a, b) => a + b, 0) / n;
+            const variance = data.reduce((sum, x) => sum + (x - mean) ** 2, 0) / n;
+            const std = Math.sqrt(variance);
+
+            let maxD = 0;
+            for (let i = 0; i < n; i++) {
+                const empirical = (i + 1) / n;
+                const theoretical = normalCDF((sorted[i] - mean) / std);
+                const d = Math.abs(empirical - theoretical);
+                maxD = Math.max(maxD, d);
+            }
+
+            // Approximate p-value
+            const lambda = (Math.sqrt(n) + 0.12 + 0.11 / Math.sqrt(n)) * maxD;
+            let pValue = 0;
+            for (let k = 1; k <= 100; k++) {
+                pValue += 2 * Math.pow(-1, k - 1) * Math.exp(-2 * k * k * lambda * lambda);
+            }
+            pValue = Math.max(0, Math.min(1, pValue));
+
+            return { D: maxD, pValue };
+        }
+
+        function runNonParametricTest() {
+            const testType = document.getElementById('testType').value;
+            let result, data1, data2, data3;
+            let chartData = {};
+
+            if (testType === 'mann_whitney') {
+                const meanA = parseFloat(document.getElementById('meanA').value);
+                const volA = parseFloat(document.getElementById('volA').value);
+                const nA = parseInt(document.getElementById('nA').value);
+                const meanB = parseFloat(document.getElementById('meanB').value);
+                const volB = parseFloat(document.getElementById('volB').value);
+                const nB = parseInt(document.getElementById('nB').value);
+
+                data1 = generateData(meanA, volA, nA);
+                data2 = generateData(meanB, volB, nB);
+
+                result = mannWhitneyU(data1, data2);
+                chartData = { type: 'boxplot', groups: [data1, data2], labels: ['Strategy A', 'Strategy B'] };
+
+                let html = '<div class="result-grid">';
+                html += `<div class="result-item"><span class="result-label">U Statistic:</span><span class="result-value">${result.U.toFixed(1)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Z Score:</span><span class="result-value">${result.z.toFixed(3)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">P-Value:</span><span class="result-value ${result.pValue < 0.05 ? 'positive' : 'negative'}">${result.pValue.toFixed(4)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Significant:</span><span class="result-value ${result.pValue < 0.05 ? 'positive' : 'negative'}">${result.pValue < 0.05 ? 'YES' : 'NO'}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Median A:</span><span class="result-value">${(median(data1) * 100).toFixed(3)}%</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Median B:</span><span class="result-value">${(median(data2) * 100).toFixed(3)}%</span></div>`;
+                html += '</div>';
+                document.getElementById('npOutput').innerHTML = html;
+
+            } else if (testType === 'wilcoxon') {
+                const mean = parseFloat(document.getElementById('meanSingle').value);
+                const vol = parseFloat(document.getElementById('volSingle').value);
+                const n = parseInt(document.getElementById('nSingle').value);
+
+                data1 = generateData(mean, vol, n);
+                result = wilcoxonSignedRank(data1, 0);
+                chartData = { type: 'histogram', data: data1 };
+
+                let html = '<div class="result-grid">';
+                html += `<div class="result-item"><span class="result-label">W+ (Positive Ranks):</span><span class="result-value">${result.Wplus.toFixed(1)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">W- (Negative Ranks):</span><span class="result-value">${result.Wminus.toFixed(1)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">W Statistic:</span><span class="result-value">${result.W.toFixed(1)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">P-Value:</span><span class="result-value ${result.pValue < 0.05 ? 'positive' : 'negative'}">${result.pValue.toFixed(4)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Significant:</span><span class="result-value ${result.pValue < 0.05 ? 'positive' : 'negative'}">${result.pValue < 0.05 ? 'YES' : 'NO'}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Median:</span><span class="result-value">${(median(data1) * 100).toFixed(3)}%</span></div>`;
+                html += '</div>';
+                document.getElementById('npOutput').innerHTML = html;
+
+            } else if (testType === 'kruskal') {
+                const meanBull = parseFloat(document.getElementById('meanBull').value);
+                const meanSideways = parseFloat(document.getElementById('meanSideways').value);
+                const meanBear = parseFloat(document.getElementById('meanBear').value);
+                const n = parseInt(document.getElementById('nRegime').value);
+
+                data1 = generateData(meanBull, 1.5, n);
+                data2 = generateData(meanSideways, 1, n);
+                data3 = generateData(meanBear, 2, n);
+
+                result = kruskalWallis([data1, data2, data3]);
+                chartData = { type: 'boxplot', groups: [data1, data2, data3], labels: ['Bull', 'Sideways', 'Bear'] };
+
+                let html = '<div class="result-grid">';
+                html += `<div class="result-item"><span class="result-label">H Statistic:</span><span class="result-value">${result.H.toFixed(3)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">P-Value:</span><span class="result-value ${result.pValue < 0.05 ? 'positive' : 'negative'}">${result.pValue.toFixed(4)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Significant:</span><span class="result-value ${result.pValue < 0.05 ? 'positive' : 'negative'}">${result.pValue < 0.05 ? 'YES' : 'NO'}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Bull Median:</span><span class="result-value">${(median(data1) * 100).toFixed(3)}%</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Sideways Median:</span><span class="result-value">${(median(data2) * 100).toFixed(3)}%</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Bear Median:</span><span class="result-value">${(median(data3) * 100).toFixed(3)}%</span></div>`;
+                html += '</div>';
+                document.getElementById('npOutput').innerHTML = html;
+
+            } else if (testType === 'ks') {
+                const mean = parseFloat(document.getElementById('meanSingle').value);
+                const vol = parseFloat(document.getElementById('volSingle').value);
+                const n = parseInt(document.getElementById('nSingle').value);
+
+                data1 = generateData(mean, vol, n);
+                result = ksTest(data1);
+                chartData = { type: 'histogram', data: data1 };
+
+                let html = '<div class="result-grid">';
+                html += `<div class="result-item"><span class="result-label">D Statistic:</span><span class="result-value">${result.D.toFixed(4)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">P-Value:</span><span class="result-value ${result.pValue >= 0.05 ? 'positive' : 'negative'}">${result.pValue.toFixed(4)}</span></div>`;
+                html += `<div class="result-item"><span class="result-label">Normally Distributed:</span><span class="result-value ${result.pValue >= 0.05 ? 'positive' : 'negative'}">${result.pValue >= 0.05 ? 'LIKELY' : 'UNLIKELY'}</span></div>`;
+                html += '</div>';
+                document.getElementById('npOutput').innerHTML = html;
+            }
+
+            updateChart(chartData);
+        }
+
+        function median(arr) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        function updateChart(chartData) {
+            const ctx = document.getElementById('npChart').getContext('2d');
+            if (npChart) npChart.destroy();
+
+            if (chartData.type === 'boxplot') {
+                // Simulate box plot with bars
+                const datasets = chartData.groups.map((g, i) => {
+                    const sorted = [...g].sort((a, b) => a - b);
+                    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+                    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+                    const med = median(g);
+                    return {
+                        q1: q1 * 100,
+                        median: med * 100,
+                        q3: q3 * 100,
+                        min: Math.min(...g) * 100,
+                        max: Math.max(...g) * 100
+                    };
+                });
+
+                const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(244, 67, 54, 0.7)', 'rgba(33, 150, 243, 0.7)'];
+
+                npChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Median',
+                            data: datasets.map(d => d.median),
+                            backgroundColor: colors.slice(0, datasets.length),
+                            borderColor: colors.slice(0, datasets.length).map(c => c.replace('0.7', '1')),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: { display: true, text: 'Median Returns by Group (%)', color: '#e0e0e0' },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#808080' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                            y: {
+                                title: { display: true, text: 'Return (%)', color: '#b0b0b0' },
+                                ticks: { color: '#808080' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        }
+                    }
+                });
+
+            } else if (chartData.type === 'histogram') {
+                const data = chartData.data.map(x => x * 100);
+                const nBins = 30;
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const binWidth = (max - min) / nBins;
+                const bins = Array(nBins).fill(0);
+                const binCenters = [];
+
+                for (let i = 0; i < nBins; i++) {
+                    binCenters.push((min + (i + 0.5) * binWidth).toFixed(2) + '%');
+                }
+
+                data.forEach(d => {
+                    const idx = Math.min(Math.floor((d - min) / binWidth), nBins - 1);
+                    bins[idx]++;
+                });
+
+                npChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: binCenters,
+                        datasets: [{
+                            label: 'Frequency',
+                            data: bins,
+                            backgroundColor: 'rgba(100, 181, 246, 0.7)',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: { display: true, text: 'Return Distribution', color: '#e0e0e0' },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Return (%)', color: '#b0b0b0' },
+                                ticks: { color: '#808080', maxTicksLimit: 10 },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            y: {
+                                title: { display: true, text: 'Frequency', color: '#b0b0b0' },
+                                ticks: { color: '#808080' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function checkAnswer(questionNum, answer) {
+            const feedback = document.getElementById(`feedback${questionNum}`);
+            const isCorrect = answer === correctAnswers[questionNum];
+
+            quizAnswers[questionNum] = answer;
+
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[questionNum][answer]}
+            </div>`;
+            feedback.style.display = 'block';
+
+            const buttons = document.querySelectorAll(`#q${questionNum} button`);
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (Object.keys(quizAnswers).length === 5) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const score = Object.keys(quizAnswers).reduce((sum, q) =>
+                sum + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('scoreContainer').style.display = 'block';
+        }
+
+        window.onload = function() {
+            updateTestInputs();
+            runNonParametricTest();
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

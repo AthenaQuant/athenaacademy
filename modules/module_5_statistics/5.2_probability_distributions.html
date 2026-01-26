@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master probability distributions for quantitative trading. Learn Normal, Lognormal, Student-t, and how to model market returns.">
+    <title>5.2 Probability Distributions | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+
+    <style>
+        .dist-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .dist-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dist-box h4 {
+            color: #6366f1;
+            margin-bottom: 15px;
+        }
+        .dist-formula {
+            font-family: 'Georgia', serif;
+            color: #a855f7;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .use-case {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+            padding: 10px 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .comparison-table th {
+            background: rgba(99, 102, 241, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.2</span>
+                    <span class="nav-module-title">Probability Distributions</span>
+                </div>
+                <a href="5.3_statistical_inference.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.2 Probability Distributions</span>
+                </div>
+                <h1>Probability Distributions</h1>
+                <p class="module-subtitle">
+                    Model market returns with the right distribution. Normal, Lognormal, Student-t, and beyond.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 35 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 Distribution Explorer</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1 -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Normal Distribution Lie</div>
+                <p>
+                    Finance textbooks love the normal distribution—it's mathematically convenient. But real returns
+                    have fat tails. The 2008 crash was a "25-sigma event" under normal assumptions—supposedly
+                    impossible. Choosing the right distribution is life or death for risk management.
+                </p>
+            </div>
+
+            <div class="grid grid-3">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">📊 Returns vs Prices</h4>
+                    <p>Returns are roughly normal. Prices are lognormal (can't go negative). Know which to use when.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">⚠️ Tail Risk</h4>
+                    <p>Student-t distribution captures fat tails. Critical for VaR and stress testing.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">🎯 Option Pricing</h4>
+                    <p>Black-Scholes assumes lognormal prices. Reality differs—hence volatility smile.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2 -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="dist-grid">
+                <div class="dist-box">
+                    <h4>Normal (Gaussian) Distribution</h4>
+                    <div class="dist-formula">f(x) = (1/σ√2π) e^(-(x-μ)²/2σ²)</div>
+                    <p>Symmetric bell curve. Defined by mean (μ) and std dev (σ).</p>
+                    <div class="use-case">
+                        <strong>Use for:</strong> Log returns over short periods, residuals in models
+                    </div>
+                </div>
+                <div class="dist-box">
+                    <h4>Lognormal Distribution</h4>
+                    <div class="dist-formula">If ln(X) ~ Normal, then X ~ Lognormal</div>
+                    <p>Always positive. Right-skewed. Multiplicative processes.</p>
+                    <div class="use-case">
+                        <strong>Use for:</strong> Stock prices, wealth, trade sizes
+                    </div>
+                </div>
+                <div class="dist-box">
+                    <h4>Student-t Distribution</h4>
+                    <div class="dist-formula">f(x) ∝ (1 + x²/ν)^(-(ν+1)/2)</div>
+                    <p>Like normal but with fatter tails. ν (degrees of freedom) controls tail thickness.</p>
+                    <div class="use-case">
+                        <strong>Use for:</strong> Financial returns (ν ≈ 3-5 typical), VaR calculations
+                    </div>
+                </div>
+                <div class="dist-box">
+                    <h4>Poisson Distribution</h4>
+                    <div class="dist-formula">P(k) = λᵏe^(-λ) / k!</div>
+                    <p>Counts rare events in fixed time. λ = average rate.</p>
+                    <div class="use-case">
+                        <strong>Use for:</strong> Number of trades, defaults, extreme events
+                    </div>
+                </div>
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Distribution</th>
+                        <th>Support</th>
+                        <th>Tails</th>
+                        <th>Trading Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Normal</td>
+                        <td>(-∞, +∞)</td>
+                        <td>Thin</td>
+                        <td>Returns (first approximation)</td>
+                    </tr>
+                    <tr>
+                        <td>Lognormal</td>
+                        <td>(0, +∞)</td>
+                        <td>Right-skewed</td>
+                        <td>Stock prices</td>
+                    </tr>
+                    <tr>
+                        <td>Student-t</td>
+                        <td>(-∞, +∞)</td>
+                        <td>Fat</td>
+                        <td>Returns (realistic)</td>
+                    </tr>
+                    <tr>
+                        <td>Binomial</td>
+                        <td>{0,1,...,n}</td>
+                        <td>N/A</td>
+                        <td>Win/loss count</td>
+                    </tr>
+                    <tr>
+                        <td>Poisson</td>
+                        <td>{0,1,2,...}</td>
+                        <td>N/A</td>
+                        <td>Event counts</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 3 -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>Normal Distribution PDF</h3>
+                <div class="formula">f(x|μ,σ) = (1/(σ√(2π))) × exp(-(x-μ)²/(2σ²))</div>
+                <p>68-95-99.7 rule: 68% within 1σ, 95% within 2σ, 99.7% within 3σ</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Lognormal from Normal</h3>
+                <div class="formula">If X ~ N(μ, σ²), then e^X ~ Lognormal(μ, σ²)</div>
+                <p>E[e^X] = exp(μ + σ²/2), Var[e^X] = exp(2μ + σ²)(exp(σ²) - 1)</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Student-t Distribution</h3>
+                <div class="formula">f(x|ν) = Γ((ν+1)/2) / (√(νπ)Γ(ν/2)) × (1 + x²/ν)^(-(ν+1)/2)</div>
+                <p>As ν → ∞, t-distribution → normal. Lower ν = fatter tails.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Binomial Distribution</h3>
+                <div class="formula">P(X=k) = C(n,k) × p^k × (1-p)^(n-k)</div>
+                <p>n trials, probability p of success each. E[X] = np, Var[X] = np(1-p)</p>
+            </div>
+        </section>
+
+        <!-- PART 4 -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Key Properties</h2>
+
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Normal: Central Limit Theorem</span>
+                    <span class="property-desc">Sum of many independent variables → normal. Why returns are "sort of" normal.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Lognormal: Multiplicative</span>
+                    <span class="property-desc">Prices = cumulative product of (1+r). Product → lognormal even if returns are independent.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Student-t: Robustness</span>
+                    <span class="property-desc">More realistic for finance. ν=3-5 typical. ν<4 means infinite kurtosis!</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Q-Q Plot</span>
+                    <span class="property-desc">Plot quantiles vs theoretical. Straight line = good fit. Curved tails = fat tails.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 5 -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Distribution Fitting and Comparison</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy import stats
+import pandas as pd
+from typing import Dict, Tuple
+
+
+def fit_distributions(
+    data: np.ndarray
+) -> Dict[str, Dict]:
+    """
+    Fit multiple distributions to data and compare.
+
+    Args:
+        data: Array of observations
+
+    Returns:
+        Dictionary with fitted parameters and goodness-of-fit
+    """
+    results = {}
+
+    # Normal
+    mu, sigma = stats.norm.fit(data)
+    ks_stat, ks_p = stats.kstest(data, 'norm', args=(mu, sigma))
+    results['normal'] = {
+        'params': {'mu': mu, 'sigma': sigma},
+        'ks_statistic': ks_stat,
+        'ks_pvalue': ks_p
+    }
+
+    # Student-t
+    df, loc, scale = stats.t.fit(data)
+    ks_stat, ks_p = stats.kstest(data, 't', args=(df, loc, scale))
+    results['student_t'] = {
+        'params': {'df': df, 'loc': loc, 'scale': scale},
+        'ks_statistic': ks_stat,
+        'ks_pvalue': ks_p
+    }
+
+    # Lognormal (for positive data)
+    if np.all(data > 0):
+        shape, loc, scale = stats.lognorm.fit(data, floc=0)
+        ks_stat, ks_p = stats.kstest(data, 'lognorm', args=(shape, loc, scale))
+        results['lognormal'] = {
+            'params': {'shape': shape, 'scale': scale},
+            'ks_statistic': ks_stat,
+            'ks_pvalue': ks_p
+        }
+
+    return results
+
+
+def calculate_probabilities(
+    dist_type: str,
+    params: dict,
+    thresholds: list
+) -> Dict:
+    """
+    Calculate probabilities for given thresholds.
+
+    Args:
+        dist_type: 'normal', 'student_t', 'lognormal'
+        params: Distribution parameters
+        thresholds: List of values to calculate P(X < threshold)
+
+    Returns:
+        Dictionary of probabilities
+    """
+    if dist_type == 'normal':
+        dist = stats.norm(loc=params['mu'], scale=params['sigma'])
+    elif dist_type == 'student_t':
+        dist = stats.t(df=params['df'], loc=params['loc'], scale=params['scale'])
+    elif dist_type == 'lognormal':
+        dist = stats.lognorm(s=params['shape'], scale=params['scale'])
+    else:
+        raise ValueError(f"Unknown distribution: {dist_type}")
+
+    probs = {}
+    for t in thresholds:
+        probs[t] = dist.cdf(t)
+
+    return probs
+
+
+def generate_qq_data(
+    data: np.ndarray,
+    dist_type: str = 'norm'
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generate Q-Q plot data.
+
+    Args:
+        data: Observed data
+        dist_type: 'norm' or 't'
+
+    Returns:
+        Tuple of (theoretical quantiles, sample quantiles)
+    """
+    n = len(data)
+    sorted_data = np.sort(data)
+
+    # Theoretical quantiles
+    probs = (np.arange(1, n + 1) - 0.5) / n
+
+    if dist_type == 'norm':
+        theoretical = stats.norm.ppf(probs)
+    elif dist_type == 't':
+        # Fit t-distribution first
+        df, loc, scale = stats.t.fit(data)
+        theoretical = stats.t.ppf(probs, df, loc, scale)
+    else:
+        theoretical = stats.norm.ppf(probs)
+
+    return theoretical, sorted_data
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Simulate returns with fat tails
+    n = 1000
+    # Mix of normal and occasional large moves
+    returns = np.concatenate([
+        np.random.randn(950) * 0.01,
+        np.random.randn(50) * 0.05  # Fat tail events
+    ])
+    np.random.shuffle(returns)
+
+    # Fit distributions
+    fits = fit_distributions(returns)
+
+    print("=" * 50)
+    print("DISTRIBUTION FITTING RESULTS")
+    print("=" * 50)
+
+    for dist_name, result in fits.items():
+        print(f"\n{dist_name.upper()}:")
+        print(f"  Parameters: {result['params']}")
+        print(f"  KS Statistic: {result['ks_statistic']:.4f}")
+        print(f"  KS p-value: {result['ks_pvalue']:.4f}")
+        if result['ks_pvalue'] > 0.05:
+            print("  ✓ Good fit (cannot reject)")
+        else:
+            print("  ✗ Poor fit (rejected at 5%)")
+
+    # Compare tail probabilities
+    print("\n" + "=" * 50)
+    print("TAIL PROBABILITY COMPARISON (P(X < threshold))")
+    print("=" * 50)
+
+    thresholds = [-0.03, -0.05, -0.10]
+    print(f"\n{'Threshold':<12} {'Normal':<12} {'Student-t':<12}")
+    print("-" * 40)
+
+    normal_probs = calculate_probabilities('normal', fits['normal']['params'], thresholds)
+    t_probs = calculate_probabilities('student_t', fits['student_t']['params'], thresholds)
+
+    for t in thresholds:
+        print(f"{t*100:.1f}%{' '*8} {normal_probs[t]:.6f}     {t_probs[t]:.6f}")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6 -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive Distribution Explorer</h2>
+
+            <div class="calculator">
+                <h3>Explore Probability Distributions</h3>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label for="distType">Distribution:</label>
+                        <select id="distType" onchange="updateDistribution()">
+                            <option value="normal">Normal</option>
+                            <option value="student_t">Student-t</option>
+                            <option value="lognormal">Lognormal</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="param1">Mean/Location (μ):</label>
+                        <input type="number" id="param1" value="0" step="0.1" onchange="updateDistribution()">
+                    </div>
+                    <div class="input-group">
+                        <label for="param2">Std Dev/Scale (σ):</label>
+                        <input type="number" id="param2" value="1" step="0.1" min="0.1" onchange="updateDistribution()">
+                    </div>
+                </div>
+
+                <div class="input-group" id="dfGroup">
+                    <label for="param3">Degrees of Freedom (ν):</label>
+                    <input type="number" id="param3" value="5" step="1" min="1" onchange="updateDistribution()">
+                </div>
+
+                <div id="probResults" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Probability Density Function (PDF)</h3>
+                <canvas id="pdfChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Cumulative Distribution Function (CDF)</h3>
+                <canvas id="cdfChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7 -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Trading Applications</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>VaR with Fat Tails</h4>
+                    <p>Normal VaR underestimates risk. Student-t VaR is more conservative and realistic for markets.</p>
+                    <div class="highlight">Use t-distribution for VaR</div>
+                </div>
+                <div class="card">
+                    <h4>Option Pricing</h4>
+                    <p>Black-Scholes assumes lognormal prices. Real markets have volatility smile—fatter tails.</p>
+                    <div class="highlight">Volatility smile = fat tails</div>
+                </div>
+                <div class="card">
+                    <h4>Monte Carlo Simulation</h4>
+                    <p>Generate random returns from fitted distribution. Student-t produces more realistic scenarios.</p>
+                    <div class="highlight">Choose distribution carefully</div>
+                </div>
+                <div class="card">
+                    <h4>Extreme Event Probability</h4>
+                    <p>P(-10% day) under normal: 1 in 10^23. Under t(4): 1 in 500. Reality closer to t.</p>
+                    <div class="highlight">Normal vastly underestimates crashes</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Normal vs Student-t: Tail Comparison</h3>
+                <canvas id="tailChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 8 -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Common Mistakes</h2>
+
+            <div class="warning-box">
+                <h3>Mistake 1: Always Using Normal</h3>
+                <p>Normal is convenient but dangerous. Financial returns have fat tails—use Student-t or empirical distributions.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 2: Confusing Returns and Prices</h3>
+                <p>Returns can be negative (normal-ish). Prices can't be negative (lognormal). Use the right one.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 3: Ignoring Time Aggregation</h3>
+                <p>Daily returns ≠ monthly returns in distribution. Fat tails persist but parameters change.</p>
+            </div>
+        </section>
+
+        <!-- SUMMARY & QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Summary</h2>
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>Normal:</strong> Symmetric, thin tails—underestimates risk</li>
+                    <li><strong>Lognormal:</strong> For prices (always positive)</li>
+                    <li><strong>Student-t:</strong> Fat tails—better for real returns</li>
+                    <li><strong>Q-Q plots:</strong> Diagnose distribution fit</li>
+                </ul>
+            </div>
+
+            <div class="nav-buttons">
+                <a href="5.1_descriptive_statistics.html" class="nav-btn">← Previous: Descriptive Stats</a>
+                <a href="5.3_statistical_inference.html" class="nav-btn">Next: Statistical Inference →</a>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Test Your Knowledge</h2>
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Question 1: Why is the normal distribution problematic for modeling returns?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> It's too complex</label>
+                        <label><input type="radio" name="q1" value="b"> It underestimates the probability of extreme events (thin tails)</label>
+                        <label><input type="radio" name="q1" value="c"> It only works for positive values</label>
+                        <label><input type="radio" name="q1" value="d"> It requires too many parameters</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 2: Why are stock prices modeled as lognormal?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> Because returns are lognormal</label>
+                        <label><input type="radio" name="q2" value="b"> Because prices can't be negative and result from multiplicative process</label>
+                        <label><input type="radio" name="q2" value="c"> Because of regulatory requirements</label>
+                        <label><input type="radio" name="q2" value="d"> Because lognormal is simpler to calculate</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 3: In Student-t distribution, what happens as degrees of freedom (ν) increases?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> Tails get fatter</label>
+                        <label><input type="radio" name="q3" value="b"> Distribution approaches normal (thinner tails)</label>
+                        <label><input type="radio" name="q3" value="c"> Distribution becomes skewed</label>
+                        <label><input type="radio" name="q3" value="d"> Mean increases</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 4: What does a Q-Q plot curved at the ends indicate?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> Perfect fit to the theoretical distribution</label>
+                        <label><input type="radio" name="q4" value="b"> Data has fatter or thinner tails than the theoretical distribution</label>
+                        <label><input type="radio" name="q4" value="c"> Sample size is too small</label>
+                        <label><input type="radio" name="q4" value="d"> Data needs to be transformed</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 5: For VaR calculation, which distribution typically gives higher (more conservative) risk estimates?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> Normal distribution</label>
+                        <label><input type="radio" name="q5" value="b"> Student-t distribution</label>
+                        <label><input type="radio" name="q5" value="c"> They give the same estimates</label>
+                        <label><input type="radio" name="q5" value="d"> Binomial distribution</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let pdfChart, cdfChart, tailChart;
+
+        function normalPDF(x, mu, sigma) {
+            return Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2)) / (sigma * Math.sqrt(2 * Math.PI));
+        }
+
+        function normalCDF(x, mu, sigma) {
+            return 0.5 * (1 + erf((x - mu) / (sigma * Math.sqrt(2))));
+        }
+
+        function erf(x) {
+            const a1 =  0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+            const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x);
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return sign * y;
+        }
+
+        function gamma(n) {
+            if (n === 1) return 1;
+            if (n === 0.5) return Math.sqrt(Math.PI);
+            return (n - 1) * gamma(n - 1);
+        }
+
+        function studentTPDF(x, nu, mu = 0, sigma = 1) {
+            const z = (x - mu) / sigma;
+            const coef = gamma((nu + 1) / 2) / (Math.sqrt(nu * Math.PI) * gamma(nu / 2));
+            return coef * Math.pow(1 + z * z / nu, -(nu + 1) / 2) / sigma;
+        }
+
+        function lognormalPDF(x, mu, sigma) {
+            if (x <= 0) return 0;
+            return Math.exp(-Math.pow(Math.log(x) - mu, 2) / (2 * sigma * sigma)) / (x * sigma * Math.sqrt(2 * Math.PI));
+        }
+
+        function initializeCharts() {
+            updateDistribution();
+            initTailChart();
+        }
+
+        function updateDistribution() {
+            const distType = document.getElementById('distType').value;
+            const mu = parseFloat(document.getElementById('param1').value);
+            const sigma = parseFloat(document.getElementById('param2').value);
+            const nu = parseFloat(document.getElementById('param3').value);
+
+            document.getElementById('dfGroup').style.display = distType === 'student_t' ? 'block' : 'none';
+
+            // Generate data
+            const xMin = distType === 'lognormal' ? 0.01 : -4 * sigma + mu;
+            const xMax = distType === 'lognormal' ? 3 : 4 * sigma + mu;
+            const x = [], pdf = [], cdf = [];
+
+            let cumulative = 0;
+            const dx = (xMax - xMin) / 100;
+
+            for (let xi = xMin; xi <= xMax; xi += dx) {
+                x.push(xi.toFixed(2));
+                let pdfVal;
+                if (distType === 'normal') {
+                    pdfVal = normalPDF(xi, mu, sigma);
+                    cumulative = normalCDF(xi, mu, sigma);
+                } else if (distType === 'student_t') {
+                    pdfVal = studentTPDF(xi, nu, mu, sigma);
+                    cumulative += pdfVal * dx;
+                } else {
+                    pdfVal = lognormalPDF(xi, mu, sigma);
+                    cumulative += pdfVal * dx;
+                }
+                pdf.push(pdfVal);
+                cdf.push(Math.min(cumulative, 1));
+            }
+
+            // PDF Chart
+            const ctx1 = document.getElementById('pdfChart').getContext('2d');
+            if (pdfChart) pdfChart.destroy();
+            pdfChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [{
+                        label: 'PDF',
+                        data: pdf,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+
+            // CDF Chart
+            const ctx2 = document.getElementById('cdfChart').getContext('2d');
+            if (cdfChart) cdfChart.destroy();
+            cdfChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [{
+                        label: 'CDF',
+                        data: cdf,
+                        borderColor: '#10b981',
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+
+            // Probability calculations
+            let p_neg2 = distType === 'normal' ? normalCDF(-2 * sigma + mu, mu, sigma) : 0.05;
+            document.getElementById('probResults').innerHTML = `
+                <div class="info-box info-box-info">
+                    <p><strong>P(X < μ - 2σ):</strong> ${(p_neg2 * 100).toFixed(2)}%</p>
+                    <p><strong>P(X > μ + 2σ):</strong> ${((1 - (1 - p_neg2)) * 100).toFixed(2)}%</p>
+                </div>
+            `;
+        }
+
+        function initTailChart() {
+            const ctx = document.getElementById('tailChart').getContext('2d');
+            const x = [], normal = [], studentT = [];
+
+            for (let xi = -5; xi <= 5; xi += 0.1) {
+                x.push(xi.toFixed(1));
+                normal.push(normalPDF(xi, 0, 1));
+                studentT.push(studentTPDF(xi, 4, 0, 1));
+            }
+
+            tailChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [
+                        { label: 'Normal', data: normal, borderColor: '#10b981', fill: false, pointRadius: 0 },
+                        { label: 'Student-t (ν=4)', data: studentT, borderColor: '#ef4444', fill: false, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        title: { display: true, text: 'Student-t has fatter tails (more probability in extremes)', color: '#94a3b8' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'Normal distribution has thin tails, underestimating extreme events that occur more often in real markets.' },
+                q2: { correct: 'b', explanation: 'Stock prices result from multiplicative returns and cannot go negative, making lognormal appropriate.' },
+                q3: { correct: 'b', explanation: 'As degrees of freedom increase, Student-t converges to normal distribution with thinner tails.' },
+                q4: { correct: 'b', explanation: 'Curved ends in Q-Q plot indicate tails differ from theoretical—data has fatter or thinner tails.' },
+                q5: { correct: 'b', explanation: 'Student-t has fatter tails, so it assigns higher probability to extreme losses, giving more conservative VaR.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+
+            document.getElementById('quizScore').innerHTML = `<h3>Score: ${score}/5 (${score * 20}%)</h3>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCharts);
+    </script>
+</body>
+</html>

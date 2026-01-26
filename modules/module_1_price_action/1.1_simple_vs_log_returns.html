@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn the difference between simple and log returns in quantitative trading. Understand when to use each type and avoid common mistakes.">
+  <title>1.1 Simple vs Log Returns | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 1.1</span>
+          <span class="nav-module-title">Simple vs Log Returns</span>
+        </div>
+        <a href="1.2_cumulative_returns.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 1: Price Action & Returns</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>1.1 Simple vs Log Returns</span>
+        </div>
+        <h1>Simple vs Log Returns</h1>
+        <p class="module-subtitle">
+          The fundamental choice that affects everything in quantitative trading.
+          Learn when to use each type and avoid costly mistakes.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💻 Interactive Examples</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          You're running a trading strategy on Bitcoin. In January, you make +50%. In February, you lose -50%.
+          Your intuition says you're back to breakeven, right? <strong>Wrong.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          If you started with $10,000:
+          <br>• After +50%: $15,000
+          <br>• After -50% of $15,000: $7,500
+          <br><strong>You've lost 25% of your capital!</strong>
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        This isn't just academic. Using the wrong type of returns can lead to:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Incorrect Risk Metrics</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Your Sharpe ratio and volatility calculations will be mathematically incorrect,
+            leading to poor position sizing decisions.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Wrong Backtests</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Compound returns across periods incorrectly, and you'll overestimate your strategy's
+            performance by significant margins.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Failed Strategies</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Statistical models break down when fed the wrong return type, causing your
+            mean-reversion or momentum strategies to fail in live trading.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters</div>
+        <p style="margin-bottom: 0;">
+          Understanding simple vs log returns is the foundation of quantitative finance. Every professional
+          trader, risk manager, and portfolio manager needs to know this cold. It affects portfolio optimization,
+          risk metrics, statistical analysis, and options pricing. <strong>Get this right, and everything else becomes easier.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition (No Math Yet)</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Simple Returns 🎯</h3>
+          <p>
+            <strong>Think of it as:</strong> "What percentage did I make on my original investment?"
+          </p>
+          <p>
+            If you invest $100 and it grows to $120, you made $20 on your $100 investment.
+            That's a 20% simple return. It's intuitive, easy to understand, and matches how we
+            naturally think about gains and losses.
+          </p>
+          <p style="margin-bottom: 0;">
+            <strong>Great for:</strong> Reporting to clients, calculating single-period returns,
+            understanding immediate profit/loss.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Log Returns 📊</h3>
+          <p>
+            <strong>Think of it as:</strong> "What's the continuously compounded growth rate?"
+          </p>
+          <p>
+            Log returns measure the rate of continuous growth. Instead of asking "how much did I make,"
+            they ask "what constant growth rate would get me from A to B?" This makes them additive
+            over time and symmetric for gains and losses.
+          </p>
+          <p style="margin-bottom: 0;">
+            <strong>Great for:</strong> Statistical analysis, multi-period returns, volatility calculations,
+            mathematical modeling.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: The Ruler vs The Logarithmic Scale</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📏 Simple Returns = Linear Ruler</div>
+        <p>
+          Imagine measuring with a regular ruler. Going from 100 to 110 is +10, and going from 110 back to 100 is -10.
+          The distance is the same, but the percentages aren't: +10% vs -9.09%.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📐 Log Returns = Logarithmic Scale</div>
+        <p style="margin-bottom: 0;">
+          Imagine measuring on a logarithmic scale (like a guitar fretboard or earthquake Richter scale).
+          Each step represents a constant multiplicative change. Going up by 0.1 on the log scale and then
+          down by 0.1 brings you back exactly where you started.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <h3>Simple Returns Formula</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Simple Return (Arithmetic Return)</div>
+        <div class="formula-content">
+          R<sub>simple</sub> = (P<sub>end</sub> - P<sub>start</sub>) / P<sub>start</sub>
+        </div>
+        <div class="formula-content" style="font-size: 1.2rem; margin-top: 1rem;">
+          = (P<sub>end</sub> / P<sub>start</sub>) - 1
+        </div>
+        <div class="formula-description">
+          Where P<sub>start</sub> is the initial price and P<sub>end</sub> is the final price
+        </div>
+      </div>
+
+      <h3>Log Returns Formula</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Log Return (Logarithmic Return)</div>
+        <div class="formula-content">
+          R<sub>log</sub> = ln(P<sub>end</sub> / P<sub>start</sub>)
+        </div>
+        <div class="formula-content" style="font-size: 1.2rem; margin-top: 1rem;">
+          = ln(P<sub>end</sub>) - ln(P<sub>start</sub>)
+        </div>
+        <div class="formula-description">
+          Where ln is the natural logarithm (base e ≈ 2.71828)
+        </div>
+      </div>
+
+      <h3>Numerical Example: $100 → $110</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">numerical_example.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+
+# Initial and final prices
+P_start = 100
+P_end = 110
+
+# Calculate simple return
+R_simple = (P_end - P_start) / P_start
+print(f"Simple Return: {R_simple:.4f} = {R_simple*100:.2f}%")
+# Output: Simple Return: 0.1000 = 10.00%
+
+# Calculate log return
+R_log = np.log(P_end / P_start)
+print(f"Log Return: {R_log:.4f} = {R_log*100:.2f}%")
+# Output: Log Return: 0.0953 = 9.53%
+
+# Difference
+difference = R_simple - R_log
+print(f"Difference: {difference:.4f} = {difference*100:.2f}%")
+# Output: Difference: 0.0047 = 0.47%</code></pre>
+        </div>
+      </div>
+
+      <h3>Comparison Table</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Price Change</th>
+              <th>Simple Return</th>
+              <th>Log Return</th>
+              <th>Difference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>$100 → $110</td>
+              <td style="color: var(--success);">+10.00%</td>
+              <td style="color: var(--success);">+9.53%</td>
+              <td>0.47%</td>
+            </tr>
+            <tr>
+              <td>$100 → $90</td>
+              <td style="color: var(--error);">-10.00%</td>
+              <td style="color: var(--error);">-10.54%</td>
+              <td>0.54%</td>
+            </tr>
+            <tr>
+              <td>$100 → $150</td>
+              <td style="color: var(--success);">+50.00%</td>
+              <td style="color: var(--success);">+40.55%</td>
+              <td>9.45%</td>
+            </tr>
+            <tr>
+              <td>$100 → $50</td>
+              <td style="color: var(--error);">-50.00%</td>
+              <td style="color: var(--error);">-69.31%</td>
+              <td>19.31%</td>
+            </tr>
+            <tr>
+              <td>$100 → $200</td>
+              <td style="color: var(--success);">+100.00%</td>
+              <td style="color: var(--success);">+69.31%</td>
+              <td>30.69%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          For small returns (< 10%), simple and log returns are approximately equal. For larger returns,
+          the difference becomes significant. Log returns are always smaller in magnitude than simple returns.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties</h2>
+
+      <h3>1. Symmetry Property</h3>
+
+      <div class="grid grid-2">
+        <div>
+          <h4>Simple Returns (NOT Symmetric)</h4>
+          <p>
+            If you gain 50% then lose 50%, you don't break even:
+          </p>
+          <div class="code-block">
+            <div class="code-content">
+<pre><code>Start: $100
+After +50%: $100 × 1.50 = $150
+After -50%: $150 × 0.50 = $75
+<span style="color: var(--error);">Loss: -25%</span></code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4>Log Returns (Symmetric)</h4>
+          <p>
+            Log returns of equal magnitude cancel out:
+          </p>
+          <div class="code-block">
+            <div class="code-content">
+<pre><code>Start: $100
+Log return up: +0.405
+Log return down: -0.405
+Total log return: 0.0
+<span style="color: var(--success);">Back to $100 ✓</span></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h4>Visual: Symmetry Comparison</h4>
+      <svg width="100%" height="300" viewBox="0 0 800 300" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <!-- Simple Returns Path -->
+        <g>
+          <text x="50" y="30" fill="var(--accent-blue)" font-size="16" font-weight="600">Simple Returns (Not Symmetric)</text>
+          <line x1="50" y1="100" x2="350" y2="100" stroke="var(--text-muted)" stroke-width="2"/>
+
+          <!-- Start -->
+          <circle cx="50" cy="100" r="6" fill="var(--success)"/>
+          <text x="50" y="130" fill="var(--text-secondary)" text-anchor="middle" font-size="14">$100</text>
+
+          <!-- After +50% -->
+          <line x1="50" y1="100" x2="200" y2="50" stroke="var(--success)" stroke-width="3" marker-end="url(#arrowgreen)"/>
+          <circle cx="200" cy="50" r="6" fill="var(--success)"/>
+          <text x="200" y="35" fill="var(--text-secondary)" text-anchor="middle" font-size="14">$150</text>
+          <text x="125" y="65" fill="var(--success)" font-size="12">+50%</text>
+
+          <!-- After -50% -->
+          <line x1="200" y1="50" x2="350" y2="125" stroke="var(--error)" stroke-width="3" marker-end="url(#arrowred)"/>
+          <circle cx="350" cy="125" r="6" fill="var(--error)"/>
+          <text x="350" y="155" fill="var(--text-secondary)" text-anchor="middle" font-size="14">$75</text>
+          <text x="275" y="80" fill="var(--error)" font-size="12">-50%</text>
+
+          <text x="200" y="180" fill="var(--error)" text-anchor="middle" font-size="16" font-weight="600">Net: -25% ❌</text>
+        </g>
+
+        <!-- Log Returns Path -->
+        <g transform="translate(400, 0)">
+          <text x="50" y="30" fill="var(--accent-purple)" font-size="16" font-weight="600">Log Returns (Symmetric)</text>
+          <line x1="50" y1="100" x2="350" y2="100" stroke="var(--text-muted)" stroke-width="2"/>
+
+          <!-- Start -->
+          <circle cx="50" cy="100" r="6" fill="var(--success)"/>
+          <text x="50" y="130" fill="var(--text-secondary)" text-anchor="middle" font-size="14">$100</text>
+
+          <!-- After +0.405 -->
+          <line x1="50" y1="100" x2="200" y2="50" stroke="var(--success)" stroke-width="3"/>
+          <circle cx="200" cy="50" r="6" fill="var(--success)"/>
+          <text x="200" y="35" fill="var(--text-secondary)" text-anchor="middle" font-size="14">$150</text>
+          <text x="125" y="65" fill="var(--success)" font-size="12">+0.405</text>
+
+          <!-- After -0.405 -->
+          <line x1="200" y1="50" x2="350" y2="100" stroke="var(--accent-purple)" stroke-width="3"/>
+          <circle cx="350" cy="100" r="6" fill="var(--success)"/>
+          <text x="350" y="130" fill="var(--text-secondary)" text-anchor="middle" font-size="14">$100</text>
+          <text x="275" y="65" fill="var(--accent-purple)" font-size="12">-0.405</text>
+
+          <text x="200" y="180" fill="var(--success)" text-anchor="middle" font-size="16" font-weight="600">Net: 0% ✓</text>
+        </g>
+
+        <!-- Arrow markers -->
+        <defs>
+          <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="var(--success)" />
+          </marker>
+          <marker id="arrowred" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="var(--error)" />
+          </marker>
+        </defs>
+      </svg>
+
+      <h3>2. Additivity Property (Time Aggregation)</h3>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--error);">❌ Simple Returns (NOT Additive)</h4>
+          <p>You cannot simply add simple returns across periods:</p>
+          <div class="code-block">
+            <div class="code-content">
+<pre><code><span style="color: var(--error);">WRONG:</span>
+Day 1: +10% → Day 2: +5%
+Total ≠ 15%
+
+<span style="color: var(--success);">CORRECT:</span>
+Total = (1.10) × (1.05) - 1 = 15.5%</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Log Returns (Additive)</h4>
+          <p>You can simply add log returns across periods:</p>
+          <div class="code-block">
+            <div class="code-content">
+<pre><code><span style="color: var(--success);">CORRECT:</span>
+Day 1: +0.0953 → Day 2: +0.0488
+Total = 0.0953 + 0.0488 = 0.1441
+
+Convert back: e^0.1441 - 1 = 15.5%</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h4>Visual: Additivity Property</h4>
+      <svg width="100%" height="200" viewBox="0 0 800 200" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <!-- Log Returns - Stack them up -->
+        <g>
+          <text x="400" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="18" font-weight="600">Log Returns: Just Add Them Up!</text>
+
+          <!-- Period 1 -->
+          <rect x="200" y="60" width="120" height="50" fill="var(--accent-blue)" opacity="0.7" rx="5"/>
+          <text x="260" y="90" fill="white" text-anchor="middle" font-size="16" font-weight="600">+0.0953</text>
+          <text x="260" y="130" fill="var(--text-secondary)" text-anchor="middle" font-size="12">Period 1</text>
+
+          <!-- Plus sign -->
+          <text x="340" y="90" fill="var(--text-primary)" font-size="24" font-weight="600">+</text>
+
+          <!-- Period 2 -->
+          <rect x="370" y="60" width="120" height="50" fill="var(--accent-purple)" opacity="0.7" rx="5"/>
+          <text x="430" y="90" fill="white" text-anchor="middle" font-size="16" font-weight="600">+0.0488</text>
+          <text x="430" y="130" fill="var(--text-secondary)" text-anchor="middle" font-size="12">Period 2</text>
+
+          <!-- Equals sign -->
+          <text x="510" y="90" fill="var(--text-primary)" font-size="24" font-weight="600">=</text>
+
+          <!-- Total -->
+          <rect x="540" y="60" width="120" height="50" fill="var(--success)" opacity="0.7" rx="5"/>
+          <text x="600" y="90" fill="white" text-anchor="middle" font-size="16" font-weight="600">+0.1441</text>
+          <text x="600" y="130" fill="var(--text-secondary)" text-anchor="middle" font-size="12">Total</text>
+        </g>
+      </svg>
+
+      <h3>3. When Are They Approximately Equal?</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📊 Taylor Series Approximation</div>
+        <p>
+          For small returns (|R| < 0.10 or 10%), we have:
+        </p>
+        <div style="text-align: center; font-family: var(--font-mono); font-size: 1.2rem; margin: 1rem 0;">
+          ln(1 + R) ≈ R
+        </div>
+        <p style="margin-bottom: 0;">
+          This means for daily or intraday returns (which are typically small), simple and log returns
+          are nearly identical. The difference becomes significant only for larger moves.
+        </p>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Interactive Calculator: Compare Both Returns</h2>
+
+      <div class="calculator-widget" data-calc-id="returns-calc">
+        <h3 class="calculator-title">Returns Calculator</h3>
+
+        <div class="grid grid-2">
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="startPrice">Starting Price ($)</label>
+            <input type="number" id="startPrice" class="calculator-input" value="100" step="0.01" min="0.01">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="endPrice">Ending Price ($)</label>
+            <input type="number" id="endPrice" class="calculator-input" value="110" step="0.01" min="0.01">
+          </div>
+        </div>
+
+        <div class="calculator-result" style="margin-top: 1.5rem;">
+          <div class="grid grid-2">
+            <div>
+              <div class="calculator-result-label">Simple Return</div>
+              <div class="calculator-result-value" id="simpleReturnResult">10.00%</div>
+            </div>
+            <div>
+              <div class="calculator-result-label">Log Return</div>
+              <div class="calculator-result-value" id="logReturnResult">9.53%</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="calculator-result-label">Difference</div>
+            <div class="calculator-result-value" id="differenceResult" style="font-size: 1.3rem;">0.47%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <h3>Professional Implementation with Type Hints</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">returns_calculator.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+import pandas as pd
+from typing import Union
+import matplotlib.pyplot as plt
+
+def calculate_simple_returns(prices: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    """
+    Calculate simple (arithmetic) returns from a price series.
+
+    Formula: R_simple = (P_t / P_{t-1}) - 1
+
+    Args:
+        prices: Price series (pandas Series or numpy array)
+
+    Returns:
+        Simple returns series (same type as input)
+    """
+    if isinstance(prices, pd.Series):
+        return prices.pct_change()
+    else:
+        return np.diff(prices) / prices[:-1]
+
+
+def calculate_log_returns(prices: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    """
+    Calculate log (logarithmic) returns from a price series.
+
+    Formula: R_log = ln(P_t / P_{t-1})
+
+    Args:
+        prices: Price series (pandas Series or numpy array)
+
+    Returns:
+        Log returns series (same type as input)
+    """
+    if isinstance(prices, pd.Series):
+        return np.log(prices / prices.shift(1))
+    else:
+        return np.log(prices[1:] / prices[:-1])
+
+
+def convert_simple_to_log(simple_returns: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    """Convert simple returns to log returns."""
+    return np.log(1 + simple_returns)
+
+
+def convert_log_to_simple(log_returns: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    """Convert log returns to simple returns."""
+    return np.exp(log_returns) - 1
+
+
+# Example Usage
+if __name__ == "__main__":
+    # Create sample price data
+    prices = np.array([100, 110, 105, 120, 115, 130])
+
+    # Calculate both return types
+    simple_rets = calculate_simple_returns(prices)
+    log_rets = calculate_log_returns(prices)
+
+    # Create comparison DataFrame
+    df = pd.DataFrame({
+        'Price': prices[1:],
+        'Simple Return': simple_rets,
+        'Log Return': log_rets,
+        'Difference': simple_rets - log_rets
+    })
+
+    print(df.to_string())
+    print(f"\nCumulative Simple Return: {(1 + simple_rets).prod() - 1:.4f}")
+    print(f"Cumulative Log Return: {log_rets.sum():.4f}")
+    print(f"Converted back: {np.exp(log_rets.sum()) - 1:.4f}")</code></pre>
+        </div>
+      </div>
+
+      <h3>Real Example: SPY (S&P 500 ETF) Analysis</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">spy_analysis.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import yfinance as yf
+import pandas as pd
+import numpy as np
+
+# Download SPY data (last 1 year)
+spy = yf.download('SPY', period='1y', progress=False)
+prices = spy['Adj Close']
+
+# Calculate both return types
+simple_returns = prices.pct_change().dropna()
+log_returns = np.log(prices / prices.shift(1)).dropna()
+
+# Compare statistics
+print("="*50)
+print("SPY Returns Comparison (1 Year)")
+print("="*50)
+
+stats = pd.DataFrame({
+    'Simple Returns': [
+        f"{simple_returns.mean()*252:.2%}",  # Annualized
+        f"{simple_returns.std()*np.sqrt(252):.2%}",  # Annualized volatility
+        f"{simple_returns.min():.2%}",
+        f"{simple_returns.max():.2%}",
+        f"{(1 + simple_returns).prod() - 1:.2%}"
+    ],
+    'Log Returns': [
+        f"{log_returns.mean()*252:.2%}",
+        f"{log_returns.std()*np.sqrt(252):.2%}",
+        f"{log_returns.min():.2%}",
+        f"{log_returns.max():.2%}",
+        f"{np.exp(log_returns.sum()) - 1:.2%}"
+    ]
+}, index=['Ann. Mean', 'Ann. Volatility', 'Min Daily', 'Max Daily', 'Cumulative'])
+
+print(stats)
+
+# Correlation between the two
+correlation = np.corrcoef(simple_returns, log_returns)[0, 1]
+print(f"\nCorrelation: {correlation:.6f}")
+print("(Should be very close to 1.0 for daily returns)")</code></pre>
+        </div>
+      </div>
+
+      <h3>Visualization: Returns Comparison</h3>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Simple vs Log Returns Over Time</h4>
+        <canvas id="returnsComparisonChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Cumulative Wealth: $100 Investment</h4>
+        <canvas id="cumulativeWealthChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Difference Between Return Types</h4>
+        <canvas id="differencesChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 6: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Trading Applications</h2>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px solid var(--accent-blue);">
+          <h3 style="color: var(--accent-blue);">When to Use Simple Returns</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Client Reporting:</strong> Investors understand "I made 15%" better than log returns</li>
+            <li><strong>Single Period Analysis:</strong> When looking at one time period only</li>
+            <li><strong>Portfolio Weights:</strong> Asset allocation calculations</li>
+            <li><strong>Benchmarking:</strong> Comparing to index returns (usually reported as simple)</li>
+            <li><strong>Regulatory Reporting:</strong> SEC requires simple returns in some contexts</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); border: 2px solid var(--accent-purple);">
+          <h3 style="color: var(--accent-purple);">When to Use Log Returns</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Statistical Analysis:</strong> Modeling, hypothesis testing, regression</li>
+            <li><strong>Multi-Period Returns:</strong> Aggregating daily to monthly/yearly returns</li>
+            <li><strong>Volatility Calculation:</strong> Standard deviation of returns</li>
+            <li><strong>Risk Metrics:</strong> Value at Risk (VaR), Sharpe ratio calculations</li>
+            <li><strong>Time Series Models:</strong> ARIMA, GARCH models require log returns</li>
+            <li><strong>Options Pricing:</strong> Black-Scholes assumes log-normal distribution</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Professional Workflow</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">professional_workflow.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+import pandas as pd
+
+class PortfolioAnalytics:
+    """Professional portfolio analytics using both return types appropriately."""
+
+    def __init__(self, prices: pd.DataFrame):
+        """
+        Initialize with price data.
+
+        Args:
+            prices: DataFrame of asset prices (columns = assets, index = dates)
+        """
+        self.prices = prices
+        # Store both return types
+        self.simple_returns = prices.pct_change().dropna()
+        self.log_returns = np.log(prices / prices.shift(1)).dropna()
+
+    def get_portfolio_weights(self, method='equal'):
+        """Calculate portfolio weights - use SIMPLE returns."""
+        n_assets = len(self.prices.columns)
+        if method == 'equal':
+            return np.ones(n_assets) / n_assets
+        # ... other methods
+
+    def calculate_volatility(self, annualize=True):
+        """Calculate volatility - use LOG returns."""
+        vol = self.log_returns.std()
+        if annualize:
+            vol *= np.sqrt(252)
+        return vol
+
+    def calculate_sharpe_ratio(self, rf_rate=0.02):
+        """Calculate Sharpe ratio - use LOG returns."""
+        excess_returns = self.log_returns.mean() * 252 - rf_rate
+        volatility = self.log_returns.std() * np.sqrt(252)
+        return excess_returns / volatility
+
+    def calculate_cumulative_return(self):
+        """Calculate cumulative return - can use either, but LOG is easier."""
+        # Using log returns (just sum them)
+        total_log_return = self.log_returns.sum()
+        # Convert to simple for reporting
+        return np.exp(total_log_return) - 1
+
+    def report_performance(self):
+        """Generate performance report - use SIMPLE returns for clarity."""
+        cumulative = self.calculate_cumulative_return()
+        sharpe = self.calculate_sharpe_ratio()
+        volatility = self.calculate_volatility()
+
+        print("Portfolio Performance Report")
+        print("="*50)
+        print(f"Cumulative Return: {cumulative:.2%}")  # Simple for reporting
+        print(f"Annualized Volatility: {volatility:.2%}")
+        print(f"Sharpe Ratio: {sharpe:.2f}")
+
+        return {
+            'cumulative_return': cumulative,
+            'sharpe_ratio': sharpe,
+            'volatility': volatility
+        }</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 7: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Common Mistakes (And How to Avoid Them)</h2>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #1: Adding Simple Returns Over Time</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># NEVER DO THIS!
+daily_returns = [0.01, 0.02, -0.01, 0.015]  # Simple returns
+total_return = sum(daily_returns)  # = 0.035 or 3.5%
+# This is mathematically INCORRECT!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># Method 1: Compound simple returns
+daily_returns = [0.01, 0.02, -0.01, 0.015]
+cumulative = np.prod([1 + r for r in daily_returns]) - 1
+# = 3.55%
+
+# Method 2: Use log returns instead
+log_returns = [np.log(1 + r) for r in daily_returns]
+cumulative = np.exp(sum(log_returns)) - 1
+# = 3.55%</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #2: Using Simple Returns for Volatility</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># WRONG: Simple returns don't have the right statistical properties
+simple_returns = prices.pct_change()
+volatility = simple_returns.std()  # Biased estimate!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Log returns are designed for this
+log_returns = np.log(prices / prices.shift(1))
+volatility = log_returns.std()
+annualized_vol = volatility * np.sqrt(252)  # For daily data</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #3: Confusing Multi-Period Calculations</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># WRONG: Treating multi-period like single period
+# If you gained 10% in period 1 and 10% in period 2:
+total_return = 0.10 + 0.10  # = 20% WRONG!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Compound the returns
+period1_return = 0.10
+period2_return = 0.10
+total_return = (1 + period1_return) * (1 + period2_return) - 1
+# = (1.10 * 1.10) - 1 = 0.21 or 21%
+
+# OR use log returns
+log_r1 = np.log(1.10)  # = 0.0953
+log_r2 = np.log(1.10)  # = 0.0953
+total_log = log_r1 + log_r2  # = 0.1906
+total_return = np.exp(total_log) - 1  # = 0.21 or 21%</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Mistake #4: Ignoring the Difference for Large Moves</div>
+        <p>
+          For daily returns (usually < 5%), the difference is negligible. But for monthly or yearly returns,
+          or during high volatility periods, the difference matters significantly.
+        </p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python"># Small move: negligible difference
+small_simple = 0.02  # 2%
+small_log = np.log(1.02)  # 0.0198 ≈ 1.98%
+# Difference: 0.02%
+
+# Large move: significant difference!
+large_simple = 0.50  # 50%
+large_log = np.log(1.50)  # 0.405 = 40.5%
+# Difference: 9.5% - this matters!</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Understanding</h2>
+
+      <div class="quiz-container" data-quiz-id="returns-quiz">
+        <div class="quiz-score" style="text-align: right; font-weight: 600; color: var(--accent-blue); margin-bottom: 1rem;">
+          Score: 0/5
+        </div>
+
+        <!-- Question 1 -->
+        <div class="quiz-question-group" data-question-id="q1">
+          <div class="quiz-question">1. A stock price goes from $50 to $60. What is the simple return?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="That would be the dollar change, not the percentage return.">
+              $10
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Close! But you need to divide by the starting price.">
+              16.67%
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! ($60 - $50) / $50 = $10 / $50 = 0.20 or 20%">
+              20%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That would be if it went from $60 to $50 (a loss).">
+              -16.67%
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-question-group" data-question-id="q2">
+          <div class="quiz-question">2. For the same price change ($50 to $60), which statement is true about the log return?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Log returns are always smaller in absolute magnitude than simple returns for the same price change.">
+              It's larger than the simple return
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Log return = ln(60/50) = ln(1.2) ≈ 0.182 or 18.2%, which is less than 20%">
+              It's smaller than the simple return
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="They're only approximately equal for very small returns (< 5%).">
+              It's exactly equal to the simple return
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="The sign is the same - both are positive for a price increase.">
+              It has the opposite sign
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-question-group" data-question-id="q3">
+          <div class="quiz-question">3. You want to calculate the total return over 30 days from daily returns. Which approach is correct?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="You cannot simply add simple returns - they need to be compounded!">
+              Add up all 30 daily simple returns
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="You need to compound them: (1+r₁)×(1+r₂)×...×(1+r₃₀) - 1">
+              Multiply all 30 daily simple returns
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Log returns are additive over time. Sum them up, then convert: exp(sum) - 1 = total simple return">
+              Add up all 30 daily log returns
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That would give you the average, not the total.">
+              Take the average of the simple returns
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="quiz-question-group" data-question-id="q4">
+          <div class="quiz-question">4. Why should you use log returns when calculating volatility?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Both types can be calculated quickly - that's not the reason.">
+              They're faster to calculate
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Log returns are assumed to be normally distributed, which is required for standard deviation to be a valid risk measure.">
+              They have better statistical properties (closer to normal distribution)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Actually, institutional investors typically use log returns for risk analysis.">
+              Institutional investors prefer simple returns
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Log returns are preferred precisely because they handle large moves better statistically.">
+              They work better only for small returns
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 5 -->
+        <div class="quiz-question-group" data-question-id="q5">
+          <div class="quiz-question">5. A portfolio gains 50% then loses 50%. What's the final result?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="This is the intuitive answer but it's wrong! You need to compound: 1.5 × 0.5 = 0.75 = -25%">
+              Break even (0%)
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Starting with $100: +50% = $150, then -50% of $150 = $75. Net result: -25%">
+              Lose 25%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="The math doesn't work out this way - calculate it step by step.">
+              Gain 25%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="It would be this if both were log returns of equal magnitude, but these are simple returns.">
+              Back to starting value with log returns only
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 8: SUMMARY & CHEAT SHEET -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Summary & Cheat Sheet</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Simple returns</strong> are intuitive and great for reporting single-period performance</li>
+          <li><strong>Log returns</strong> are mathematically superior for analysis and multi-period calculations</li>
+          <li>For small daily returns (< 5%), they're approximately equal</li>
+          <li>Log returns are additive over time; simple returns must be compounded</li>
+          <li>Always use log returns for volatility and statistical analysis</li>
+          <li>Log returns are symmetric; simple returns are not</li>
+        </ul>
+      </div>
+
+      <h3>Quick Reference Table</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Simple Returns</th>
+              <th>Log Returns</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Formula</strong></td>
+              <td>(P<sub>end</sub> - P<sub>start</sub>) / P<sub>start</sub></td>
+              <td>ln(P<sub>end</sub> / P<sub>start</sub>)</td>
+            </tr>
+            <tr>
+              <td><strong>Range</strong></td>
+              <td>[-100%, +∞)</td>
+              <td>(-∞, +∞)</td>
+            </tr>
+            <tr>
+              <td><strong>Time Aggregation</strong></td>
+              <td>Must compound: (1+r₁)(1+r₂)...-1</td>
+              <td>Just add: r₁ + r₂ + ...</td>
+            </tr>
+            <tr>
+              <td><strong>Symmetry</strong></td>
+              <td>❌ Not symmetric</td>
+              <td>✅ Symmetric</td>
+            </tr>
+            <tr>
+              <td><strong>Best For</strong></td>
+              <td>Reporting, single period</td>
+              <td>Analysis, multi-period, volatility</td>
+            </tr>
+            <tr>
+              <td><strong>Python</strong></td>
+              <td>prices.pct_change()</td>
+              <td>np.log(prices/prices.shift(1))</td>
+            </tr>
+            <tr>
+              <td><strong>Conversion</strong></td>
+              <td>R<sub>simple</sub> = e<sup>R<sub>log</sub></sup> - 1</td>
+              <td>R<sub>log</sub> = ln(1 + R<sub>simple</sub>)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Decision Guide: Which Return Type Should I Use?</h3>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: rgba(59, 130, 246, 0.05); border-left: 4px solid var(--accent-blue);">
+          <h4 style="color: var(--accent-blue);">Use Simple Returns When:</h4>
+          <ul>
+            <li>Presenting to clients or stakeholders</li>
+            <li>Calculating returns for a single period</li>
+            <li>Reporting regulatory performance</li>
+            <li>Comparing to benchmark indices</li>
+            <li>The audience isn't mathematically sophisticated</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: rgba(139, 92, 246, 0.05); border-left: 4px solid var(--accent-purple);">
+          <h4 style="color: var(--accent-purple);">Use Log Returns When:</h4>
+          <ul>
+            <li>Calculating volatility or standard deviation</li>
+            <li>Aggregating returns across multiple periods</li>
+            <li>Running statistical models or regressions</li>
+            <li>Calculating Sharpe ratios or other risk metrics</li>
+            <li>Doing any serious quantitative analysis</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="formula-box" style="margin-top: 2rem;">
+        <div class="formula-label">The Golden Rule</div>
+        <div class="formula-content" style="font-size: 1.3rem;">
+          When in doubt for analysis: Use Log Returns
+        </div>
+        <div class="formula-content" style="font-size: 1.3rem; margin-top: 1rem;">
+          When in doubt for reporting: Use Simple Returns
+        </div>
+        <div class="formula-description">
+          You can always convert between them!
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="../../index.html" class="btn btn-secondary">
+        ← Back to Course
+      </a>
+      <a href="1.2_cumulative_returns.html" class="btn btn-primary">
+        Next: Cumulative Returns & Wealth Accumulation →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Module 1.1: Simple vs Log Returns</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of the Quantitative Trading Mastery course
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="1.2_cumulative_returns.html">1.2 Cumulative Returns & Wealth Accumulation</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    // ============================================
+    // INTERACTIVE CALCULATOR
+    // ============================================
+    function updateReturnsCalculator() {
+      const startPrice = parseFloat(document.getElementById('startPrice').value) || 100;
+      const endPrice = parseFloat(document.getElementById('endPrice').value) || 110;
+
+      // Calculate returns
+      const simpleReturn = (endPrice - startPrice) / startPrice;
+      const logReturn = Math.log(endPrice / startPrice);
+      const difference = simpleReturn - logReturn;
+
+      // Update display
+      document.getElementById('simpleReturnResult').textContent = (simpleReturn * 100).toFixed(2) + '%';
+      document.getElementById('logReturnResult').textContent = (logReturn * 100).toFixed(2) + '%';
+      document.getElementById('differenceResult').textContent = (difference * 100).toFixed(2) + '%';
+
+      // Color code based on positive/negative
+      const simpleEl = document.getElementById('simpleReturnResult');
+      const logEl = document.getElementById('logReturnResult');
+
+      simpleEl.style.color = simpleReturn >= 0 ? 'var(--success)' : 'var(--error)';
+      logEl.style.color = logReturn >= 0 ? 'var(--success)' : 'var(--error)';
+    }
+
+    // Add event listeners
+    document.getElementById('startPrice').addEventListener('input', updateReturnsCalculator);
+    document.getElementById('endPrice').addEventListener('input', updateReturnsCalculator);
+
+    // Initialize
+    updateReturnsCalculator();
+
+    // ============================================
+    // CHART.JS VISUALIZATIONS
+    // ============================================
+
+    // Generate sample data
+    function generateSampleData() {
+      const prices = [100];
+      const dates = ['Day 0'];
+
+      // Generate 30 days of random price movements
+      for (let i = 1; i <= 30; i++) {
+        const change = (Math.random() - 0.48) * 0.05; // Slight upward bias
+        prices.push(prices[i-1] * (1 + change));
+        dates.push(`Day ${i}`);
+      }
+
+      // Calculate returns
+      const simpleReturns = [];
+      const logReturns = [];
+
+      for (let i = 1; i < prices.length; i++) {
+        simpleReturns.push((prices[i] - prices[i-1]) / prices[i-1]);
+        logReturns.push(Math.log(prices[i] / prices[i-1]));
+      }
+
+      return { prices, dates, simpleReturns, logReturns };
+    }
+
+    const data = generateSampleData();
+
+    // Chart 1: Returns Comparison
+    const ctx1 = document.getElementById('returnsComparisonChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: data.dates.slice(1),
+        datasets: [{
+          label: 'Simple Returns',
+          data: data.simpleReturns.map(r => r * 100),
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          tension: 0.1
+        }, {
+          label: 'Log Returns',
+          data: data.logReturns.map(r => r * 100),
+          borderColor: 'rgb(139, 92, 246)',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderWidth: 2,
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            labels: { color: '#e8eaf0' }
+          },
+          title: {
+            display: true,
+            text: 'Daily Returns Comparison',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: {
+              display: true,
+              text: 'Return (%)',
+              color: '#a8b2d1'
+            },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 2: Cumulative Wealth
+    const cumulativeSimple = [100];
+    const cumulativeLog = [100];
+
+    for (let i = 0; i < data.simpleReturns.length; i++) {
+      cumulativeSimple.push(cumulativeSimple[i] * (1 + data.simpleReturns[i]));
+      cumulativeLog.push(100 * Math.exp(data.logReturns.slice(0, i+1).reduce((a, b) => a + b, 0)));
+    }
+
+    const ctx2 = document.getElementById('cumulativeWealthChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: data.dates,
+        datasets: [{
+          label: 'Simple Returns Method',
+          data: cumulativeSimple,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          fill: true
+        }, {
+          label: 'Log Returns Method',
+          data: cumulativeLog,
+          borderColor: 'rgb(139, 92, 246)',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderWidth: 3,
+          borderDash: [5, 5],
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            labels: { color: '#e8eaf0' }
+          },
+          title: {
+            display: true,
+            text: 'Both methods give identical cumulative wealth!',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: {
+              display: true,
+              text: 'Portfolio Value ($)',
+              color: '#a8b2d1'
+            },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 3: Differences
+    const differences = data.simpleReturns.map((sr, i) => (sr - data.logReturns[i]) * 100);
+
+    const ctx3 = document.getElementById('differencesChart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: data.dates.slice(1),
+        datasets: [{
+          label: 'Simple - Log (%)',
+          data: differences,
+          backgroundColor: differences.map(d =>
+            d > 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+          ),
+          borderColor: differences.map(d =>
+            d > 0 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)'
+          ),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            labels: { color: '#e8eaf0' }
+          },
+          title: {
+            display: true,
+            text: 'Difference: Simple Return - Log Return',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: {
+              display: true,
+              text: 'Difference (%)',
+              color: '#a8b2d1'
+            },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Mark module as completed (you can implement this properly later)
+    function markModuleComplete() {
+      const completed = parseInt(localStorage.getItem('completedModules') || '0');
+      if (completed < 1) {
+        localStorage.setItem('completedModules', '1');
+      }
+    }
+
+    // Call when user reaches bottom of page or completes quiz
+    window.addEventListener('scroll', () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+        markModuleComplete();
+      }
+    });
+  </script>
+
+  <style>
+    /* Module-specific styles */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

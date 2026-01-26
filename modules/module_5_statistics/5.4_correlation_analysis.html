@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master correlation analysis for quantitative trading. Learn Pearson, Spearman correlation, portfolio diversification, and pairs trading.">
+    <title>5.4 Correlation Analysis | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+
+    <style>
+        .corr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 25px 0; }
+        .corr-card { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; text-align: center; }
+        .corr-value { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+        .corr-value.positive { color: #10b981; }
+        .corr-value.negative { color: #ef4444; }
+        .corr-value.neutral { color: #94a3b8; }
+        .heatmap-container { display: grid; gap: 2px; margin: 20px 0; }
+        .heatmap-cell { padding: 10px; text-align: center; border-radius: 4px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.4</span>
+                    <span class="nav-module-title">Correlation Analysis</span>
+                </div>
+                <a href="5.5_regression_analysis.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.4 Correlation Analysis</span>
+                </div>
+                <h1>Correlation Analysis</h1>
+                <p class="module-subtitle">
+                    Measure relationships between assets. Essential for diversification and pairs trading.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 30 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 Correlation Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">Correlation: The Heart of Diversification</div>
+                <p>
+                    A portfolio's risk isn't just the sum of individual risks—correlations matter enormously.
+                    Two assets with -1 correlation can create a riskless portfolio. Understanding correlation
+                    is essential for risk management, hedging, and pairs trading.
+                </p>
+            </div>
+
+            <div class="corr-grid">
+                <div class="corr-card">
+                    <h4>Perfect Positive</h4>
+                    <div class="corr-value positive">+1.0</div>
+                    <p>Move together perfectly. No diversification benefit.</p>
+                </div>
+                <div class="corr-card">
+                    <h4>Uncorrelated</h4>
+                    <div class="corr-value neutral">0.0</div>
+                    <p>No linear relationship. Good diversification.</p>
+                </div>
+                <div class="corr-card">
+                    <h4>Perfect Negative</h4>
+                    <div class="corr-value negative">-1.0</div>
+                    <p>Move opposite. Perfect hedge possible.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">Correlation ≠ Causation</div>
+                <p>High correlation between two variables doesn't mean one causes the other. Both might be driven by a third factor, or the relationship might be coincidental.</p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Pearson Correlation</h4>
+                    <p>Measures <strong>linear</strong> relationship. Sensitive to outliers. Range: [-1, +1].</p>
+                    <div class="highlight">Use for: normally distributed data</div>
+                </div>
+                <div class="card">
+                    <h4>Spearman Rank Correlation</h4>
+                    <p>Measures <strong>monotonic</strong> relationship. Robust to outliers. Uses ranks.</p>
+                    <div class="highlight">Use for: non-normal, ordinal data</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>Pearson Correlation Coefficient</h3>
+                <div class="formula">ρ(X,Y) = Cov(X,Y) / (σₓ × σᵧ) = Σ(xᵢ - x̄)(yᵢ - ȳ) / √[Σ(xᵢ - x̄)² × Σ(yᵢ - ȳ)²]</div>
+            </div>
+
+            <div class="formula-box">
+                <h3>Spearman Rank Correlation</h3>
+                <div class="formula">ρₛ = 1 - 6Σdᵢ² / (n(n² - 1))</div>
+                <p>Where dᵢ = difference between ranks of xᵢ and yᵢ</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Portfolio Variance (Two Assets)</h3>
+                <div class="formula">σₚ² = w₁²σ₁² + w₂²σ₂² + 2w₁w₂ρσ₁σ₂</div>
+                <p>Correlation directly affects portfolio risk!</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Key Properties</h2>
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Correlation is Bounded</span>
+                    <span class="property-desc">Always between -1 and +1. |ρ| near 1 = strong relationship.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Correlation is Symmetric</span>
+                    <span class="property-desc">ρ(X,Y) = ρ(Y,X). Order doesn't matter.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Correlations Change Over Time</span>
+                    <span class="property-desc">Regime-dependent. Often increase during crises (correlation breakdown).</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Non-linear Relationships</span>
+                    <span class="property-desc">Pearson misses non-linear patterns. Use Spearman or visual inspection.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Correlation Analysis Suite</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import pandas as pd
+from scipy import stats
+from typing import Dict, Tuple
+
+
+def calculate_correlations(
+    x: np.ndarray,
+    y: np.ndarray
+) -> Dict:
+    """Calculate Pearson and Spearman correlations with significance."""
+    pearson_r, pearson_p = stats.pearsonr(x, y)
+    spearman_r, spearman_p = stats.spearmanr(x, y)
+
+    return {
+        'pearson': {'r': pearson_r, 'p_value': pearson_p},
+        'spearman': {'r': spearman_r, 'p_value': spearman_p}
+    }
+
+
+def rolling_correlation(
+    x: np.ndarray,
+    y: np.ndarray,
+    window: int = 60
+) -> np.ndarray:
+    """Calculate rolling correlation."""
+    n = len(x)
+    roll_corr = np.full(n, np.nan)
+
+    for i in range(window - 1, n):
+        x_win = x[i - window + 1:i + 1]
+        y_win = y[i - window + 1:i + 1]
+        roll_corr[i] = np.corrcoef(x_win, y_win)[0, 1]
+
+    return roll_corr
+
+
+def correlation_matrix(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate correlation matrix for multiple assets."""
+    return df.corr()
+
+
+# Example
+if __name__ == "__main__":
+    np.random.seed(42)
+    n = 252
+
+    # Simulate correlated assets
+    common = np.random.randn(n)
+    stock_a = 0.7 * common + 0.3 * np.random.randn(n)
+    stock_b = 0.5 * common + 0.5 * np.random.randn(n)
+
+    corr = calculate_correlations(stock_a, stock_b)
+    print(f"Pearson: {corr['pearson']['r']:.4f} (p={corr['pearson']['p_value']:.4f})")
+    print(f"Spearman: {corr['spearman']['r']:.4f} (p={corr['spearman']['p_value']:.4f})")</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive Correlation Calculator</h2>
+            <div class="calculator">
+                <h3>Calculate Correlation</h3>
+                <div class="input-group">
+                    <label for="dataX">Series X (comma-separated):</label>
+                    <input type="text" id="dataX" value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10">
+                </div>
+                <div class="input-group">
+                    <label for="dataY">Series Y (comma-separated):</label>
+                    <input type="text" id="dataY" value="2.1, 3.9, 6.2, 7.8, 10.1, 12.3, 13.9, 16.2, 17.8, 20.1">
+                </div>
+                <button class="btn" onclick="calculateCorrelation()">Calculate</button>
+                <div id="corrResults" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Scatter Plot</h3>
+                <canvas id="scatterChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Rolling Correlation Example</h3>
+                <canvas id="rollingCorrChart"></canvas>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Trading Applications</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Portfolio Diversification</h4>
+                    <p>Low correlation assets reduce portfolio volatility. Target ρ < 0.3 for diversification.</p>
+                </div>
+                <div class="card">
+                    <h4>Pairs Trading</h4>
+                    <p>High correlation (ρ > 0.8) assets that diverge create mean-reversion opportunities.</p>
+                </div>
+                <div class="card">
+                    <h4>Hedging</h4>
+                    <p>Negative correlation enables hedging. Short correlated asset to reduce risk.</p>
+                </div>
+                <div class="card">
+                    <h4>Regime Detection</h4>
+                    <p>Rolling correlation changes signal regime shifts. Correlations spike in crises.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Common Mistakes</h2>
+            <div class="warning-box">
+                <h3>Mistake 1: Correlation = Causation</h3>
+                <p>Correlation shows association, not causation. Spurious correlations abound.</p>
+            </div>
+            <div class="warning-box">
+                <h3>Mistake 2: Assuming Stable Correlation</h3>
+                <p>Correlations change over time and regimes. Use rolling windows to track changes.</p>
+            </div>
+            <div class="warning-box">
+                <h3>Mistake 3: Ignoring Non-linearity</h3>
+                <p>Pearson captures only linear relationships. Check scatter plots for curves.</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Summary</h2>
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>Pearson:</strong> Linear correlation, sensitive to outliers</li>
+                    <li><strong>Spearman:</strong> Rank-based, robust to outliers and non-linearity</li>
+                    <li><strong>Diversification:</strong> Low correlation reduces portfolio risk</li>
+                    <li><strong>Time-varying:</strong> Use rolling correlation for regime awareness</li>
+                </ul>
+            </div>
+            <div class="nav-buttons">
+                <a href="5.3_statistical_inference.html" class="nav-btn">← Previous: Inference</a>
+                <a href="5.5_regression_analysis.html" class="nav-btn">Next: Regression →</a>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Test Your Knowledge</h2>
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Q1: Correlation of -0.8 means:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> Weak negative relationship</label>
+                        <label><input type="radio" name="q1" value="b"> Strong negative (inverse) relationship</label>
+                        <label><input type="radio" name="q1" value="c"> No relationship</label>
+                        <label><input type="radio" name="q1" value="d"> Causation</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q2: When should you use Spearman over Pearson?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> When data is normally distributed</label>
+                        <label><input type="radio" name="q2" value="b"> When relationship may be non-linear or data has outliers</label>
+                        <label><input type="radio" name="q2" value="c"> When sample size is large</label>
+                        <label><input type="radio" name="q2" value="d"> Never—Pearson is always better</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q3: What happens to correlations during market crises?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> They decrease (more diversification)</label>
+                        <label><input type="radio" name="q3" value="b"> They increase (correlation breakdown)</label>
+                        <label><input type="radio" name="q3" value="c"> They stay the same</label>
+                        <label><input type="radio" name="q3" value="d"> They become negative</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q4: For pairs trading, you want correlation:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> Near 0</label>
+                        <label><input type="radio" name="q4" value="b"> Highly positive (near +1)</label>
+                        <label><input type="radio" name="q4" value="c"> Highly negative (near -1)</label>
+                        <label><input type="radio" name="q4" value="d"> Exactly 0.5</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q5: Two assets both driven by oil prices would show:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> Zero correlation</label>
+                        <label><input type="radio" name="q5" value="b"> Positive correlation (common factor)</label>
+                        <label><input type="radio" name="q5" value="c"> Negative correlation</label>
+                        <label><input type="radio" name="q5" value="d"> Cannot determine</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let scatterChart, rollingCorrChart;
+
+        function pearsonCorrelation(x, y) {
+            const n = x.length;
+            const meanX = x.reduce((a, b) => a + b) / n;
+            const meanY = y.reduce((a, b) => a + b) / n;
+            let num = 0, denX = 0, denY = 0;
+            for (let i = 0; i < n; i++) {
+                const dx = x[i] - meanX, dy = y[i] - meanY;
+                num += dx * dy;
+                denX += dx * dx;
+                denY += dy * dy;
+            }
+            return num / Math.sqrt(denX * denY);
+        }
+
+        function calculateCorrelation() {
+            const x = document.getElementById('dataX').value.split(',').map(v => parseFloat(v.trim()));
+            const y = document.getElementById('dataY').value.split(',').map(v => parseFloat(v.trim()));
+
+            if (x.length !== y.length) {
+                alert('Series must have same length');
+                return;
+            }
+
+            const r = pearsonCorrelation(x, y);
+            const interpretation = Math.abs(r) > 0.7 ? 'Strong' : Math.abs(r) > 0.3 ? 'Moderate' : 'Weak';
+            const direction = r > 0 ? 'positive' : r < 0 ? 'negative' : 'no';
+
+            document.getElementById('corrResults').innerHTML = `
+                <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <h3 style="color: ${r > 0 ? '#10b981' : r < 0 ? '#ef4444' : '#94a3b8'};">ρ = ${r.toFixed(4)}</h3>
+                    <p>${interpretation} ${direction} correlation</p>
+                </div>
+            `;
+
+            updateScatterChart(x, y, r);
+        }
+
+        function updateScatterChart(x, y, r) {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            if (scatterChart) scatterChart.destroy();
+
+            const data = x.map((xi, i) => ({ x: xi, y: y[i] }));
+
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: `Correlation: ${r.toFixed(3)}`,
+                        data: data,
+                        backgroundColor: 'rgba(99, 102, 241, 0.6)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { title: { display: true, text: 'X', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { title: { display: true, text: 'Y', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function initRollingChart() {
+            const ctx = document.getElementById('rollingCorrChart').getContext('2d');
+            const labels = Array.from({ length: 100 }, (_, i) => i + 1);
+            const corr = labels.map((_, i) => 0.7 + 0.2 * Math.sin(i * 0.1) + (Math.random() - 0.5) * 0.1);
+
+            rollingCorrChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '60-Day Rolling Correlation',
+                        data: corr,
+                        borderColor: '#6366f1',
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { min: 0, max: 1, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: '-0.8 is a strong negative correlation—as one increases, the other decreases.' },
+                q2: { correct: 'b', explanation: 'Spearman is robust to outliers and captures monotonic (not just linear) relationships.' },
+                q3: { correct: 'b', explanation: 'During crises, correlations typically increase ("everything falls together").' },
+                q4: { correct: 'b', explanation: 'Pairs trading requires highly correlated assets that temporarily diverge.' },
+                q5: { correct: 'b', explanation: 'A common driving factor (oil) creates positive correlation between assets.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+            document.getElementById('quizScore').innerHTML = `<h3>Score: ${score}/5 (${score * 20}%)</h3>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateCorrelation();
+            initRollingChart();
+        });
+    </script>
+</body>
+</html>

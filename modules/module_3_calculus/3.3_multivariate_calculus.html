@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master multivariate calculus for quantitative trading. Learn partial derivatives, gradients, Hessians, and optimization for portfolio management.">
+  <title>3.3 Multivariate Calculus | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>∇</text></svg>">
+
+  <style>
+    .gradient-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 25px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      border-radius: 12px;
+      margin: 20px 0;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .gradient-component {
+      text-align: center;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      min-width: 120px;
+    }
+    .gradient-component .symbol {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #818cf8;
+    }
+    .gradient-component .value {
+      font-size: 1.2rem;
+      color: #10b981;
+      margin-top: 5px;
+    }
+    .hessian-matrix {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      max-width: 200px;
+      margin: 20px auto;
+      padding: 15px;
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 8px;
+      border: 2px solid #8b5cf6;
+    }
+    .hessian-matrix .cell {
+      padding: 10px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      font-family: 'Times New Roman', serif;
+      color: #e2e8f0;
+    }
+    .partial-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin: 25px 0;
+    }
+    .partial-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .partial-card h4 {
+      color: #10b981;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    .partial-card .formula {
+      font-family: 'Times New Roman', serif;
+      font-size: 1.3rem;
+      color: #e2e8f0;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      margin: 10px 0;
+    }
+    .contour-legend {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    .contour-legend .item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+    .contour-legend .color-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 3.3</span>
+          <span class="nav-module-title">Multivariate Calculus</span>
+        </div>
+        <a href="3.4_optimization_techniques.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 3: Calculus</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>3.3 Multivariate Calculus</span>
+        </div>
+        <h1>Multivariate Calculus</h1>
+        <p class="module-subtitle">
+          Navigate the landscape of multiple variables. Master partial derivatives, gradients,
+          and Hessians for portfolio optimization and risk management.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 25 min read</span>
+          <span class="meta-item">📊 4 Visualizations</span>
+          <span class="meta-item">💻 Interactive Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">The Portfolio Optimization Problem</div>
+        <p>
+          You have 100 stocks. To minimize variance while hitting a return target, you need to find
+          the direction of steepest descent in a 100-dimensional space. This requires the <strong>gradient</strong>.
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          The gradient ∇f points in the direction of steepest increase. To minimize, go opposite: -∇f.
+          <strong>Without multivariate calculus, you cannot optimize portfolios with multiple assets.</strong>
+        </p>
+      </div>
+
+      <h3>Where Multivariate Calculus Appears</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Portfolio Optimization</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Minimize variance w'Σw subject to constraints. Requires partial derivatives ∂/∂wᵢ for each weight.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📈 Multi-Asset Greeks</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Option on a basket of stocks has cross-gammas: ∂²V/∂Sᵢ∂Sⱼ. Full Hessian needed for risk.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">⚖️ Gradient Descent</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Machine learning optimizers (Adam, SGD) use gradients. Factor models trained with multivariate calculus.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2: BUILDING INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: Building Intuition</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">The Mountain Analogy</div>
+        <p>
+          Imagine standing on a mountainside. The <strong>gradient</strong> points directly uphill (steepest direction).
+          <strong>Partial derivatives</strong> measure steepness in each compass direction (north-south, east-west).
+          The <strong>Hessian</strong> describes the curvature - is it a peak, valley, or saddle point?
+        </p>
+      </div>
+
+      <svg viewBox="0 0 700 350" class="svg-diagram">
+        <!-- 3D surface visualization (simplified 2D representation) -->
+        <defs>
+          <linearGradient id="surfaceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.8" />
+            <stop offset="50%" style="stop-color:#10b981;stop-opacity:0.6" />
+            <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.4" />
+          </linearGradient>
+        </defs>
+
+        <!-- Contour lines representing a quadratic surface -->
+        <ellipse cx="300" cy="180" rx="200" ry="120" fill="none" stroke="#6366f1" stroke-width="1" opacity="0.3"/>
+        <ellipse cx="300" cy="180" rx="160" ry="96" fill="none" stroke="#818cf8" stroke-width="1" opacity="0.4"/>
+        <ellipse cx="300" cy="180" rx="120" ry="72" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.5"/>
+        <ellipse cx="300" cy="180" rx="80" ry="48" fill="none" stroke="#c4b5fd" stroke-width="2" opacity="0.6"/>
+        <ellipse cx="300" cy="180" rx="40" ry="24" fill="none" stroke="#e2e8f0" stroke-width="2" opacity="0.8"/>
+
+        <!-- Minimum point -->
+        <circle cx="300" cy="180" r="8" fill="#10b981"/>
+        <text x="315" y="175" fill="#10b981" font-size="12">Minimum</text>
+
+        <!-- Current point -->
+        <circle cx="380" cy="140" r="6" fill="#f59e0b"/>
+        <text x="395" y="145" fill="#f59e0b" font-size="11">Current (w₁, w₂)</text>
+
+        <!-- Gradient arrow (pointing toward minimum = downhill) -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+          </marker>
+        </defs>
+        <line x1="380" y1="140" x2="330" y2="165" stroke="#ef4444" stroke-width="3" marker-end="url(#arrowhead)"/>
+        <text x="340" y="130" fill="#ef4444" font-size="12">-∇f (descent)</text>
+
+        <!-- Partial derivative directions -->
+        <line x1="380" y1="140" x2="330" y2="140" stroke="#818cf8" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="340" y="135" fill="#818cf8" font-size="10">∂f/∂w₁</text>
+
+        <line x1="380" y1="140" x2="380" y2="175" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="385" y="160" fill="#8b5cf6" font-size="10">∂f/∂w₂</text>
+
+        <!-- Axes -->
+        <line x1="100" y1="280" x2="500" y2="280" stroke="#94a3b8" stroke-width="2"/>
+        <line x1="100" y1="280" x2="100" y2="80" stroke="#94a3b8" stroke-width="2"/>
+        <text x="300" y="310" text-anchor="middle" fill="#94a3b8" font-size="12">w₁ (weight of asset 1)</text>
+        <text x="60" y="180" text-anchor="middle" fill="#94a3b8" font-size="12" transform="rotate(-90, 60, 180)">w₂ (weight of asset 2)</text>
+
+        <!-- Legend -->
+        <text x="550" y="100" fill="#e2e8f0" font-size="14" font-weight="bold">Level Curves</text>
+        <text x="550" y="120" fill="#94a3b8" font-size="11">f(w₁,w₂) = constant</text>
+        <text x="550" y="145" fill="#94a3b8" font-size="11">(Portfolio variance)</text>
+        <text x="550" y="180" fill="#10b981" font-size="12">● Global minimum</text>
+        <text x="550" y="200" fill="#ef4444" font-size="12">→ Gradient descent</text>
+      </svg>
+
+      <div class="partial-grid">
+        <div class="partial-card">
+          <h4>Partial Derivative ∂f/∂x</h4>
+          <p>Rate of change in f when only x changes (y held constant).</p>
+          <div class="formula">∂f/∂x = lim[h→0] (f(x+h,y) - f(x,y))/h</div>
+        </div>
+        <div class="partial-card">
+          <h4>Gradient Vector ∇f</h4>
+          <p>Points in direction of steepest increase. Magnitude = rate of increase.</p>
+          <div class="formula">∇f = [∂f/∂x, ∂f/∂y, ...]ᵀ</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <div class="formula-box">
+        <h3>Partial Derivative Definition</h3>
+        <div class="formula">
+          ∂f/∂xᵢ = lim[h→0] (f(x₁,...,xᵢ+h,...,xₙ) - f(x₁,...,xᵢ,...,xₙ))/h
+        </div>
+        <p>Derivative with respect to one variable, holding all others constant</p>
+      </div>
+
+      <div class="formula-box">
+        <h3>Gradient Vector</h3>
+        <div class="formula">
+          ∇f(x) = [∂f/∂x₁, ∂f/∂x₂, ..., ∂f/∂xₙ]ᵀ
+        </div>
+        <p>Vector of all partial derivatives. Points toward steepest ascent.</p>
+      </div>
+
+      <div class="formula-box">
+        <h3>Hessian Matrix</h3>
+        <div class="formula">
+          H = [∂²f/∂xᵢ∂xⱼ]
+        </div>
+        <p>Matrix of second partial derivatives. Describes curvature.</p>
+
+        <div class="hessian-matrix">
+          <div class="cell">∂²f/∂x²</div>
+          <div class="cell">∂²f/∂x∂y</div>
+          <div class="cell">∂²f/∂y∂x</div>
+          <div class="cell">∂²f/∂y²</div>
+        </div>
+      </div>
+
+      <h3>Portfolio Variance Example</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Two-Asset Portfolio Variance</div>
+        <div class="formula-box">
+          <div class="formula">σ²ₚ = w₁²σ₁² + w₂²σ₂² + 2w₁w₂ρσ₁σ₂</div>
+        </div>
+
+        <p><strong>Partial derivatives:</strong></p>
+        <div class="formula-box">
+          <div class="formula">∂σ²ₚ/∂w₁ = 2w₁σ₁² + 2w₂ρσ₁σ₂</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">∂σ²ₚ/∂w₂ = 2w₂σ₂² + 2w₁ρσ₁σ₂</div>
+        </div>
+
+        <p><strong>In matrix form:</strong> ∇(w'Σw) = 2Σw</p>
+      </div>
+
+      <div class="formula-box">
+        <h3>Chain Rule (Multivariate)</h3>
+        <div class="formula">
+          dz/dt = (∂z/∂x)(dx/dt) + (∂z/∂y)(dy/dt)
+        </div>
+        <p>For z = f(x(t), y(t)), the total derivative sums contributions from each path.</p>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties for Trading</h2>
+
+      <div class="properties-list">
+        <div class="property-item">
+          <span class="property-name">Gradient = Zero at Optimum</span>
+          <span class="property-desc">At a local min/max, ∇f = 0 (necessary condition)</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Hessian Determines Type</span>
+          <span class="property-desc">H positive definite → local min. H negative definite → local max. Indefinite → saddle.</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Symmetry of Hessian</span>
+          <span class="property-desc">∂²f/∂x∂y = ∂²f/∂y∂x (for smooth functions)</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Gradient Perpendicular to Level Curves</span>
+          <span class="property-desc">∇f is perpendicular to contours of constant f (level sets)</span>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Positive Definite Hessian</h4>
+          <p>All eigenvalues > 0. Point is a local minimum. Bowl-shaped surface curving upward.</p>
+          <div class="highlight">Portfolio variance Hessian = 2Σ (always PD)</div>
+        </div>
+        <div class="card">
+          <h4>Negative Definite Hessian</h4>
+          <p>All eigenvalues < 0. Point is a local maximum. Dome-shaped surface curving downward.</p>
+          <div class="highlight">Maximizing Sharpe ratio</div>
+        </div>
+        <div class="card">
+          <h4>Indefinite Hessian</h4>
+          <p>Mixed positive/negative eigenvalues. Saddle point - neither max nor min.</p>
+          <div class="highlight">Critical points that aren't optima</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Numerical Gradient Calculation</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.optimize import approx_fprime
+from typing import Callable
+
+def numerical_gradient(
+    f: Callable[[np.ndarray], float],
+    x: np.ndarray,
+    epsilon: float = 1e-8
+) -> np.ndarray:
+    """
+    Calculate numerical gradient using central differences.
+
+    Parameters:
+    -----------
+    f : Callable
+        Function f: R^n → R
+    x : np.ndarray
+        Point at which to evaluate gradient
+    epsilon : float
+        Step size for finite differences
+
+    Returns:
+    --------
+    np.ndarray : Gradient vector ∇f(x)
+    """
+    n = len(x)
+    gradient = np.zeros(n)
+
+    for i in range(n):
+        x_plus = x.copy()
+        x_minus = x.copy()
+        x_plus[i] += epsilon
+        x_minus[i] -= epsilon
+
+        # Central difference
+        gradient[i] = (f(x_plus) - f(x_minus)) / (2 * epsilon)
+
+    return gradient
+
+def numerical_hessian(
+    f: Callable[[np.ndarray], float],
+    x: np.ndarray,
+    epsilon: float = 1e-5
+) -> np.ndarray:
+    """
+    Calculate numerical Hessian using finite differences.
+    """
+    n = len(x)
+    hessian = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            x_pp = x.copy()  # +i, +j
+            x_pm = x.copy()  # +i, -j
+            x_mp = x.copy()  # -i, +j
+            x_mm = x.copy()  # -i, -j
+
+            x_pp[i] += epsilon; x_pp[j] += epsilon
+            x_pm[i] += epsilon; x_pm[j] -= epsilon
+            x_mp[i] -= epsilon; x_mp[j] += epsilon
+            x_mm[i] -= epsilon; x_mm[j] -= epsilon
+
+            hessian[i, j] = (f(x_pp) - f(x_pm) - f(x_mp) + f(x_mm)) / (4 * epsilon**2)
+
+    return hessian
+
+# Example: Portfolio variance
+def portfolio_variance(weights: np.ndarray, cov_matrix: np.ndarray) -> float:
+    """Calculate portfolio variance: w'Σw"""
+    return weights @ cov_matrix @ weights
+
+# Define covariance matrix (2 assets)
+sigma1, sigma2 = 0.15, 0.25
+rho = 0.3
+cov_matrix = np.array([
+    [sigma1**2, rho * sigma1 * sigma2],
+    [rho * sigma1 * sigma2, sigma2**2]
+])
+
+# Test point
+w = np.array([0.6, 0.4])
+
+# Create function with fixed covariance
+f = lambda w: portfolio_variance(w, cov_matrix)
+
+# Calculate gradient and Hessian
+grad = numerical_gradient(f, w)
+hess = numerical_hessian(f, w)
+
+# Analytical gradient: ∇(w'Σw) = 2Σw
+analytical_grad = 2 * cov_matrix @ w
+
+# Analytical Hessian: H = 2Σ
+analytical_hess = 2 * cov_matrix
+
+print("=" * 50)
+print("GRADIENT AND HESSIAN CALCULATION")
+print("=" * 50)
+print(f"\nWeights: {w}")
+print(f"Portfolio Variance: {f(w):.6f}")
+print(f"\nNumerical Gradient:  {grad}")
+print(f"Analytical Gradient: {analytical_grad}")
+print(f"\nNumerical Hessian:")
+print(hess)
+print(f"\nAnalytical Hessian (2Σ):")
+print(analytical_hess)</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Gradient Descent for Portfolio Optimization</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+
+def gradient_descent_portfolio(
+    cov_matrix: np.ndarray,
+    target_return: float,
+    expected_returns: np.ndarray,
+    learning_rate: float = 0.1,
+    max_iterations: int = 1000,
+    tolerance: float = 1e-8
+) -> dict:
+    """
+    Find minimum variance portfolio for given target return
+    using gradient descent with projection.
+
+    Minimize: (1/2) w'Σw
+    Subject to: μ'w = target_return, 1'w = 1
+
+    Parameters:
+    -----------
+    cov_matrix : np.ndarray
+        Asset covariance matrix
+    target_return : float
+        Required portfolio return
+    expected_returns : np.ndarray
+        Expected returns for each asset
+    learning_rate : float
+        Step size for gradient descent
+    max_iterations : int
+        Maximum number of iterations
+    tolerance : float
+        Convergence criterion
+
+    Returns:
+    --------
+    dict : Optimal weights, variance, iteration history
+    """
+    n = len(expected_returns)
+
+    # Initialize with equal weights
+    w = np.ones(n) / n
+
+    history = {'variance': [], 'weights': []}
+
+    for iteration in range(max_iterations):
+        # Gradient of (1/2)w'Σw is Σw
+        gradient = cov_matrix @ w
+
+        # Gradient descent step
+        w_new = w - learning_rate * gradient
+
+        # Project onto constraints
+        # 1. Budget constraint: sum = 1
+        w_new = w_new / np.sum(w_new)
+
+        # 2. Return constraint (approximate via penalty or Lagrangian)
+        # Simple approach: adjust weights proportionally
+        current_return = expected_returns @ w_new
+        if abs(current_return - target_return) > 1e-10:
+            # Adjust toward target
+            adjustment = (target_return - current_return) / np.var(expected_returns)
+            w_new = w_new + adjustment * (expected_returns - expected_returns.mean())
+            w_new = w_new / np.sum(w_new)
+
+        # Record history
+        variance = 0.5 * w_new @ cov_matrix @ w_new
+        history['variance'].append(variance)
+        history['weights'].append(w_new.copy())
+
+        # Check convergence
+        if np.linalg.norm(w_new - w) < tolerance:
+            break
+
+        w = w_new
+
+    return {
+        'weights': w,
+        'variance': w @ cov_matrix @ w,
+        'volatility': np.sqrt(w @ cov_matrix @ w),
+        'return': expected_returns @ w,
+        'iterations': iteration + 1,
+        'history': history
+    }
+
+# Example: 3-asset optimization
+expected_returns = np.array([0.08, 0.12, 0.06])
+volatilities = np.array([0.15, 0.25, 0.10])
+correlations = np.array([
+    [1.0, 0.5, 0.2],
+    [0.5, 1.0, 0.3],
+    [0.2, 0.3, 1.0]
+])
+cov_matrix = np.diag(volatilities) @ correlations @ np.diag(volatilities)
+
+# Find minimum variance portfolio for 9% target return
+result = gradient_descent_portfolio(
+    cov_matrix, target_return=0.09,
+    expected_returns=expected_returns,
+    learning_rate=0.5
+)
+
+print("\n" + "=" * 50)
+print("GRADIENT DESCENT OPTIMIZATION")
+print("=" * 50)
+print(f"\nTarget Return: 9%")
+print(f"Iterations: {result['iterations']}")
+print(f"\nOptimal Weights: {result['weights'].round(4)}")
+print(f"Achieved Return: {result['return']*100:.2f}%")
+print(f"Portfolio Volatility: {result['volatility']*100:.2f}%")</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Multi-Asset Option Greeks</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.stats import norm
+
+def basket_option_greeks(
+    spot_prices: np.ndarray,
+    weights: np.ndarray,
+    K: float,
+    T: float,
+    r: float,
+    volatilities: np.ndarray,
+    correlations: np.ndarray,
+    epsilon: float = 0.01
+) -> dict:
+    """
+    Calculate Greeks for a basket call option using numerical differentiation.
+
+    Basket value: B = Σ wᵢ Sᵢ
+    Payoff: max(B - K, 0)
+
+    Greeks include cross-gammas ∂²V/∂Sᵢ∂Sⱼ
+
+    Parameters:
+    -----------
+    spot_prices : np.ndarray
+        Current prices of underlying assets
+    weights : np.ndarray
+        Basket weights
+    K : float
+        Strike price
+    T : float
+        Time to expiration
+    r : float
+        Risk-free rate
+    volatilities : np.ndarray
+        Volatilities of each asset
+    correlations : np.ndarray
+        Correlation matrix
+    epsilon : float
+        Bump size for numerical differentiation
+
+    Returns:
+    --------
+    dict : Delta vector, Gamma matrix, and other Greeks
+    """
+    n = len(spot_prices)
+
+    # Simple basket option pricing (approximate)
+    def price_basket(S):
+        basket_value = np.sum(weights * S)
+        basket_vol = np.sqrt(
+            weights @ np.diag(volatilities) @ correlations @
+            np.diag(volatilities) @ weights
+        )
+
+        # Black-Scholes approximation for basket
+        d1 = (np.log(basket_value / K) + (r + 0.5 * basket_vol**2) * T) / (basket_vol * np.sqrt(T))
+        d2 = d1 - basket_vol * np.sqrt(T)
+        price = basket_value * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+        return price
+
+    base_price = price_basket(spot_prices)
+
+    # Delta vector (∂V/∂Sᵢ)
+    deltas = np.zeros(n)
+    for i in range(n):
+        S_up = spot_prices.copy()
+        S_down = spot_prices.copy()
+        S_up[i] *= (1 + epsilon)
+        S_down[i] *= (1 - epsilon)
+        deltas[i] = (price_basket(S_up) - price_basket(S_down)) / (2 * epsilon * spot_prices[i])
+
+    # Gamma matrix (∂²V/∂Sᵢ∂Sⱼ)
+    gammas = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                # Diagonal: ∂²V/∂Sᵢ²
+                S_up = spot_prices.copy()
+                S_down = spot_prices.copy()
+                S_up[i] *= (1 + epsilon)
+                S_down[i] *= (1 - epsilon)
+                gammas[i, i] = (price_basket(S_up) - 2*base_price + price_basket(S_down)) / (epsilon * spot_prices[i])**2
+            else:
+                # Off-diagonal: ∂²V/∂Sᵢ∂Sⱼ
+                S_pp = spot_prices.copy()
+                S_pm = spot_prices.copy()
+                S_mp = spot_prices.copy()
+                S_mm = spot_prices.copy()
+
+                S_pp[i] *= (1 + epsilon); S_pp[j] *= (1 + epsilon)
+                S_pm[i] *= (1 + epsilon); S_pm[j] *= (1 - epsilon)
+                S_mp[i] *= (1 - epsilon); S_mp[j] *= (1 + epsilon)
+                S_mm[i] *= (1 - epsilon); S_mm[j] *= (1 - epsilon)
+
+                gammas[i, j] = (price_basket(S_pp) - price_basket(S_pm) -
+                               price_basket(S_mp) + price_basket(S_mm)) / \
+                              (4 * epsilon**2 * spot_prices[i] * spot_prices[j])
+
+    return {
+        'price': base_price,
+        'deltas': deltas,
+        'gammas': gammas,
+        'total_delta': np.sum(deltas * spot_prices),
+        'total_gamma': np.sum(gammas * np.outer(spot_prices, spot_prices))
+    }
+
+# Example: Basket option on 3 stocks
+spots = np.array([100, 150, 80])
+weights = np.array([0.4, 0.35, 0.25])
+vols = np.array([0.2, 0.25, 0.18])
+corr = np.array([
+    [1.0, 0.5, 0.3],
+    [0.5, 1.0, 0.4],
+    [0.3, 0.4, 1.0]
+])
+
+greeks = basket_option_greeks(spots, weights, K=110, T=0.5, r=0.05,
+                              volatilities=vols, correlations=corr)
+
+print("\n" + "=" * 50)
+print("BASKET OPTION GREEKS")
+print("=" * 50)
+print(f"\nBasket Value: ${np.sum(weights * spots):.2f}")
+print(f"Option Price: ${greeks['price']:.4f}")
+print(f"\nDelta Vector: {greeks['deltas'].round(4)}")
+print(f"Total Delta: {greeks['total_delta']:.4f}")
+print(f"\nGamma Matrix:")
+print(greeks['gammas'].round(6))</code></pre>
+      </div>
+    </section>
+
+    <!-- PART 6: INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Interactive Gradient Calculator</h2>
+
+      <div class="calculator">
+        <h3>Gradient of f(x,y) = ax² + by² + cxy</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+          <div class="input-group">
+            <label for="coeffA">Coefficient a:</label>
+            <input type="number" id="coeffA" value="2" step="0.5" onchange="updateGradientCalc()">
+          </div>
+          <div class="input-group">
+            <label for="coeffB">Coefficient b:</label>
+            <input type="number" id="coeffB" value="3" step="0.5" onchange="updateGradientCalc()">
+          </div>
+          <div class="input-group">
+            <label for="coeffC">Coefficient c:</label>
+            <input type="number" id="coeffC" value="1" step="0.5" onchange="updateGradientCalc()">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px;">
+          <div class="input-group">
+            <label for="pointX">Point x₀: <span id="xVal">1</span></label>
+            <input type="range" id="pointX" min="-3" max="3" step="0.1" value="1" oninput="updateGradientCalc()">
+          </div>
+          <div class="input-group">
+            <label for="pointY">Point y₀: <span id="yVal">1</span></label>
+            <input type="range" id="pointY" min="-3" max="3" step="0.1" value="1" oninput="updateGradientCalc()">
+          </div>
+        </div>
+
+        <div class="gradient-display">
+          <div class="gradient-component">
+            <div class="symbol">f(x₀,y₀)</div>
+            <div class="value" id="fValue">6</div>
+          </div>
+          <div class="gradient-component">
+            <div class="symbol">∂f/∂x</div>
+            <div class="value" id="dfdx">5</div>
+          </div>
+          <div class="gradient-component">
+            <div class="symbol">∂f/∂y</div>
+            <div class="value" id="dfdy">7</div>
+          </div>
+          <div class="gradient-component">
+            <div class="symbol">|∇f|</div>
+            <div class="value" id="gradMag">8.60</div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 15px;">
+          <p style="color: #94a3b8;">Gradient vector: ∇f = (<span id="gradVec">5, 7</span>)</p>
+          <p style="color: #94a3b8;">Direction of steepest ascent: <span id="gradDir">54.5°</span> from x-axis</p>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Contour Plot with Gradient</h3>
+        <canvas id="contourChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 7: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Trading Applications</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Mean-Variance Optimization</h4>
+          <p>Minimize w'Σw subject to constraints. Gradient ∇(w'Σw) = 2Σw used in optimization algorithms.</p>
+          <div class="highlight">Set ∇L = 0 for Lagrangian</div>
+        </div>
+        <div class="card">
+          <h4>Risk Contribution</h4>
+          <p>Marginal risk contribution: MRCᵢ = ∂σₚ/∂wᵢ = (Σw)ᵢ/σₚ. Used in risk parity portfolios.</p>
+          <div class="highlight">Equal MRC × weight = risk parity</div>
+        </div>
+        <div class="card">
+          <h4>Factor Model Estimation</h4>
+          <p>Minimize ||y - Xβ||². Gradient: ∇ = -2X'(y - Xβ). Normal equations: X'Xβ = X'y.</p>
+          <div class="highlight">Gradient = 0 at solution</div>
+        </div>
+        <div class="card">
+          <h4>Neural Network Training</h4>
+          <p>Backpropagation computes ∇Loss via chain rule. Used to predict returns, volatility, etc.</p>
+          <div class="highlight">SGD: θ ← θ - η∇L(θ)</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Optimization Landscape</h3>
+        <canvas id="landscapeChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h3>Gradient Descent Path</h3>
+        <canvas id="descentChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 8: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Common Mistakes to Avoid</h2>
+
+      <div class="warning-box">
+        <h3>Mistake 1: Confusing Gradient with Derivative</h3>
+        <p>The gradient ∇f is a VECTOR (one component per variable). For f: R² → R, ∇f ∈ R², not R.</p>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 2: Wrong Step Size in Gradient Descent</h3>
+        <p>Too large → diverges. Too small → converges slowly. Use line search or adaptive methods (Adam).</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span>Adaptive Learning Rate</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code class="language-python"># Backtracking line search
+alpha = 1.0
+while f(x - alpha * grad) > f(x) - 0.5 * alpha * np.dot(grad, grad):
+    alpha *= 0.5  # Shrink step until sufficient decrease</code></pre>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 3: Ignoring Saddle Points</h3>
+        <p>∇f = 0 doesn't guarantee optimum! Check Hessian eigenvalues. Saddle points are common in high dimensions.</p>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 4: Numerical Gradient with Wrong Step Size</h3>
+        <p>For second derivatives (Hessian), use larger ε (~10⁻⁵). Too small causes division by tiny numbers.</p>
+      </div>
+    </section>
+
+    <!-- SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Summary</h2>
+
+      <div class="key-concept">
+        <h3>Key Takeaways</h3>
+        <ul>
+          <li><strong>Partial derivatives</strong> measure change in one direction, holding others fixed</li>
+          <li><strong>Gradient</strong> ∇f is a vector pointing toward steepest ascent; magnitude = rate of increase</li>
+          <li><strong>Hessian</strong> matrix of second derivatives determines curvature (min/max/saddle)</li>
+          <li><strong>Portfolio variance gradient</strong> ∇(w'Σw) = 2Σw is fundamental to optimization</li>
+          <li><strong>Gradient descent</strong> iteratively moves toward optimum: x ← x - η∇f(x)</li>
+        </ul>
+      </div>
+
+      <div class="nav-buttons">
+        <a href="3.2_integral_calculus.html" class="nav-btn">← Previous: Integral Calculus</a>
+        <a href="3.4_optimization_techniques.html" class="nav-btn">Next: Optimization Techniques →</a>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Knowledge</h2>
+
+      <div class="quiz-container" id="quiz">
+        <div class="quiz-question">
+          <h4>Question 1: For f(x,y) = x²y + y³, what is ∂f/∂x?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q1" value="a"> 2xy + 3y²</label>
+            <label><input type="radio" name="q1" value="b"> 2xy</label>
+            <label><input type="radio" name="q1" value="c"> x² + 3y²</label>
+            <label><input type="radio" name="q1" value="d"> 2x + y</label>
+          </div>
+          <div class="quiz-feedback" id="feedback1"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 2: The gradient ∇f points in the direction of:</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q2" value="a"> Steepest descent</label>
+            <label><input type="radio" name="q2" value="b"> Steepest ascent</label>
+            <label><input type="radio" name="q2" value="c"> The x-axis</label>
+            <label><input type="radio" name="q2" value="d"> Constant function value</label>
+          </div>
+          <div class="quiz-feedback" id="feedback2"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 3: For portfolio variance σ²ₚ = w'Σw, what is ∂σ²ₚ/∂w?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q3" value="a"> Σw</label>
+            <label><input type="radio" name="q3" value="b"> 2Σw</label>
+            <label><input type="radio" name="q3" value="c"> w'Σ</label>
+            <label><input type="radio" name="q3" value="d"> 2w</label>
+          </div>
+          <div class="quiz-feedback" id="feedback3"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 4: If the Hessian is positive definite at a critical point, the point is a:</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q4" value="a"> Local maximum</label>
+            <label><input type="radio" name="q4" value="b"> Local minimum</label>
+            <label><input type="radio" name="q4" value="c"> Saddle point</label>
+            <label><input type="radio" name="q4" value="d"> Inflection point</label>
+          </div>
+          <div class="quiz-feedback" id="feedback4"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 5: In gradient descent, why do we move in direction -∇f?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q5" value="a"> To maximize f</label>
+            <label><input type="radio" name="q5" value="b"> To minimize f (move opposite to steepest ascent)</label>
+            <label><input type="radio" name="q5" value="c"> To stay at the same level</label>
+            <label><input type="radio" name="q5" value="d"> To find saddle points</label>
+          </div>
+          <div class="quiz-feedback" id="feedback5"></div>
+        </div>
+
+        <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+        <div class="quiz-score" id="quizScore"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    let contourChart, landscapeChart, descentChart;
+
+    function initializeCharts() {
+      // Contour plot
+      const ctx1 = document.getElementById('contourChart').getContext('2d');
+      contourChart = new Chart(ctx1, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Level 1', data: [], borderColor: '#6366f1', pointRadius: 1, showLine: true, fill: false },
+            { label: 'Level 2', data: [], borderColor: '#818cf8', pointRadius: 1, showLine: true, fill: false },
+            { label: 'Level 3', data: [], borderColor: '#a78bfa', pointRadius: 1, showLine: true, fill: false },
+            { label: 'Current Point', data: [], backgroundColor: '#f59e0b', pointRadius: 8 },
+            { label: 'Gradient', data: [], borderColor: '#ef4444', pointRadius: 0, showLine: true, borderWidth: 3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          aspectRatio: 1,
+          plugins: { legend: { labels: { color: '#e2e8f0' } } },
+          scales: {
+            x: { min: -3, max: 3, title: { display: true, text: 'x', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+            y: { min: -3, max: 3, title: { display: true, text: 'y', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+          }
+        }
+      });
+
+      // Landscape chart (simulated 3D via color)
+      const ctx2 = document.getElementById('landscapeChart').getContext('2d');
+      const landscapeData = [];
+      for (let i = -20; i <= 20; i++) {
+        for (let j = -20; j <= 20; j++) {
+          const x = i / 10, y = j / 10;
+          const z = x * x + y * y;
+          landscapeData.push({ x: i, y: j, v: z });
+        }
+      }
+
+      landscapeChart = new Chart(ctx2, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'f(x,y) = x² + y² (color = value)',
+            data: landscapeData.map(d => ({ x: d.x / 10, y: d.y / 10 })),
+            backgroundColor: landscapeData.map(d => `rgba(99, 102, 241, ${Math.min(d.v / 8, 1)})`),
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          aspectRatio: 1,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0' } },
+            title: { display: true, text: 'Darker = higher value (bowl shape)', color: '#94a3b8' }
+          },
+          scales: {
+            x: { title: { display: true, text: 'x', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+            y: { title: { display: true, text: 'y', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+          }
+        }
+      });
+
+      // Descent path chart
+      const ctx3 = document.getElementById('descentChart').getContext('2d');
+      const path = [{ x: 2, y: 2 }];
+      let px = 2, py = 2;
+      for (let i = 0; i < 20; i++) {
+        const gx = 2 * px, gy = 2 * py;
+        px -= 0.3 * gx;
+        py -= 0.3 * gy;
+        path.push({ x: px, y: py });
+      }
+
+      descentChart = new Chart(ctx3, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Descent Path', data: path, borderColor: '#ef4444', backgroundColor: '#ef4444', pointRadius: 4, showLine: true },
+            { label: 'Minimum', data: [{ x: 0, y: 0 }], backgroundColor: '#10b981', pointRadius: 10 }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0' } },
+            title: { display: true, text: 'Gradient descent converging to minimum', color: '#94a3b8' }
+          },
+          scales: {
+            x: { min: -0.5, max: 2.5, title: { display: true, text: 'x', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+            y: { min: -0.5, max: 2.5, title: { display: true, text: 'y', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+          }
+        }
+      });
+
+      updateGradientCalc();
+    }
+
+    function updateGradientCalc() {
+      const a = parseFloat(document.getElementById('coeffA').value);
+      const b = parseFloat(document.getElementById('coeffB').value);
+      const c = parseFloat(document.getElementById('coeffC').value);
+      const x0 = parseFloat(document.getElementById('pointX').value);
+      const y0 = parseFloat(document.getElementById('pointY').value);
+
+      document.getElementById('xVal').textContent = x0.toFixed(1);
+      document.getElementById('yVal').textContent = y0.toFixed(1);
+
+      // f(x,y) = ax² + by² + cxy
+      const fVal = a * x0 * x0 + b * y0 * y0 + c * x0 * y0;
+      const dfdx = 2 * a * x0 + c * y0;
+      const dfdy = 2 * b * y0 + c * x0;
+      const gradMag = Math.sqrt(dfdx * dfdx + dfdy * dfdy);
+      const gradAngle = Math.atan2(dfdy, dfdx) * 180 / Math.PI;
+
+      document.getElementById('fValue').textContent = fVal.toFixed(2);
+      document.getElementById('dfdx').textContent = dfdx.toFixed(2);
+      document.getElementById('dfdy').textContent = dfdy.toFixed(2);
+      document.getElementById('gradMag').textContent = gradMag.toFixed(2);
+      document.getElementById('gradVec').textContent = `${dfdx.toFixed(2)}, ${dfdy.toFixed(2)}`;
+      document.getElementById('gradDir').textContent = `${gradAngle.toFixed(1)}°`;
+
+      // Update contour chart
+      const levels = [fVal * 0.5, fVal, fVal * 1.5];
+      const contours = [[], [], []];
+
+      for (let theta = 0; theta <= 2 * Math.PI; theta += 0.05) {
+        for (let li = 0; li < 3; li++) {
+          const level = levels[li];
+          // Solve ax² + by² + cxy = level for points on ellipse
+          // Parametric approximation
+          const r = Math.sqrt(Math.abs(level) / (a * Math.cos(theta) ** 2 + b * Math.sin(theta) ** 2 + c * Math.cos(theta) * Math.sin(theta)));
+          if (isFinite(r) && r < 5) {
+            contours[li].push({ x: r * Math.cos(theta), y: r * Math.sin(theta) });
+          }
+        }
+      }
+
+      contourChart.data.datasets[0].data = contours[0];
+      contourChart.data.datasets[1].data = contours[1];
+      contourChart.data.datasets[2].data = contours[2];
+      contourChart.data.datasets[3].data = [{ x: x0, y: y0 }];
+
+      // Gradient arrow
+      const scale = 0.3;
+      contourChart.data.datasets[4].data = [
+        { x: x0, y: y0 },
+        { x: x0 + scale * dfdx, y: y0 + scale * dfdy }
+      ];
+
+      contourChart.update();
+    }
+
+    function checkQuiz() {
+      const answers = {
+        q1: { correct: 'b', explanation: '∂f/∂x treats y as constant: ∂/∂x[x²y + y³] = 2xy (y³ has no x, so it\'s 0).' },
+        q2: { correct: 'b', explanation: 'The gradient points in the direction of maximum increase (steepest ascent).' },
+        q3: { correct: 'b', explanation: '∂(w\'Σw)/∂w = 2Σw. This is the fundamental gradient for portfolio optimization.' },
+        q4: { correct: 'b', explanation: 'Positive definite Hessian means all eigenvalues > 0, indicating the surface curves upward (local minimum).' },
+        q5: { correct: 'b', explanation: '∇f points uphill. To minimize, we go downhill: -∇f direction.' }
+      };
+
+      let score = 0;
+      const total = Object.keys(answers).length;
+
+      for (const [q, data] of Object.entries(answers)) {
+        const selected = document.querySelector(`input[name="${q}"]:checked`);
+        const feedback = document.getElementById(`feedback${q.slice(1)}`);
+
+        if (selected && selected.value === data.correct) {
+          score++;
+          feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+        } else {
+          feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+        }
+        feedback.style.display = 'block';
+      }
+
+      const pct = (score / total * 100).toFixed(0);
+      document.getElementById('quizScore').innerHTML = `
+        <h3>Score: ${score}/${total} (${pct}%)</h3>
+        <p>${pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Good progress!' : 'Review the material and try again.'}</p>
+      `;
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+  </script>
+</body>
+</html>

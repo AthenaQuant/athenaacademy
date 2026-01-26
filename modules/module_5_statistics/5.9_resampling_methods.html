@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master resampling methods for quantitative trading. Learn bootstrap, block bootstrap, permutation tests, and cross-validation techniques.">
+    <title>5.9 Resampling Methods | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .data-table { width: 100%; margin: 1rem 0; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .result-value.positive { color: var(--success); }
+        .result-value.negative { color: var(--error); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; }
+        .score-container h3 { color: white; margin: 0; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.9</span>
+                    <span class="nav-module-title">Resampling Methods</span>
+                </div>
+                <a href="5.10_non_parametric_tests.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.9 Resampling Methods</span>
+                </div>
+                <h1>Resampling Methods</h1>
+                <p class="module-subtitle">
+                    Bootstrap, permutation tests, and cross-validation for robust strategy analysis.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 55 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Interactive Lab</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Section 1: Introduction -->
+        <section class="content-section fade-in">
+            <h2>1. Introduction to Resampling</h2>
+
+            <p>Resampling methods are a class of powerful, computer-intensive techniques that make <strong>minimal distributional assumptions</strong>. Instead of assuming returns follow a normal distribution (they don't!), resampling lets the data speak for itself by repeatedly drawing samples from the observed data.</p>
+
+            <div class="key-concept">
+                <h3>Why Resampling in Quantitative Finance?</h3>
+                <ul>
+                    <li><strong>Non-Normality:</strong> Financial returns have fat tails and skewness—resampling handles this</li>
+                    <li><strong>Small Samples:</strong> Limited trade history? Bootstrap quantifies uncertainty anyway</li>
+                    <li><strong>Complex Statistics:</strong> Sharpe ratios, drawdowns have unknown distributions—bootstrap estimates them</li>
+                    <li><strong>Strategy Validation:</strong> Cross-validation prevents overfitting to historical data</li>
+                    <li><strong>Hypothesis Testing:</strong> Permutation tests need no distributional assumptions</li>
+                </ul>
+            </div>
+
+            <div class="important-note">
+                <h3>The Core Idea</h3>
+                <p>Instead of deriving theoretical sampling distributions (often impossible for complex statistics), we <strong>empirically construct</strong> them by resampling from our observed data. With modern computing, we can do thousands of resamples in seconds.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Bootstrap -->
+        <section class="content-section fade-in">
+            <h2>2. The Bootstrap Method</h2>
+
+            <h3>Basic Bootstrap Procedure</h3>
+            <p>The bootstrap estimates the sampling distribution of any statistic by resampling <strong>with replacement</strong> from the original sample.</p>
+
+            <div class="formula-box">
+                <h4>Bootstrap Algorithm</h4>
+                <ol>
+                    <li>Draw n observations with replacement from the original sample (size n)</li>
+                    <li>Calculate the statistic of interest on this bootstrap sample</li>
+                    <li>Repeat B times (typically B = 1,000 to 10,000)</li>
+                    <li>Analyze the distribution of B bootstrap statistics</li>
+                </ol>
+                <p><strong>Key Insight:</strong> Each bootstrap sample has ~63.2% unique observations (some repeated, some missing).</p>
+            </div>
+
+            <h3>Bootstrap Confidence Intervals</h3>
+            <p>Several methods exist for constructing bootstrap confidence intervals:</p>
+
+            <div class="formula-box">
+                <h4>Percentile Method (Simplest)</h4>
+                <p>\[CI_{1-\alpha} = [\hat{\theta}^*_{\alpha/2}, \hat{\theta}^*_{1-\alpha/2}]\]</p>
+                <p>Simply take the α/2 and 1-α/2 percentiles of the bootstrap distribution.</p>
+
+                <h4>Bias-Corrected and Accelerated (BCa)</h4>
+                <p>Adjusts for bias and skewness in the bootstrap distribution:</p>
+                <p>\[\alpha_1 = \Phi\left(\hat{z}_0 + \frac{\hat{z}_0 + z_{\alpha/2}}{1 - \hat{a}(\hat{z}_0 + z_{\alpha/2})}\right)\]</p>
+                <p>Where \(\hat{z}_0\) is bias correction and \(\hat{a}\) is acceleration factor.</p>
+            </div>
+
+            <h3>Bootstrap Standard Error</h3>
+            <div class="formula-box">
+                <h4>Standard Error Estimate</h4>
+                <p>\[SE_{boot} = \sqrt{\frac{1}{B-1}\sum_{b=1}^{B}(\hat{\theta}^*_b - \bar{\theta}^*)^2}\]</p>
+                <p>The standard deviation of bootstrap statistics estimates the standard error.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Block Bootstrap -->
+        <section class="content-section fade-in">
+            <h2>3. Block Bootstrap for Time Series</h2>
+
+            <h3>The Problem with Standard Bootstrap</h3>
+            <p>Standard bootstrap assumes observations are <strong>independent</strong>. But financial returns exhibit autocorrelation and volatility clustering. Resampling individual observations destroys this temporal structure.</p>
+
+            <div class="formula-box">
+                <h4>Block Bootstrap Solution</h4>
+                <p>Instead of resampling individual observations, resample <strong>blocks</strong> of consecutive observations:</p>
+                <ol>
+                    <li>Choose block length L</li>
+                    <li>Randomly select starting points and extract blocks of length L</li>
+                    <li>Concatenate blocks until reaching desired sample size</li>
+                </ol>
+                <p><strong>Block Length Selection:</strong> L should be long enough to capture dependence but short enough to allow variability. Rule of thumb: \(L \approx n^{1/3}\)</p>
+            </div>
+
+            <h3>Types of Block Bootstrap</h3>
+            <div class="key-concept">
+                <h3>Block Bootstrap Variants</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Block Length</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Non-overlapping</td>
+                            <td>Fixed</td>
+                            <td>Simple, but fewer blocks</td>
+                        </tr>
+                        <tr>
+                            <td>Moving Block</td>
+                            <td>Fixed</td>
+                            <td>Overlapping blocks, more samples</td>
+                        </tr>
+                        <tr>
+                            <td>Circular Block</td>
+                            <td>Fixed</td>
+                            <td>Wraps around to handle endpoints</td>
+                        </tr>
+                        <tr>
+                            <td>Stationary</td>
+                            <td>Random (geometric)</td>
+                            <td>Produces stationary bootstrap samples</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 4: Permutation Tests -->
+        <section class="content-section fade-in">
+            <h2>4. Permutation Tests</h2>
+
+            <h3>The Permutation Principle</h3>
+            <p>Permutation tests answer: "If there's no difference between groups, how extreme is our observed statistic?" They construct the null distribution by permuting group labels.</p>
+
+            <div class="formula-box">
+                <h4>Permutation Test Algorithm</h4>
+                <ol>
+                    <li>Calculate the observed test statistic T<sub>obs</sub></li>
+                    <li>Permute group labels (shuffle which observations belong to which group)</li>
+                    <li>Calculate the test statistic on permuted data T<sup>*</sup></li>
+                    <li>Repeat B times to build null distribution</li>
+                    <li>P-value = proportion of T<sup>*</sup> ≥ T<sub>obs</sub></li>
+                </ol>
+            </div>
+
+            <h3>Application: Testing Strategy Alpha</h3>
+            <div class="formula-box">
+                <h4>Permutation Test for Trading Strategy</h4>
+                <p><strong>Null Hypothesis:</strong> The strategy has no predictive power (returns are random)</p>
+                <p><strong>Test:</strong> Permute the order of signals (or returns)</p>
+                <p>If the original signal-return relationship is just noise, permuted signals should produce similar returns to the original.</p>
+                <p>\[p\text{-value} = \frac{1 + \sum_{b=1}^{B} \mathbf{1}(\text{Sharpe}^*_b \geq \text{Sharpe}_{obs})}{B + 1}\]</p>
+            </div>
+
+            <div class="important-note">
+                <h3>Permutation vs Bootstrap</h3>
+                <ul>
+                    <li><strong>Bootstrap:</strong> Estimates sampling distribution of a statistic (resamples WITH replacement)</li>
+                    <li><strong>Permutation:</strong> Tests hypotheses by building null distribution (permutes WITHOUT replacement)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>5. Python Implementation</h2>
+
+            <div class="code-block">
+                <h3>Complete Resampling Methods Framework</h3>
+                <pre><code class="language-python">"""
+Resampling Methods for Quantitative Trading
+Covers: Bootstrap, Block Bootstrap, Permutation Tests, Cross-Validation
+"""
+
+import numpy as np
+from dataclasses import dataclass
+from typing import Tuple, Optional, List, Callable, Dict
+from scipy import stats
+
+
+@dataclass
+class BootstrapResult:
+    """Results from bootstrap analysis."""
+    estimate: float
+    std_error: float
+    ci_lower: float
+    ci_upper: float
+    n_bootstrap: int
+    bootstrap_distribution: np.ndarray
+
+    def __str__(self) -> str:
+        return (f"Estimate: {self.estimate:.4f} (SE: {self.std_error:.4f}), "
+                f"95% CI: [{self.ci_lower:.4f}, {self.ci_upper:.4f}]")
+
+
+@dataclass
+class PermutationResult:
+    """Results from permutation test."""
+    observed_statistic: float
+    p_value: float
+    null_distribution: np.ndarray
+    n_permutations: int
+
+    def __str__(self) -> str:
+        return (f"Observed: {self.observed_statistic:.4f}, "
+                f"p-value: {self.p_value:.4f}")
+
+
+def bootstrap(data: np.ndarray, statistic_func: Callable,
+              n_bootstrap: int = 10000, alpha: float = 0.05,
+              seed: Optional[int] = None) -> BootstrapResult:
+    """
+    Perform standard bootstrap for any statistic.
+
+    Args:
+        data: Original sample data
+        statistic_func: Function that computes the statistic of interest
+        n_bootstrap: Number of bootstrap samples
+        alpha: Significance level for confidence interval
+        seed: Random seed for reproducibility
+
+    Returns:
+        BootstrapResult with estimates and confidence interval
+    """
+    if seed is not None:
+        np.random.seed(seed)
+
+    n = len(data)
+    original_stat = statistic_func(data)
+
+    # Generate bootstrap samples
+    bootstrap_stats = np.zeros(n_bootstrap)
+    for i in range(n_bootstrap):
+        # Sample with replacement
+        indices = np.random.choice(n, size=n, replace=True)
+        boot_sample = data[indices]
+        bootstrap_stats[i] = statistic_func(boot_sample)
+
+    # Standard error
+    std_error = np.std(bootstrap_stats, ddof=1)
+
+    # Percentile confidence interval
+    ci_lower = np.percentile(bootstrap_stats, 100 * alpha / 2)
+    ci_upper = np.percentile(bootstrap_stats, 100 * (1 - alpha / 2))
+
+    return BootstrapResult(
+        estimate=original_stat,
+        std_error=std_error,
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
+        n_bootstrap=n_bootstrap,
+        bootstrap_distribution=bootstrap_stats
+    )
+
+
+def bootstrap_bca(data: np.ndarray, statistic_func: Callable,
+                  n_bootstrap: int = 10000, alpha: float = 0.05) -> BootstrapResult:
+    """
+    Bias-Corrected and Accelerated (BCa) bootstrap confidence interval.
+
+    More accurate than percentile method, especially for skewed distributions.
+    """
+    n = len(data)
+    original_stat = statistic_func(data)
+
+    # Generate bootstrap samples
+    bootstrap_stats = np.zeros(n_bootstrap)
+    for i in range(n_bootstrap):
+        indices = np.random.choice(n, size=n, replace=True)
+        bootstrap_stats[i] = statistic_func(data[indices])
+
+    # Bias correction factor z0
+    prop_less = np.mean(bootstrap_stats < original_stat)
+    z0 = stats.norm.ppf(prop_less) if 0 < prop_less < 1 else 0
+
+    # Acceleration factor using jackknife
+    jackknife_stats = np.zeros(n)
+    for i in range(n):
+        jack_sample = np.delete(data, i)
+        jackknife_stats[i] = statistic_func(jack_sample)
+
+    jack_mean = np.mean(jackknife_stats)
+    num = np.sum((jack_mean - jackknife_stats) ** 3)
+    denom = 6 * (np.sum((jack_mean - jackknife_stats) ** 2) ** 1.5)
+    a = num / denom if denom != 0 else 0
+
+    # BCa adjusted percentiles
+    z_alpha = stats.norm.ppf(alpha / 2)
+    z_1_alpha = stats.norm.ppf(1 - alpha / 2)
+
+    def bca_percentile(z):
+        return stats.norm.cdf(z0 + (z0 + z) / (1 - a * (z0 + z)))
+
+    p_lower = bca_percentile(z_alpha)
+    p_upper = bca_percentile(z_1_alpha)
+
+    # Clip to valid range
+    p_lower = max(0.001, min(0.999, p_lower))
+    p_upper = max(0.001, min(0.999, p_upper))
+
+    ci_lower = np.percentile(bootstrap_stats, 100 * p_lower)
+    ci_upper = np.percentile(bootstrap_stats, 100 * p_upper)
+
+    return BootstrapResult(
+        estimate=original_stat,
+        std_error=np.std(bootstrap_stats, ddof=1),
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
+        n_bootstrap=n_bootstrap,
+        bootstrap_distribution=bootstrap_stats
+    )
+
+
+def block_bootstrap(data: np.ndarray, statistic_func: Callable,
+                    block_length: int, n_bootstrap: int = 5000,
+                    alpha: float = 0.05) -> BootstrapResult:
+    """
+    Moving block bootstrap for time series data.
+
+    Preserves temporal dependence by resampling blocks of consecutive observations.
+
+    Args:
+        data: Time series data
+        statistic_func: Function to compute statistic
+        block_length: Length of each block
+        n_bootstrap: Number of bootstrap samples
+        alpha: Significance level
+    """
+    n = len(data)
+    original_stat = statistic_func(data)
+
+    # Number of possible block start positions
+    n_blocks_available = n - block_length + 1
+    n_blocks_needed = int(np.ceil(n / block_length))
+
+    bootstrap_stats = np.zeros(n_bootstrap)
+
+    for i in range(n_bootstrap):
+        # Randomly select block starting positions
+        block_starts = np.random.randint(0, n_blocks_available, size=n_blocks_needed)
+
+        # Concatenate blocks
+        boot_sample = []
+        for start in block_starts:
+            boot_sample.extend(data[start:start + block_length])
+
+        # Trim to original length
+        boot_sample = np.array(boot_sample[:n])
+        bootstrap_stats[i] = statistic_func(boot_sample)
+
+    std_error = np.std(bootstrap_stats, ddof=1)
+    ci_lower = np.percentile(bootstrap_stats, 100 * alpha / 2)
+    ci_upper = np.percentile(bootstrap_stats, 100 * (1 - alpha / 2))
+
+    return BootstrapResult(
+        estimate=original_stat,
+        std_error=std_error,
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
+        n_bootstrap=n_bootstrap,
+        bootstrap_distribution=bootstrap_stats
+    )
+
+
+def stationary_bootstrap(data: np.ndarray, statistic_func: Callable,
+                         expected_block_length: float,
+                         n_bootstrap: int = 5000,
+                         alpha: float = 0.05) -> BootstrapResult:
+    """
+    Stationary bootstrap with random block lengths (geometric distribution).
+
+    Produces stationary bootstrap samples, often preferred for time series.
+
+    Args:
+        data: Time series data
+        statistic_func: Function to compute statistic
+        expected_block_length: Expected block length (1/p where p is geometric probability)
+        n_bootstrap: Number of bootstrap samples
+        alpha: Significance level
+    """
+    n = len(data)
+    original_stat = statistic_func(data)
+    p = 1 / expected_block_length  # Probability of starting new block
+
+    bootstrap_stats = np.zeros(n_bootstrap)
+
+    for i in range(n_bootstrap):
+        boot_sample = np.zeros(n)
+        idx = np.random.randint(0, n)  # Random starting point
+
+        for j in range(n):
+            boot_sample[j] = data[idx % n]
+
+            # With probability p, jump to new random position
+            if np.random.random() < p:
+                idx = np.random.randint(0, n)
+            else:
+                idx += 1
+
+        bootstrap_stats[i] = statistic_func(boot_sample)
+
+    std_error = np.std(bootstrap_stats, ddof=1)
+    ci_lower = np.percentile(bootstrap_stats, 100 * alpha / 2)
+    ci_upper = np.percentile(bootstrap_stats, 100 * (1 - alpha / 2))
+
+    return BootstrapResult(
+        estimate=original_stat,
+        std_error=std_error,
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
+        n_bootstrap=n_bootstrap,
+        bootstrap_distribution=bootstrap_stats
+    )
+
+
+def permutation_test(group1: np.ndarray, group2: np.ndarray,
+                     statistic_func: Callable = None,
+                     n_permutations: int = 10000,
+                     alternative: str = 'two-sided') -> PermutationResult:
+    """
+    Two-sample permutation test.
+
+    Args:
+        group1: First group of observations
+        group2: Second group of observations
+        statistic_func: Function to compute test statistic (default: difference of means)
+        n_permutations: Number of permutations
+        alternative: 'two-sided', 'greater', or 'less'
+
+    Returns:
+        PermutationResult with p-value and null distribution
+    """
+    if statistic_func is None:
+        statistic_func = lambda g1, g2: np.mean(g1) - np.mean(g2)
+
+    n1 = len(group1)
+    combined = np.concatenate([group1, group2])
+    n_total = len(combined)
+
+    observed = statistic_func(group1, group2)
+    permuted_stats = np.zeros(n_permutations)
+
+    for i in range(n_permutations):
+        # Permute combined data
+        permuted = np.random.permutation(combined)
+        perm_g1 = permuted[:n1]
+        perm_g2 = permuted[n1:]
+        permuted_stats[i] = statistic_func(perm_g1, perm_g2)
+
+    # Calculate p-value based on alternative
+    if alternative == 'two-sided':
+        p_value = np.mean(np.abs(permuted_stats) >= np.abs(observed))
+    elif alternative == 'greater':
+        p_value = np.mean(permuted_stats >= observed)
+    else:  # 'less'
+        p_value = np.mean(permuted_stats <= observed)
+
+    return PermutationResult(
+        observed_statistic=observed,
+        p_value=p_value,
+        null_distribution=permuted_stats,
+        n_permutations=n_permutations
+    )
+
+
+def permutation_test_strategy(signals: np.ndarray, returns: np.ndarray,
+                             n_permutations: int = 10000) -> PermutationResult:
+    """
+    Test if a trading signal has predictive power using permutation test.
+
+    Permutes the signals relative to returns to break any true relationship.
+
+    Args:
+        signals: Trading signals (e.g., -1, 0, 1)
+        returns: Corresponding returns
+        n_permutations: Number of permutations
+    """
+    # Strategy returns = signal * return
+    strategy_returns = signals * returns
+    observed_sharpe = calculate_sharpe(strategy_returns)
+
+    permuted_sharpes = np.zeros(n_permutations)
+    for i in range(n_permutations):
+        # Permute signals (break the signal-return relationship)
+        permuted_signals = np.random.permutation(signals)
+        perm_strategy_returns = permuted_signals * returns
+        permuted_sharpes[i] = calculate_sharpe(perm_strategy_returns)
+
+    # One-sided test: is observed Sharpe better than random?
+    p_value = np.mean(permuted_sharpes >= observed_sharpe)
+
+    return PermutationResult(
+        observed_statistic=observed_sharpe,
+        p_value=p_value,
+        null_distribution=permuted_sharpes,
+        n_permutations=n_permutations
+    )
+
+
+def calculate_sharpe(returns: np.ndarray, risk_free: float = 0,
+                     periods_per_year: int = 252) -> float:
+    """Calculate annualized Sharpe ratio."""
+    excess_returns = returns - risk_free / periods_per_year
+    if np.std(excess_returns) == 0:
+        return 0
+    return np.sqrt(periods_per_year) * np.mean(excess_returns) / np.std(excess_returns)
+
+
+def calculate_max_drawdown(returns: np.ndarray) -> float:
+    """Calculate maximum drawdown from returns."""
+    cumulative = np.cumprod(1 + returns)
+    peak = np.maximum.accumulate(cumulative)
+    drawdown = (peak - cumulative) / peak
+    return np.max(drawdown)
+
+
+def walk_forward_cv(returns: np.ndarray, signals: np.ndarray,
+                    n_splits: int = 5, test_size: float = 0.2) -> Dict:
+    """
+    Walk-forward cross-validation for time series strategy evaluation.
+
+    Args:
+        returns: Market returns
+        signals: Strategy signals
+        n_splits: Number of train/test splits
+        test_size: Fraction of data for each test set
+    """
+    n = len(returns)
+    results = []
+
+    # Calculate minimum train size
+    min_test = int(n * test_size)
+    step = min_test
+
+    for i in range(n_splits):
+        test_end = n - i * step
+        test_start = test_end - min_test
+        train_end = test_start
+
+        if train_end < min_test:
+            break
+
+        # Train and test periods
+        test_returns = returns[test_start:test_end]
+        test_signals = signals[test_start:test_end]
+
+        # Calculate out-of-sample performance
+        strategy_returns = test_signals * test_returns
+        oos_sharpe = calculate_sharpe(strategy_returns)
+        oos_return = np.prod(1 + strategy_returns) - 1
+
+        results.append({
+            'fold': i + 1,
+            'train_end': train_end,
+            'test_start': test_start,
+            'test_end': test_end,
+            'oos_sharpe': oos_sharpe,
+            'oos_return': oos_return,
+            'n_test_obs': len(test_returns)
+        })
+
+    # Aggregate results
+    sharpes = [r['oos_sharpe'] for r in results]
+    oos_returns = [r['oos_return'] for r in results]
+
+    return {
+        'fold_results': results,
+        'mean_oos_sharpe': np.mean(sharpes),
+        'std_oos_sharpe': np.std(sharpes),
+        'mean_oos_return': np.mean(oos_returns),
+        'consistency': np.mean([1 for s in sharpes if s > 0])
+    }
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("BOOTSTRAP CONFIDENCE INTERVALS")
+    print("=" * 60)
+
+    # Generate sample returns
+    returns = np.random.normal(0.001, 0.02, 252)  # 1 year of daily returns
+
+    # Bootstrap Sharpe ratio
+    sharpe_bootstrap = bootstrap(
+        returns,
+        calculate_sharpe,
+        n_bootstrap=10000
+    )
+    print(f"\nSharpe Ratio Bootstrap: {sharpe_bootstrap}")
+
+    # BCa Bootstrap
+    sharpe_bca = bootstrap_bca(returns, calculate_sharpe, n_bootstrap=10000)
+    print(f"Sharpe Ratio BCa: {sharpe_bca}")
+
+    # Max Drawdown bootstrap
+    dd_bootstrap = bootstrap(
+        returns,
+        calculate_max_drawdown,
+        n_bootstrap=10000
+    )
+    print(f"Max Drawdown Bootstrap: {dd_bootstrap}")
+
+    print("\n" + "=" * 60)
+    print("BLOCK BOOTSTRAP FOR TIME SERIES")
+    print("=" * 60)
+
+    # Block length based on rule of thumb
+    block_length = int(len(returns) ** (1/3))
+    print(f"\nUsing block length: {block_length}")
+
+    block_result = block_bootstrap(
+        returns,
+        calculate_sharpe,
+        block_length=block_length,
+        n_bootstrap=5000
+    )
+    print(f"Block Bootstrap Sharpe: {block_result}")
+
+    # Stationary bootstrap
+    stationary_result = stationary_bootstrap(
+        returns,
+        calculate_sharpe,
+        expected_block_length=block_length,
+        n_bootstrap=5000
+    )
+    print(f"Stationary Bootstrap Sharpe: {stationary_result}")
+
+    print("\n" + "=" * 60)
+    print("PERMUTATION TEST: STRATEGY SIGNIFICANCE")
+    print("=" * 60)
+
+    # Generate strategy signals with slight edge
+    signals = np.sign(np.random.randn(252))  # Random signals
+    # Add some predictive power
+    signals = np.where(np.random.random(252) < 0.55, np.sign(returns), signals)
+
+    perm_result = permutation_test_strategy(signals, returns, n_permutations=10000)
+    print(f"\n{perm_result}")
+    if perm_result.p_value < 0.05:
+        print("Strategy shows significant predictive power!")
+    else:
+        print("Cannot reject that strategy returns are due to chance.")
+
+    print("\n" + "=" * 60)
+    print("WALK-FORWARD CROSS-VALIDATION")
+    print("=" * 60)
+
+    cv_results = walk_forward_cv(returns, signals, n_splits=5)
+    print(f"\nMean OOS Sharpe: {cv_results['mean_oos_sharpe']:.3f} "
+          f"(±{cv_results['std_oos_sharpe']:.3f})")
+    print(f"Consistency (% positive Sharpe): {cv_results['consistency']:.1%}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>6. Interactive Resampling Lab</h2>
+
+            <div class="calculator-container">
+                <h3>Bootstrap Confidence Interval Calculator</h3>
+
+                <div class="input-group">
+                    <label for="statType">Statistic to Bootstrap:</label>
+                    <select id="statType">
+                        <option value="sharpe">Sharpe Ratio</option>
+                        <option value="mean">Mean Return</option>
+                        <option value="volatility">Volatility</option>
+                        <option value="maxdd">Max Drawdown</option>
+                    </select>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="sampleSize">Sample Size (days):</label>
+                        <input type="number" id="sampleSize" value="252" min="50" max="1000" step="50">
+                    </div>
+                    <div class="input-group">
+                        <label for="nBootstrap">Bootstrap Samples:</label>
+                        <input type="number" id="nBootstrap" value="2000" min="500" max="10000" step="500">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="meanReturn">Mean Daily Return (%):</label>
+                        <input type="number" id="meanReturn" value="0.05" min="-0.5" max="0.5" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="volatilityInput">Daily Volatility (%):</label>
+                        <input type="number" id="volatilityInput" value="1.5" min="0.5" max="5" step="0.1">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="runBootstrap()">Run Bootstrap</button>
+
+                <div class="results-container" id="bootstrapResults">
+                    <h4>Bootstrap Results</h4>
+                    <div id="bootstrapOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="bootstrapDistChart"></canvas>
+                </div>
+            </div>
+
+            <div class="calculator-container" style="margin-top: 30px;">
+                <h3>Permutation Test for Strategy</h3>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="winRate">Strategy Win Rate (%):</label>
+                        <input type="number" id="winRate" value="55" min="40" max="70">
+                    </div>
+                    <div class="input-group">
+                        <label for="nTrades">Number of Trades:</label>
+                        <input type="number" id="nTrades" value="100" min="20" max="500" step="10">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="nPermutations">Number of Permutations:</label>
+                    <input type="number" id="nPermutations" value="5000" min="1000" max="20000" step="1000">
+                </div>
+
+                <button class="calculate-btn" onclick="runPermutationTest()">Run Permutation Test</button>
+
+                <div class="results-container" id="permResults">
+                    <h4>Permutation Test Results</h4>
+                    <div id="permOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="permDistChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Practical Application -->
+        <section class="content-section fade-in">
+            <h2>7. Practical Application: Strategy Robustness Testing</h2>
+
+            <div class="code-block">
+                <h3>Comprehensive Strategy Robustness Framework</h3>
+                <pre><code class="language-python">"""
+Strategy Robustness Testing using Resampling Methods
+"""
+
+import numpy as np
+from typing import Dict, List, Tuple
+from dataclasses import dataclass
+
+
+@dataclass
+class RobustnessReport:
+    """Complete robustness analysis report."""
+    sharpe_estimate: float
+    sharpe_ci: Tuple[float, float]
+    sharpe_std_error: float
+    max_drawdown_estimate: float
+    max_drawdown_ci: Tuple[float, float]
+    permutation_p_value: float
+    cv_consistency: float
+    is_robust: bool
+    warnings: List[str]
+
+
+class StrategyRobustnessTester:
+    """
+    Comprehensive robustness testing for trading strategies.
+    """
+
+    def __init__(self, confidence_level: float = 0.95,
+                 n_bootstrap: int = 5000,
+                 n_permutations: int = 10000):
+        self.confidence_level = confidence_level
+        self.n_bootstrap = n_bootstrap
+        self.n_permutations = n_permutations
+
+    def test_strategy(self, returns: np.ndarray,
+                     signals: np.ndarray = None) -> RobustnessReport:
+        """
+        Run comprehensive robustness tests on a strategy.
+
+        Args:
+            returns: Strategy returns (or market returns if signals provided)
+            signals: Optional trading signals
+
+        Returns:
+            RobustnessReport with all test results
+        """
+        warnings = []
+
+        # If signals provided, compute strategy returns
+        if signals is not None:
+            strategy_returns = signals * returns
+        else:
+            strategy_returns = returns
+
+        n = len(strategy_returns)
+
+        # 1. Bootstrap Sharpe ratio
+        sharpe_boot = self._bootstrap_sharpe(strategy_returns)
+
+        # 2. Bootstrap Max Drawdown
+        dd_boot = self._bootstrap_maxdd(strategy_returns)
+
+        # 3. Permutation test (if signals provided)
+        if signals is not None:
+            perm_p = self._permutation_test(signals, returns)
+            if perm_p > 0.05:
+                warnings.append(f"Strategy not significant (p={perm_p:.3f})")
+        else:
+            perm_p = None
+
+        # 4. Walk-forward cross-validation
+        if signals is not None:
+            cv_consistency = self._walk_forward_cv(signals, returns)
+        else:
+            cv_consistency = self._walk_forward_cv_returns(strategy_returns)
+
+        if cv_consistency < 0.6:
+            warnings.append(f"Low OOS consistency ({cv_consistency:.1%})")
+
+        # 5. Check for concerning patterns
+        if sharpe_boot['ci_lower'] < 0:
+            warnings.append("Sharpe CI includes zero")
+
+        if sharpe_boot['std_error'] > sharpe_boot['estimate'] * 0.5:
+            warnings.append("High Sharpe uncertainty")
+
+        if dd_boot['ci_upper'] > 0.30:
+            warnings.append(f"Potential for large drawdowns (>{dd_boot['ci_upper']:.1%})")
+
+        # Determine overall robustness
+        is_robust = (
+            sharpe_boot['ci_lower'] > 0 and
+            (perm_p is None or perm_p < 0.05) and
+            cv_consistency >= 0.6 and
+            len(warnings) <= 1
+        )
+
+        return RobustnessReport(
+            sharpe_estimate=sharpe_boot['estimate'],
+            sharpe_ci=(sharpe_boot['ci_lower'], sharpe_boot['ci_upper']),
+            sharpe_std_error=sharpe_boot['std_error'],
+            max_drawdown_estimate=dd_boot['estimate'],
+            max_drawdown_ci=(dd_boot['ci_lower'], dd_boot['ci_upper']),
+            permutation_p_value=perm_p,
+            cv_consistency=cv_consistency,
+            is_robust=is_robust,
+            warnings=warnings
+        )
+
+    def _bootstrap_sharpe(self, returns: np.ndarray) -> Dict:
+        """Bootstrap the Sharpe ratio."""
+        alpha = 1 - self.confidence_level
+
+        def sharpe(r):
+            if np.std(r) == 0:
+                return 0
+            return np.sqrt(252) * np.mean(r) / np.std(r)
+
+        original = sharpe(returns)
+        n = len(returns)
+
+        boot_sharpes = np.zeros(self.n_bootstrap)
+        for i in range(self.n_bootstrap):
+            idx = np.random.choice(n, size=n, replace=True)
+            boot_sharpes[i] = sharpe(returns[idx])
+
+        return {
+            'estimate': original,
+            'std_error': np.std(boot_sharpes),
+            'ci_lower': np.percentile(boot_sharpes, 100 * alpha / 2),
+            'ci_upper': np.percentile(boot_sharpes, 100 * (1 - alpha / 2))
+        }
+
+    def _bootstrap_maxdd(self, returns: np.ndarray) -> Dict:
+        """Bootstrap maximum drawdown."""
+        alpha = 1 - self.confidence_level
+
+        def maxdd(r):
+            cum = np.cumprod(1 + r)
+            peak = np.maximum.accumulate(cum)
+            dd = (peak - cum) / peak
+            return np.max(dd)
+
+        original = maxdd(returns)
+        n = len(returns)
+
+        # Use block bootstrap to preserve time structure
+        block_len = max(5, int(n ** (1/3)))
+
+        boot_dds = np.zeros(self.n_bootstrap)
+        for i in range(self.n_bootstrap):
+            # Block bootstrap
+            n_blocks = int(np.ceil(n / block_len))
+            blocks = []
+            for _ in range(n_blocks):
+                start = np.random.randint(0, n - block_len + 1)
+                blocks.extend(returns[start:start + block_len])
+            boot_sample = np.array(blocks[:n])
+            boot_dds[i] = maxdd(boot_sample)
+
+        return {
+            'estimate': original,
+            'std_error': np.std(boot_dds),
+            'ci_lower': np.percentile(boot_dds, 100 * alpha / 2),
+            'ci_upper': np.percentile(boot_dds, 100 * (1 - alpha / 2))
+        }
+
+    def _permutation_test(self, signals: np.ndarray,
+                          returns: np.ndarray) -> float:
+        """Permutation test for signal predictive power."""
+        def sharpe(r):
+            if np.std(r) == 0:
+                return 0
+            return np.sqrt(252) * np.mean(r) / np.std(r)
+
+        observed = sharpe(signals * returns)
+
+        perm_sharpes = np.zeros(self.n_permutations)
+        for i in range(self.n_permutations):
+            perm_signals = np.random.permutation(signals)
+            perm_sharpes[i] = sharpe(perm_signals * returns)
+
+        return np.mean(perm_sharpes >= observed)
+
+    def _walk_forward_cv(self, signals: np.ndarray,
+                        returns: np.ndarray) -> float:
+        """Walk-forward cross-validation consistency."""
+        n = len(returns)
+        test_size = n // 5
+        n_folds = 4
+
+        positive_folds = 0
+        for i in range(n_folds):
+            test_end = n - i * test_size
+            test_start = test_end - test_size
+
+            if test_start < test_size:
+                break
+
+            test_ret = returns[test_start:test_end]
+            test_sig = signals[test_start:test_end]
+            strat_ret = test_sig * test_ret
+
+            if np.mean(strat_ret) > 0:
+                positive_folds += 1
+
+        return positive_folds / n_folds
+
+    def _walk_forward_cv_returns(self, returns: np.ndarray) -> float:
+        """Walk-forward CV for return series (no signals)."""
+        n = len(returns)
+        test_size = n // 5
+        n_folds = 4
+
+        positive_folds = 0
+        for i in range(n_folds):
+            test_end = n - i * test_size
+            test_start = test_end - test_size
+
+            if test_start < test_size:
+                break
+
+            test_ret = returns[test_start:test_end]
+            if np.mean(test_ret) > 0:
+                positive_folds += 1
+
+        return positive_folds / n_folds
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("STRATEGY ROBUSTNESS TESTING")
+    print("=" * 60)
+
+    # Simulate strategy with edge
+    n = 500
+    market_returns = np.random.normal(0.0003, 0.015, n)
+
+    # Strategy with some predictive power
+    true_signal = np.sign(market_returns + np.random.normal(0, 0.01, n))
+    noise = np.random.choice([-1, 1], n)
+    signals = np.where(np.random.random(n) < 0.6, true_signal, noise)
+
+    tester = StrategyRobustnessTester()
+    report = tester.test_strategy(market_returns, signals)
+
+    print(f"\n{'='*40}")
+    print("ROBUSTNESS REPORT")
+    print(f"{'='*40}")
+    print(f"Sharpe Ratio: {report.sharpe_estimate:.3f}")
+    print(f"  95% CI: [{report.sharpe_ci[0]:.3f}, {report.sharpe_ci[1]:.3f}]")
+    print(f"  Std Error: {report.sharpe_std_error:.3f}")
+    print(f"\nMax Drawdown: {report.max_drawdown_estimate:.2%}")
+    print(f"  95% CI: [{report.max_drawdown_ci[0]:.2%}, {report.max_drawdown_ci[1]:.2%}]")
+    print(f"\nPermutation p-value: {report.permutation_p_value:.4f}")
+    print(f"CV Consistency: {report.cv_consistency:.1%}")
+    print(f"\nOverall: {'ROBUST' if report.is_robust else 'NOT ROBUST'}")
+
+    if report.warnings:
+        print("\nWarnings:")
+        for w in report.warnings:
+            print(f"  - {w}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 8: Quiz -->
+        <section class="content-section fade-in">
+            <h2>8. Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>Question 1: What is the key difference between bootstrap and permutation tests?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'A')">A) Bootstrap is faster computationally</button>
+                        <button onclick="checkAnswer(1, 'B')">B) Bootstrap estimates sampling distributions; permutation tests hypotheses</button>
+                        <button onclick="checkAnswer(1, 'C')">C) Permutation requires larger sample sizes</button>
+                        <button onclick="checkAnswer(1, 'D')">D) There is no difference; they are the same</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>Question 2: Why is block bootstrap preferred over standard bootstrap for time series?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'A')">A) It's computationally more efficient</button>
+                        <button onclick="checkAnswer(2, 'B')">B) It preserves temporal dependence (autocorrelation)</button>
+                        <button onclick="checkAnswer(2, 'C')">C) It produces narrower confidence intervals</button>
+                        <button onclick="checkAnswer(2, 'D')">D) It works with smaller sample sizes</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>Question 3: In a permutation test for strategy significance, what is being permuted?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'A')">A) The strategy returns</button>
+                        <button onclick="checkAnswer(3, 'B')">B) The trading signals (relative to returns)</button>
+                        <button onclick="checkAnswer(3, 'C')">C) The time order of observations</button>
+                        <button onclick="checkAnswer(3, 'D')">D) The bootstrap samples</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>Question 4: What does walk-forward cross-validation test in strategy evaluation?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'A')">A) Whether the strategy has any alpha</button>
+                        <button onclick="checkAnswer(4, 'B')">B) Out-of-sample consistency across different time periods</button>
+                        <button onclick="checkAnswer(4, 'C')">C) The optimal parameter values</button>
+                        <button onclick="checkAnswer(4, 'D')">D) Transaction cost sensitivity</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>Question 5: A bootstrap confidence interval for Sharpe ratio is [0.15, 1.85]. What does this suggest?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'A')">A) The strategy is highly profitable</button>
+                        <button onclick="checkAnswer(5, 'B')">B) There is high uncertainty about the true Sharpe ratio</button>
+                        <button onclick="checkAnswer(5, 'C')">C) The strategy should be rejected</button>
+                        <button onclick="checkAnswer(5, 'D')">D) More bootstrap samples are needed</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+            </div>
+
+            <div class="score-container" id="scoreContainer" style="display:none;">
+                <h3>Your Score: <span id="finalScore"></span>/5</h3>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script>
+        let bootstrapDistChart, permDistChart;
+        let quizAnswers = {};
+        const correctAnswers = {
+            1: 'B',
+            2: 'B',
+            3: 'B',
+            4: 'B',
+            5: 'B'
+        };
+
+        const explanations = {
+            1: {
+                'A': 'Incorrect. Computational speed isn\'t the fundamental difference.',
+                'B': 'Correct! Bootstrap resamples WITH replacement to estimate the sampling distribution of a statistic. Permutation tests shuffle WITHOUT replacement to build a null distribution for hypothesis testing.',
+                'C': 'Incorrect. Sample size requirements depend on the specific application.',
+                'D': 'Incorrect. They serve fundamentally different purposes.'
+            },
+            2: {
+                'A': 'Incorrect. Block bootstrap is actually slightly slower due to block handling.',
+                'B': 'Correct! Standard bootstrap assumes independence, but time series have autocorrelation. Block bootstrap preserves this temporal structure by resampling consecutive blocks instead of individual observations.',
+                'C': 'Incorrect. Block bootstrap may actually produce wider CIs due to accounting for dependence.',
+                'D': 'Incorrect. Block bootstrap actually needs reasonable sample sizes to have enough blocks.'
+            },
+            3: {
+                'A': 'Incorrect. We don\'t permute the returns themselves.',
+                'B': 'Correct! By permuting signals while keeping returns fixed, we break any true signal-return relationship. If the original strategy still outperforms the permuted versions, the signal has predictive power.',
+                'C': 'Incorrect. Time order is preserved; only the signal-return pairing is shuffled.',
+                'D': 'Incorrect. Bootstrap samples aren\'t involved in permutation tests.'
+            },
+            4: {
+                'A': 'Incorrect. Alpha is measured by the strategy returns, not CV specifically.',
+                'B': 'Correct! Walk-forward CV tests if the strategy performs consistently across multiple non-overlapping out-of-sample periods. High consistency suggests the strategy isn\'t overfit to the training data.',
+                'C': 'Incorrect. Parameter optimization is a separate process (though CV can be used for it).',
+                'D': 'Incorrect. Transaction cost analysis is separate from cross-validation.'
+            },
+            5: {
+                'A': 'Incorrect. A wide CI doesn\'t confirm profitability.',
+                'B': 'Correct! The wide interval [0.15, 1.85] indicates substantial uncertainty about the true Sharpe ratio. While the point estimate may look good, the true value could be anywhere from barely positive to quite high.',
+                'C': 'Incorrect. The CI is entirely positive, so we can\'t reject profitability.',
+                'D': 'Incorrect. With typical bootstrap samples (5000+), adding more rarely helps much.'
+            }
+        };
+
+        function randn() {
+            const u1 = Math.random();
+            const u2 = Math.random();
+            return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        function generateReturns(n, mean, vol) {
+            const returns = [];
+            for (let i = 0; i < n; i++) {
+                returns.push(mean / 100 + (vol / 100) * randn());
+            }
+            return returns;
+        }
+
+        function calcSharpe(returns) {
+            const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+            const variance = returns.reduce((sum, r) => sum + (r - mean) ** 2, 0) / returns.length;
+            const std = Math.sqrt(variance);
+            return std > 0 ? Math.sqrt(252) * mean / std : 0;
+        }
+
+        function calcMean(returns) {
+            return returns.reduce((a, b) => a + b, 0) / returns.length;
+        }
+
+        function calcVolatility(returns) {
+            const mean = calcMean(returns);
+            const variance = returns.reduce((sum, r) => sum + (r - mean) ** 2, 0) / returns.length;
+            return Math.sqrt(variance * 252);
+        }
+
+        function calcMaxDrawdown(returns) {
+            let peak = 1;
+            let cumulative = 1;
+            let maxDD = 0;
+            for (const r of returns) {
+                cumulative *= (1 + r);
+                peak = Math.max(peak, cumulative);
+                const dd = (peak - cumulative) / peak;
+                maxDD = Math.max(maxDD, dd);
+            }
+            return maxDD;
+        }
+
+        function runBootstrap() {
+            const statType = document.getElementById('statType').value;
+            const sampleSize = parseInt(document.getElementById('sampleSize').value);
+            const nBootstrap = parseInt(document.getElementById('nBootstrap').value);
+            const meanReturn = parseFloat(document.getElementById('meanReturn').value);
+            const volatility = parseFloat(document.getElementById('volatilityInput').value);
+
+            // Generate sample data
+            const returns = generateReturns(sampleSize, meanReturn, volatility);
+
+            // Select statistic function
+            let statFunc, statName, formatFunc;
+            switch (statType) {
+                case 'sharpe':
+                    statFunc = calcSharpe;
+                    statName = 'Sharpe Ratio';
+                    formatFunc = x => x.toFixed(3);
+                    break;
+                case 'mean':
+                    statFunc = r => calcMean(r) * 252 * 100; // Annualized %
+                    statName = 'Mean Return (Annual %)';
+                    formatFunc = x => x.toFixed(2) + '%';
+                    break;
+                case 'volatility':
+                    statFunc = r => calcVolatility(r) * 100;
+                    statName = 'Volatility (Annual %)';
+                    formatFunc = x => x.toFixed(2) + '%';
+                    break;
+                case 'maxdd':
+                    statFunc = r => calcMaxDrawdown(r) * 100;
+                    statName = 'Max Drawdown (%)';
+                    formatFunc = x => x.toFixed(2) + '%';
+                    break;
+            }
+
+            // Calculate original statistic
+            const originalStat = statFunc(returns);
+
+            // Bootstrap
+            const bootstrapStats = [];
+            for (let b = 0; b < nBootstrap; b++) {
+                const bootSample = [];
+                for (let i = 0; i < sampleSize; i++) {
+                    const idx = Math.floor(Math.random() * sampleSize);
+                    bootSample.push(returns[idx]);
+                }
+                bootstrapStats.push(statFunc(bootSample));
+            }
+
+            // Sort for percentiles
+            bootstrapStats.sort((a, b) => a - b);
+
+            const stdError = Math.sqrt(bootstrapStats.reduce((sum, x) =>
+                sum + (x - originalStat) ** 2, 0) / (nBootstrap - 1));
+
+            const ciLower = bootstrapStats[Math.floor(0.025 * nBootstrap)];
+            const ciUpper = bootstrapStats[Math.floor(0.975 * nBootstrap)];
+
+            // Display results
+            let html = '<div class="result-grid">';
+            html += `<div class="result-item"><span class="result-label">${statName}:</span><span class="result-value">${formatFunc(originalStat)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Bootstrap Std Error:</span><span class="result-value">${formatFunc(stdError)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">95% CI Lower:</span><span class="result-value">${formatFunc(ciLower)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">95% CI Upper:</span><span class="result-value">${formatFunc(ciUpper)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">CI Width:</span><span class="result-value">${formatFunc(ciUpper - ciLower)}</span></div>`;
+            html += '</div>';
+            document.getElementById('bootstrapOutput').innerHTML = html;
+
+            // Update chart
+            updateBootstrapChart(bootstrapStats, originalStat, ciLower, ciUpper, statName);
+        }
+
+        function updateBootstrapChart(stats, original, ciLower, ciUpper, statName) {
+            const ctx = document.getElementById('bootstrapDistChart').getContext('2d');
+            if (bootstrapDistChart) bootstrapDistChart.destroy();
+
+            // Create histogram
+            const nBins = 40;
+            const min = Math.min(...stats);
+            const max = Math.max(...stats);
+            const binWidth = (max - min) / nBins;
+            const bins = Array(nBins).fill(0);
+            const binCenters = [];
+
+            for (let i = 0; i < nBins; i++) {
+                binCenters.push((min + (i + 0.5) * binWidth).toFixed(3));
+            }
+
+            stats.forEach(s => {
+                const binIdx = Math.min(Math.floor((s - min) / binWidth), nBins - 1);
+                bins[binIdx]++;
+            });
+
+            const maxCount = Math.max(...bins);
+            const normalizedBins = bins.map(b => b / stats.length);
+
+            // Color bins based on CI
+            const colors = binCenters.map((_, i) => {
+                const binCenter = min + (i + 0.5) * binWidth;
+                if (binCenter < ciLower || binCenter > ciUpper) {
+                    return 'rgba(244, 67, 54, 0.6)';
+                }
+                return 'rgba(76, 175, 80, 0.7)';
+            });
+
+            bootstrapDistChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binCenters,
+                    datasets: [{
+                        label: 'Bootstrap Distribution',
+                        data: normalizedBins,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: `Bootstrap Distribution of ${statName}`, color: '#e0e0e0' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: statName, color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Density', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function runPermutationTest() {
+            const winRate = parseFloat(document.getElementById('winRate').value) / 100;
+            const nTrades = parseInt(document.getElementById('nTrades').value);
+            const nPermutations = parseInt(document.getElementById('nPermutations').value);
+
+            // Generate trade data
+            const signals = [];
+            const returns = [];
+            for (let i = 0; i < nTrades; i++) {
+                const signal = Math.random() < 0.5 ? 1 : -1;
+                signals.push(signal);
+                // Generate return that aligns with signal at win rate
+                const win = Math.random() < winRate;
+                const returnMag = Math.abs(randn() * 0.02);
+                returns.push(win ? signal * returnMag : -signal * returnMag);
+            }
+
+            // Original strategy Sharpe
+            const stratReturns = signals.map((s, i) => s * returns[i]);
+            const observedSharpe = calcSharpe(stratReturns);
+
+            // Permutation test
+            const permSharpes = [];
+            for (let p = 0; p < nPermutations; p++) {
+                // Shuffle signals
+                const shuffled = [...signals].sort(() => Math.random() - 0.5);
+                const permReturns = shuffled.map((s, i) => s * returns[i]);
+                permSharpes.push(calcSharpe(permReturns));
+            }
+
+            // P-value
+            const pValue = permSharpes.filter(s => s >= observedSharpe).length / nPermutations;
+
+            // Display results
+            let html = '<div class="result-grid">';
+            html += `<div class="result-item"><span class="result-label">Observed Sharpe:</span><span class="result-value">${observedSharpe.toFixed(3)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">P-value:</span><span class="result-value ${pValue < 0.05 ? 'positive' : 'negative'}">${pValue.toFixed(4)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Mean Permuted Sharpe:</span><span class="result-value">${(permSharpes.reduce((a, b) => a + b, 0) / nPermutations).toFixed(3)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Significance:</span><span class="result-value ${pValue < 0.05 ? 'positive' : 'negative'}">${pValue < 0.05 ? 'SIGNIFICANT' : 'NOT SIGNIFICANT'}</span></div>`;
+            html += '</div>';
+            document.getElementById('permOutput').innerHTML = html;
+
+            // Update chart
+            updatePermutationChart(permSharpes, observedSharpe);
+        }
+
+        function updatePermutationChart(nullDist, observed) {
+            const ctx = document.getElementById('permDistChart').getContext('2d');
+            if (permDistChart) permDistChart.destroy();
+
+            // Create histogram
+            const nBins = 40;
+            const allValues = [...nullDist, observed];
+            const min = Math.min(...allValues);
+            const max = Math.max(...allValues);
+            const binWidth = (max - min) / nBins;
+            const bins = Array(nBins).fill(0);
+            const binCenters = [];
+
+            for (let i = 0; i < nBins; i++) {
+                binCenters.push((min + (i + 0.5) * binWidth).toFixed(3));
+            }
+
+            nullDist.forEach(s => {
+                const binIdx = Math.min(Math.floor((s - min) / binWidth), nBins - 1);
+                bins[binIdx]++;
+            });
+
+            const normalizedBins = bins.map(b => b / nullDist.length);
+
+            // Color bins based on whether they exceed observed
+            const colors = binCenters.map((_, i) => {
+                const binCenter = min + (i + 0.5) * binWidth;
+                return binCenter >= observed ? 'rgba(244, 67, 54, 0.7)' : 'rgba(100, 181, 246, 0.7)';
+            });
+
+            permDistChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binCenters,
+                    datasets: [{
+                        label: 'Null Distribution',
+                        data: normalizedBins,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Permutation Null Distribution (Red = Exceeds Observed)', color: '#e0e0e0' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Sharpe Ratio', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Density', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function checkAnswer(questionNum, answer) {
+            const feedback = document.getElementById(`feedback${questionNum}`);
+            const isCorrect = answer === correctAnswers[questionNum];
+
+            quizAnswers[questionNum] = answer;
+
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[questionNum][answer]}
+            </div>`;
+            feedback.style.display = 'block';
+
+            const buttons = document.querySelectorAll(`#q${questionNum} button`);
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (Object.keys(quizAnswers).length === 5) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const score = Object.keys(quizAnswers).reduce((sum, q) =>
+                sum + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('scoreContainer').style.display = 'block';
+        }
+
+        window.onload = function() {
+            runBootstrap();
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

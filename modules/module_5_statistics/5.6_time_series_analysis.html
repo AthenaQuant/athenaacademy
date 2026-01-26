@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master time series analysis for quantitative trading. Learn stationarity, ADF tests, ARIMA, and cointegration for pairs trading.">
+    <title>5.6 Time Series Analysis | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .data-table { width: 100%; margin: 1rem 0; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .result-value.positive { color: var(--success); }
+        .result-value.negative { color: var(--error); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; }
+        .score-container h3 { color: white; margin: 0; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.6</span>
+                    <span class="nav-module-title">Time Series Analysis</span>
+                </div>
+                <a href="5.7_monte_carlo_simulation.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.6 Time Series Analysis</span>
+                </div>
+                <h1>Time Series Analysis</h1>
+                <p class="module-subtitle">
+                    Master time series techniques for financial forecasting and pairs trading strategies.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 60 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Interactive Lab</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Section 1: Introduction -->
+        <section class="content-section fade-in">
+            <h2>1. Introduction to Time Series Analysis</h2>
+
+            <p>Time series analysis is the backbone of quantitative finance. Unlike cross-sectional data, financial time series have <strong>temporal dependencies</strong>—what happened yesterday affects today, and today affects tomorrow. Understanding these patterns is crucial for forecasting prices, detecting mean reversion, and building pairs trading strategies.</p>
+
+            <div class="key-concept">
+                <h3>Why Time Series Analysis Matters in Trading</h3>
+                <ul>
+                    <li><strong>Price Forecasting:</strong> ARIMA and GARCH models predict future price movements</li>
+                    <li><strong>Mean Reversion:</strong> Stationarity tests identify mean-reverting assets</li>
+                    <li><strong>Pairs Trading:</strong> Cointegration finds assets that move together long-term</li>
+                    <li><strong>Risk Management:</strong> Volatility clustering informs position sizing</li>
+                    <li><strong>Seasonality:</strong> Decomposition reveals calendar effects and patterns</li>
+                </ul>
+            </div>
+
+            <div class="important-note">
+                <h3>The Stationarity Problem</h3>
+                <p>Most statistical methods assume <strong>stationarity</strong>—constant mean and variance over time. But stock prices are <strong>non-stationary</strong>; they trend upward over time. The solution? Work with <strong>returns</strong> instead of prices, or use differencing to achieve stationarity.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Conceptual Foundation -->
+        <section class="content-section fade-in">
+            <h2>2. Stationarity and Unit Root Tests</h2>
+
+            <h3>What is Stationarity?</h3>
+            <p>A time series is <strong>stationary</strong> if its statistical properties don't change over time:</p>
+
+            <div class="formula-box">
+                <h4>Stationarity Conditions</h4>
+                <p><strong>Strict Stationarity:</strong></p>
+                <p>\[F(x_{t_1}, x_{t_2}, ..., x_{t_n}) = F(x_{t_1+\tau}, x_{t_2+\tau}, ..., x_{t_n+\tau})\]</p>
+                <p><strong>Weak (Covariance) Stationarity:</strong></p>
+                <ul>
+                    <li>Constant mean: \(E[X_t] = \mu\) for all t</li>
+                    <li>Constant variance: \(Var(X_t) = \sigma^2\) for all t</li>
+                    <li>Autocovariance depends only on lag: \(Cov(X_t, X_{t+h}) = \gamma(h)\)</li>
+                </ul>
+            </div>
+
+            <h3>The Augmented Dickey-Fuller (ADF) Test</h3>
+            <p>The ADF test checks for a <strong>unit root</strong>—the hallmark of non-stationarity. The test regression is:</p>
+
+            <div class="formula-box">
+                <h4>ADF Test Equation</h4>
+                <p>\[\Delta y_t = \alpha + \beta t + \gamma y_{t-1} + \sum_{i=1}^{p} \delta_i \Delta y_{t-i} + \epsilon_t\]</p>
+                <p>Where:</p>
+                <ul>
+                    <li>\(\Delta y_t = y_t - y_{t-1}\) (first difference)</li>
+                    <li>\(\alpha\) = constant term</li>
+                    <li>\(\beta t\) = linear time trend</li>
+                    <li>\(\gamma\) = coefficient tested for unit root</li>
+                    <li>Lagged differences account for serial correlation</li>
+                </ul>
+                <p><strong>Null Hypothesis:</strong> \(\gamma = 0\) (unit root exists, non-stationary)</p>
+                <p><strong>Alternative:</strong> \(\gamma < 0\) (no unit root, stationary)</p>
+            </div>
+
+            <h3>Autocorrelation Function (ACF)</h3>
+            <p>ACF measures the correlation between a time series and its lagged values:</p>
+
+            <div class="formula-box">
+                <h4>ACF Formula</h4>
+                <p>\[\rho_k = \frac{\gamma_k}{\gamma_0} = \frac{Cov(X_t, X_{t+k})}{Var(X_t)}\]</p>
+                <p>Where \(\gamma_k\) is the autocovariance at lag k, and \(\gamma_0\) is the variance.</p>
+            </div>
+
+            <h3>Partial Autocorrelation Function (PACF)</h3>
+            <p>PACF measures the correlation at lag k after removing the effects of intermediate lags:</p>
+
+            <div class="formula-box">
+                <h4>PACF Interpretation</h4>
+                <p>PACF at lag k = Correlation between \(X_t\) and \(X_{t-k}\) after controlling for \(X_{t-1}, X_{t-2}, ..., X_{t-k+1}\)</p>
+                <p><strong>Key Uses:</strong></p>
+                <ul>
+                    <li>ACF decays slowly + PACF cuts off → AR(p) process</li>
+                    <li>ACF cuts off + PACF decays slowly → MA(q) process</li>
+                    <li>Both decay slowly → ARMA(p,q) process</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Mathematical Framework -->
+        <section class="content-section fade-in">
+            <h2>3. ARIMA Models for Forecasting</h2>
+
+            <h3>The ARIMA(p, d, q) Model</h3>
+            <p>ARIMA combines three components: Autoregressive (AR), Integrated (I), and Moving Average (MA).</p>
+
+            <div class="formula-box">
+                <h4>ARIMA Components</h4>
+                <p><strong>AR(p) - Autoregressive:</strong></p>
+                <p>\[X_t = c + \phi_1 X_{t-1} + \phi_2 X_{t-2} + ... + \phi_p X_{t-p} + \epsilon_t\]</p>
+
+                <p><strong>I(d) - Integrated:</strong></p>
+                <p>Apply differencing d times to achieve stationarity: \(\Delta^d X_t\)</p>
+
+                <p><strong>MA(q) - Moving Average:</strong></p>
+                <p>\[X_t = \mu + \epsilon_t + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + ... + \theta_q \epsilon_{t-q}\]</p>
+
+                <p><strong>Full ARIMA(p,d,q):</strong></p>
+                <p>\[(1 - \sum_{i=1}^{p} \phi_i L^i)(1-L)^d X_t = c + (1 + \sum_{j=1}^{q} \theta_j L^j)\epsilon_t\]</p>
+            </div>
+
+            <h3>Model Selection: AIC and BIC</h3>
+            <div class="formula-box">
+                <h4>Information Criteria</h4>
+                <p>\[AIC = 2k - 2\ln(\hat{L})\]</p>
+                <p>\[BIC = k\ln(n) - 2\ln(\hat{L})\]</p>
+                <p>Where k = number of parameters, n = sample size, \(\hat{L}\) = maximized likelihood</p>
+                <p><strong>Rule:</strong> Lower values indicate better models. BIC penalizes complexity more heavily.</p>
+            </div>
+
+            <h3>Trend and Seasonality Decomposition</h3>
+            <p>Financial time series can be decomposed into components:</p>
+
+            <div class="formula-box">
+                <h4>Decomposition Models</h4>
+                <p><strong>Additive:</strong> \(Y_t = T_t + S_t + C_t + R_t\)</p>
+                <p><strong>Multiplicative:</strong> \(Y_t = T_t \times S_t \times C_t \times R_t\)</p>
+                <p>Where:</p>
+                <ul>
+                    <li>\(T_t\) = Trend component</li>
+                    <li>\(S_t\) = Seasonal component</li>
+                    <li>\(C_t\) = Cyclical component</li>
+                    <li>\(R_t\) = Residual/noise</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Cointegration for Pairs Trading -->
+        <section class="content-section fade-in">
+            <h2>4. Cointegration for Pairs Trading</h2>
+
+            <h3>The Concept of Cointegration</h3>
+            <p>Two non-stationary series are <strong>cointegrated</strong> if a linear combination of them is stationary. This is the mathematical foundation of pairs trading.</p>
+
+            <div class="key-concept">
+                <h3>Cointegration vs Correlation</h3>
+                <ul>
+                    <li><strong>Correlation:</strong> Measures short-term co-movement (can break down)</li>
+                    <li><strong>Cointegration:</strong> Measures long-term equilibrium relationship</li>
+                </ul>
+                <p>Example: Two drunks walking together. They may wander randomly (non-stationary), but if tied by a rope (cointegrated), the distance between them stays bounded.</p>
+            </div>
+
+            <div class="formula-box">
+                <h4>Cointegration Equation</h4>
+                <p>If \(Y_t \sim I(1)\) and \(X_t \sim I(1)\), they are cointegrated if:</p>
+                <p>\[Z_t = Y_t - \beta X_t \sim I(0)\]</p>
+                <p>Where \(\beta\) is the cointegrating coefficient (hedge ratio), and \(Z_t\) is the stationary spread.</p>
+            </div>
+
+            <h3>Engle-Granger Two-Step Method</h3>
+            <div class="formula-box">
+                <h4>Testing for Cointegration</h4>
+                <p><strong>Step 1:</strong> Estimate the cointegrating regression:</p>
+                <p>\[Y_t = \alpha + \beta X_t + \epsilon_t\]</p>
+                <p><strong>Step 2:</strong> Test residuals \(\hat{\epsilon}_t\) for stationarity using ADF test</p>
+                <p>If residuals are stationary (ADF p-value < 0.05), the series are cointegrated.</p>
+            </div>
+
+            <h3>Half-Life of Mean Reversion</h3>
+            <p>For pairs trading, we need to know how quickly the spread reverts to its mean:</p>
+
+            <div class="formula-box">
+                <h4>Half-Life Calculation</h4>
+                <p>Fit an AR(1) to the spread: \(Z_t = \phi Z_{t-1} + \epsilon_t\)</p>
+                <p>\[\text{Half-Life} = \frac{-\ln(2)}{\ln(\phi)}\]</p>
+                <p><strong>Interpretation:</strong> Number of periods for the spread to revert halfway to its mean.</p>
+                <p><strong>Trading Rule:</strong> Half-life should be 1-30 days for practical pairs trading.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>5. Python Implementation</h2>
+
+            <div class="code-block">
+                <h3>Complete Time Series Analysis System</h3>
+                <pre><code class="language-python">"""
+Time Series Analysis for Quantitative Trading
+Covers: Stationarity, ARIMA, Cointegration, Pairs Trading
+"""
+
+import numpy as np
+import pandas as pd
+from dataclasses import dataclass
+from typing import Tuple, Optional, List, Dict
+from scipy import stats
+from scipy.optimize import minimize
+
+
+@dataclass
+class StationarityResult:
+    """Results from stationarity testing."""
+    adf_statistic: float
+    p_value: float
+    critical_values: Dict[str, float]
+    is_stationary: bool
+    n_lags: int
+
+    def __str__(self) -> str:
+        status = "STATIONARY" if self.is_stationary else "NON-STATIONARY"
+        return f"ADF Statistic: {self.adf_statistic:.4f}, p-value: {self.p_value:.4f} -> {status}"
+
+
+@dataclass
+class CointegrationResult:
+    """Results from cointegration testing."""
+    hedge_ratio: float
+    spread: np.ndarray
+    adf_statistic: float
+    p_value: float
+    is_cointegrated: bool
+    half_life: float
+
+    def __str__(self) -> str:
+        status = "COINTEGRATED" if self.is_cointegrated else "NOT COINTEGRATED"
+        return (f"Hedge Ratio: {self.hedge_ratio:.4f}, "
+                f"Half-Life: {self.half_life:.1f} days, "
+                f"p-value: {self.p_value:.4f} -> {status}")
+
+
+def adf_test(series: np.ndarray, max_lag: Optional[int] = None) -> StationarityResult:
+    """
+    Perform Augmented Dickey-Fuller test for stationarity.
+
+    The ADF test checks for unit root in the time series.
+    Null hypothesis: Series has a unit root (non-stationary)
+
+    Args:
+        series: Time series data
+        max_lag: Maximum lag order (default: auto-select)
+
+    Returns:
+        StationarityResult with test statistics and conclusion
+    """
+    series = np.asarray(series).flatten()
+    n = len(series)
+
+    if max_lag is None:
+        # Schwert's rule of thumb
+        max_lag = int(np.ceil(12 * (n / 100) ** 0.25))
+
+    # First difference
+    diff = np.diff(series)
+
+    # Best lag selection using AIC
+    best_aic = np.inf
+    best_lag = 1
+
+    for lag in range(1, min(max_lag + 1, len(diff) // 2)):
+        try:
+            aic = _adf_regression_aic(series, lag)
+            if aic < best_aic:
+                best_aic = aic
+                best_lag = lag
+        except:
+            continue
+
+    # Run ADF regression with best lag
+    adf_stat, p_value = _adf_regression(series, best_lag)
+
+    # Critical values for ADF test (with constant, no trend)
+    critical_values = {
+        '1%': -3.43,
+        '5%': -2.86,
+        '10%': -2.57
+    }
+
+    is_stationary = p_value < 0.05
+
+    return StationarityResult(
+        adf_statistic=adf_stat,
+        p_value=p_value,
+        critical_values=critical_values,
+        is_stationary=is_stationary,
+        n_lags=best_lag
+    )
+
+
+def _adf_regression(series: np.ndarray, lag: int) -> Tuple[float, float]:
+    """Run ADF regression and return test statistic and p-value."""
+    n = len(series)
+    diff = np.diff(series)
+
+    # Build design matrix
+    y = diff[lag:]
+    X = np.column_stack([
+        np.ones(len(y)),  # constant
+        series[lag:-1]    # lagged level
+    ])
+
+    # Add lagged differences
+    for i in range(1, lag + 1):
+        X = np.column_stack([X, diff[lag - i:-i if i < lag else len(diff) - lag]])
+
+    # OLS estimation
+    try:
+        beta = np.linalg.lstsq(X, y, rcond=None)[0]
+        residuals = y - X @ beta
+
+        # Standard error of gamma coefficient
+        sigma2 = np.sum(residuals ** 2) / (len(y) - X.shape[1])
+        var_beta = sigma2 * np.linalg.inv(X.T @ X)
+        se_gamma = np.sqrt(var_beta[1, 1])
+
+        # ADF statistic
+        adf_stat = beta[1] / se_gamma
+
+        # Approximate p-value using MacKinnon regression surface
+        p_value = _mackinnon_pvalue(adf_stat, n)
+
+        return adf_stat, p_value
+    except:
+        return 0.0, 1.0
+
+
+def _adf_regression_aic(series: np.ndarray, lag: int) -> float:
+    """Calculate AIC for lag selection."""
+    n = len(series)
+    diff = np.diff(series)
+
+    y = diff[lag:]
+    X = np.column_stack([
+        np.ones(len(y)),
+        series[lag:-1]
+    ])
+
+    for i in range(1, lag + 1):
+        X = np.column_stack([X, diff[lag - i:-i if i < lag else len(diff) - lag]])
+
+    try:
+        beta = np.linalg.lstsq(X, y, rcond=None)[0]
+        residuals = y - X @ beta
+        ssr = np.sum(residuals ** 2)
+        k = X.shape[1]
+        aic = len(y) * np.log(ssr / len(y)) + 2 * k
+        return aic
+    except:
+        return np.inf
+
+
+def _mackinnon_pvalue(adf_stat: float, n: int) -> float:
+    """Approximate p-value using MacKinnon critical values."""
+    # Simplified approximation for constant-only case
+    if adf_stat < -3.43:
+        return 0.01
+    elif adf_stat < -2.86:
+        return 0.05
+    elif adf_stat < -2.57:
+        return 0.10
+    else:
+        # Linear interpolation for higher p-values
+        return min(1.0, 0.10 + (adf_stat + 2.57) * 0.15)
+
+
+def calculate_acf(series: np.ndarray, max_lag: int = 20) -> np.ndarray:
+    """
+    Calculate Autocorrelation Function.
+
+    Args:
+        series: Time series data
+        max_lag: Maximum lag to compute
+
+    Returns:
+        Array of autocorrelation values for lags 0 to max_lag
+    """
+    series = np.asarray(series).flatten()
+    n = len(series)
+    mean = np.mean(series)
+    var = np.var(series)
+
+    acf = np.zeros(max_lag + 1)
+
+    for k in range(max_lag + 1):
+        if k == 0:
+            acf[k] = 1.0
+        else:
+            cov = np.sum((series[:-k] - mean) * (series[k:] - mean)) / n
+            acf[k] = cov / var
+
+    return acf
+
+
+def calculate_pacf(series: np.ndarray, max_lag: int = 20) -> np.ndarray:
+    """
+    Calculate Partial Autocorrelation Function using Durbin-Levinson algorithm.
+
+    Args:
+        series: Time series data
+        max_lag: Maximum lag to compute
+
+    Returns:
+        Array of partial autocorrelation values
+    """
+    acf = calculate_acf(series, max_lag)
+    pacf = np.zeros(max_lag + 1)
+    pacf[0] = 1.0
+
+    if max_lag == 0:
+        return pacf
+
+    # Durbin-Levinson recursion
+    phi = np.zeros((max_lag + 1, max_lag + 1))
+    phi[1, 1] = acf[1]
+    pacf[1] = acf[1]
+
+    for k in range(2, max_lag + 1):
+        # Calculate phi[k,k]
+        num = acf[k] - sum(phi[k-1, j] * acf[k-j] for j in range(1, k))
+        den = 1 - sum(phi[k-1, j] * acf[j] for j in range(1, k))
+
+        if abs(den) < 1e-10:
+            phi[k, k] = 0
+        else:
+            phi[k, k] = num / den
+
+        pacf[k] = phi[k, k]
+
+        # Update other phi values
+        for j in range(1, k):
+            phi[k, j] = phi[k-1, j] - phi[k, k] * phi[k-1, k-j]
+
+    return pacf
+
+
+def test_cointegration(y: np.ndarray, x: np.ndarray,
+                       significance: float = 0.05) -> CointegrationResult:
+    """
+    Test for cointegration using Engle-Granger two-step method.
+
+    Args:
+        y: Dependent series (e.g., stock Y prices)
+        x: Independent series (e.g., stock X prices)
+        significance: Significance level for stationarity test
+
+    Returns:
+        CointegrationResult with hedge ratio, spread, and test results
+    """
+    y = np.asarray(y).flatten()
+    x = np.asarray(x).flatten()
+
+    # Step 1: Estimate cointegrating regression
+    X = np.column_stack([np.ones(len(x)), x])
+    beta = np.linalg.lstsq(X, y, rcond=None)[0]
+    hedge_ratio = beta[1]
+
+    # Calculate spread (residuals)
+    spread = y - hedge_ratio * x - beta[0]
+
+    # Step 2: Test spread for stationarity
+    adf_result = adf_test(spread)
+
+    # Calculate half-life of mean reversion
+    half_life = calculate_half_life(spread)
+
+    is_cointegrated = adf_result.p_value < significance
+
+    return CointegrationResult(
+        hedge_ratio=hedge_ratio,
+        spread=spread,
+        adf_statistic=adf_result.adf_statistic,
+        p_value=adf_result.p_value,
+        is_cointegrated=is_cointegrated,
+        half_life=half_life
+    )
+
+
+def calculate_half_life(spread: np.ndarray) -> float:
+    """
+    Calculate half-life of mean reversion for a spread.
+
+    Uses AR(1) model: spread_t = phi * spread_{t-1} + epsilon_t
+    Half-life = -ln(2) / ln(phi)
+
+    Args:
+        spread: Stationary spread series
+
+    Returns:
+        Half-life in number of periods
+    """
+    spread = np.asarray(spread).flatten()
+
+    # Fit AR(1) model
+    y = spread[1:]
+    x = spread[:-1].reshape(-1, 1)
+    X = np.column_stack([np.ones(len(x)), x])
+
+    try:
+        beta = np.linalg.lstsq(X, y, rcond=None)[0]
+        phi = beta[1]
+
+        if phi <= 0 or phi >= 1:
+            return np.inf
+
+        half_life = -np.log(2) / np.log(phi)
+        return max(0.5, half_life)  # Minimum 0.5 periods
+    except:
+        return np.inf
+
+
+def generate_trading_signals(spread: np.ndarray,
+                            z_entry: float = 2.0,
+                            z_exit: float = 0.5) -> np.ndarray:
+    """
+    Generate pairs trading signals based on z-score of spread.
+
+    Args:
+        spread: Stationary spread series
+        z_entry: Z-score threshold for entry
+        z_exit: Z-score threshold for exit
+
+    Returns:
+        Signal array: 1 (long spread), -1 (short spread), 0 (no position)
+    """
+    spread = np.asarray(spread).flatten()
+
+    # Calculate rolling z-score
+    window = min(20, len(spread) // 4)
+    z_scores = np.zeros(len(spread))
+
+    for i in range(window, len(spread)):
+        window_data = spread[i-window:i]
+        mean = np.mean(window_data)
+        std = np.std(window_data)
+        if std > 0:
+            z_scores[i] = (spread[i] - mean) / std
+
+    # Generate signals
+    signals = np.zeros(len(spread))
+    position = 0
+
+    for i in range(window, len(spread)):
+        if position == 0:
+            if z_scores[i] > z_entry:
+                position = -1  # Short spread (Y is overvalued vs X)
+            elif z_scores[i] < -z_entry:
+                position = 1   # Long spread (Y is undervalued vs X)
+        else:
+            if position == 1 and z_scores[i] > -z_exit:
+                position = 0  # Exit long
+            elif position == -1 and z_scores[i] < z_exit:
+                position = 0  # Exit short
+
+        signals[i] = position
+
+    return signals
+
+
+def fit_arima(series: np.ndarray, order: Tuple[int, int, int] = (1, 1, 1),
+              forecast_steps: int = 10) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Fit simple ARIMA model and generate forecasts.
+
+    Args:
+        series: Time series data
+        order: (p, d, q) order of ARIMA model
+        forecast_steps: Number of periods to forecast
+
+    Returns:
+        Tuple of (fitted_values, forecasts)
+    """
+    p, d, q = order
+    series = np.asarray(series).flatten()
+
+    # Apply differencing
+    diff_series = series.copy()
+    for _ in range(d):
+        diff_series = np.diff(diff_series)
+
+    # Fit AR(p) model on differenced series (simplified ARIMA)
+    if len(diff_series) < p + 1:
+        return series, np.full(forecast_steps, series[-1])
+
+    # Build design matrix for AR(p)
+    y = diff_series[p:]
+    X = np.column_stack([diff_series[p-i-1:-i-1] for i in range(p)]) if p > 0 else np.ones((len(y), 1))
+
+    if p > 0:
+        X = np.column_stack([np.ones(len(y)), X])
+
+    try:
+        beta = np.linalg.lstsq(X, y, rcond=None)[0]
+
+        # Generate forecasts
+        forecasts_diff = np.zeros(forecast_steps)
+        last_values = list(diff_series[-p:]) if p > 0 else []
+
+        for i in range(forecast_steps):
+            if p > 0:
+                x_new = np.array([1] + last_values[-p:])
+                forecasts_diff[i] = x_new @ beta
+                last_values.append(forecasts_diff[i])
+            else:
+                forecasts_diff[i] = beta[0]
+
+        # Integrate forecasts back
+        forecasts = np.zeros(forecast_steps)
+        forecasts[0] = series[-1] + forecasts_diff[0]
+        for i in range(1, forecast_steps):
+            forecasts[i] = forecasts[i-1] + forecasts_diff[i]
+
+        # Fitted values
+        fitted = np.zeros(len(series))
+        fitted[:p+d] = series[:p+d]
+        fitted_diff = X @ beta
+
+        # Integrate fitted values
+        for i in range(len(fitted_diff)):
+            fitted[p+d+i] = series[p+d+i-1] + fitted_diff[i]
+
+        return fitted, forecasts
+    except:
+        return series, np.full(forecast_steps, series[-1])
+
+
+# Example usage and demonstration
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Generate sample data: two cointegrated series
+    n = 500
+
+    # Random walk (non-stationary)
+    random_walk = np.cumsum(np.random.randn(n)) + 100
+
+    # Two cointegrated stocks
+    stock_x = np.cumsum(np.random.randn(n)) + 50
+    stock_y = 2.0 * stock_x + np.random.randn(n) * 2 + 10  # Cointegrated with X
+
+    # Test stationarity
+    print("=" * 60)
+    print("STATIONARITY TESTING")
+    print("=" * 60)
+
+    rw_result = adf_test(random_walk)
+    print(f"\nRandom Walk: {rw_result}")
+
+    returns = np.diff(np.log(random_walk + 50))
+    ret_result = adf_test(returns)
+    print(f"Log Returns: {ret_result}")
+
+    # ACF and PACF
+    print("\n" + "=" * 60)
+    print("ACF AND PACF")
+    print("=" * 60)
+
+    acf = calculate_acf(returns, max_lag=10)
+    pacf = calculate_pacf(returns, max_lag=10)
+
+    print("\nLog Returns ACF (first 5 lags):", np.round(acf[:6], 4))
+    print("Log Returns PACF (first 5 lags):", np.round(pacf[:6], 4))
+
+    # Cointegration test
+    print("\n" + "=" * 60)
+    print("COINTEGRATION TESTING")
+    print("=" * 60)
+
+    coint_result = test_cointegration(stock_y, stock_x)
+    print(f"\nStock Y vs Stock X: {coint_result}")
+
+    # Generate trading signals
+    print("\n" + "=" * 60)
+    print("PAIRS TRADING SIGNALS")
+    print("=" * 60)
+
+    signals = generate_trading_signals(coint_result.spread)
+    n_long = np.sum(signals == 1)
+    n_short = np.sum(signals == -1)
+    n_flat = np.sum(signals == 0)
+
+    print(f"\nSignal Distribution:")
+    print(f"  Long Spread: {n_long} periods ({100*n_long/len(signals):.1f}%)")
+    print(f"  Short Spread: {n_short} periods ({100*n_short/len(signals):.1f}%)")
+    print(f"  Flat: {n_flat} periods ({100*n_flat/len(signals):.1f}%)")
+
+    # ARIMA forecast
+    print("\n" + "=" * 60)
+    print("ARIMA FORECASTING")
+    print("=" * 60)
+
+    fitted, forecasts = fit_arima(stock_x[-100:], order=(2, 1, 0), forecast_steps=5)
+    print(f"\nLast 3 actual values: {stock_x[-3:]}")
+    print(f"5-step forecast: {forecasts}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>6. Interactive Time Series Lab</h2>
+
+            <div class="calculator-container">
+                <h3>Stationarity & Cointegration Analyzer</h3>
+
+                <div class="input-group">
+                    <label for="dataType">Data Type:</label>
+                    <select id="dataType">
+                        <option value="random_walk">Random Walk (Non-Stationary)</option>
+                        <option value="mean_reverting">Mean-Reverting Series</option>
+                        <option value="cointegrated">Cointegrated Pair</option>
+                        <option value="trending">Trending with Noise</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="sampleSize">Sample Size:</label>
+                    <input type="number" id="sampleSize" value="200" min="50" max="500" step="50">
+                </div>
+
+                <div class="input-group" id="hedgeRatioGroup" style="display:none;">
+                    <label for="trueHedgeRatio">True Hedge Ratio (for cointegrated):</label>
+                    <input type="number" id="trueHedgeRatio" value="1.5" min="0.5" max="3" step="0.1">
+                </div>
+
+                <div class="input-group" id="meanRevSpeedGroup" style="display:none;">
+                    <label for="meanRevSpeed">Mean Reversion Speed (0-1):</label>
+                    <input type="number" id="meanRevSpeed" value="0.1" min="0.01" max="0.5" step="0.01">
+                </div>
+
+                <button class="calculate-btn" onclick="runTimeSeriesAnalysis()">Run Analysis</button>
+
+                <div class="results-container" id="tsResults">
+                    <h4>Analysis Results</h4>
+                    <div id="tsOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="acfChart"></canvas>
+                </div>
+
+                <div class="chart-container" id="spreadChartContainer" style="display:none;">
+                    <canvas id="spreadChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Practical Application -->
+        <section class="content-section fade-in">
+            <h2>7. Practical Application: Pairs Trading Strategy</h2>
+
+            <h3>Building a Complete Pairs Trading System</h3>
+
+            <div class="code-block">
+                <h3>Pairs Trading Backtest</h3>
+                <pre><code class="language-python">"""
+Complete Pairs Trading Strategy with Backtest
+"""
+
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Tuple
+from dataclasses import dataclass
+
+
+@dataclass
+class PairsTradingResult:
+    """Results from pairs trading backtest."""
+    total_return: float
+    sharpe_ratio: float
+    max_drawdown: float
+    win_rate: float
+    n_trades: int
+    hedge_ratio: float
+    half_life: float
+
+
+def find_cointegrated_pairs(prices: pd.DataFrame,
+                            p_threshold: float = 0.05) -> List[Tuple[str, str, float, float]]:
+    """
+    Scan for cointegrated pairs in a universe of stocks.
+
+    Args:
+        prices: DataFrame with stock prices (columns = tickers)
+        p_threshold: P-value threshold for cointegration
+
+    Returns:
+        List of (ticker1, ticker2, hedge_ratio, p_value) tuples
+    """
+    tickers = prices.columns.tolist()
+    n = len(tickers)
+    pairs = []
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            y = prices.iloc[:, i].values
+            x = prices.iloc[:, j].values
+
+            # Skip if any NaN
+            if np.any(np.isnan(y)) or np.any(np.isnan(x)):
+                continue
+
+            # Test cointegration
+            result = test_cointegration(y, x)
+
+            if result.is_cointegrated and 1 < result.half_life < 30:
+                pairs.append((
+                    tickers[i],
+                    tickers[j],
+                    result.hedge_ratio,
+                    result.p_value,
+                    result.half_life
+                ))
+
+    # Sort by p-value
+    pairs.sort(key=lambda x: x[3])
+    return pairs
+
+
+def backtest_pairs_strategy(y: np.ndarray, x: np.ndarray,
+                           hedge_ratio: float,
+                           z_entry: float = 2.0,
+                           z_exit: float = 0.5,
+                           lookback: int = 20,
+                           capital: float = 100000) -> PairsTradingResult:
+    """
+    Backtest pairs trading strategy.
+
+    Args:
+        y: Prices of first stock
+        x: Prices of second stock
+        hedge_ratio: Number of shares of X to short for each share of Y
+        z_entry: Z-score for entry
+        z_exit: Z-score for exit
+        lookback: Rolling window for z-score
+        capital: Initial capital
+
+    Returns:
+        PairsTradingResult with performance metrics
+    """
+    n = len(y)
+
+    # Calculate spread
+    spread = y - hedge_ratio * x
+
+    # Calculate z-scores
+    z_scores = np.zeros(n)
+    for i in range(lookback, n):
+        window = spread[i-lookback:i]
+        z_scores[i] = (spread[i] - np.mean(window)) / np.std(window)
+
+    # Trading simulation
+    position = 0  # 1 = long spread, -1 = short spread
+    entry_price_y = 0
+    entry_price_x = 0
+
+    pnl = []
+    equity = [capital]
+    trades = []
+
+    for i in range(lookback, n):
+        if position == 0:
+            # Entry logic
+            if z_scores[i] > z_entry:
+                # Short spread: short Y, long hedge_ratio * X
+                position = -1
+                entry_price_y = y[i]
+                entry_price_x = x[i]
+            elif z_scores[i] < -z_entry:
+                # Long spread: long Y, short hedge_ratio * X
+                position = 1
+                entry_price_y = y[i]
+                entry_price_x = x[i]
+        else:
+            # Exit logic
+            if (position == 1 and z_scores[i] > -z_exit) or \
+               (position == -1 and z_scores[i] < z_exit):
+                # Calculate P&L
+                if position == 1:
+                    # Long Y, Short X
+                    pnl_y = y[i] - entry_price_y
+                    pnl_x = -(x[i] - entry_price_x) * hedge_ratio
+                else:
+                    # Short Y, Long X
+                    pnl_y = -(y[i] - entry_price_y)
+                    pnl_x = (x[i] - entry_price_x) * hedge_ratio
+
+                trade_pnl = pnl_y + pnl_x
+                pnl.append(trade_pnl)
+                trades.append({
+                    'entry_idx': i - 1,
+                    'exit_idx': i,
+                    'position': position,
+                    'pnl': trade_pnl
+                })
+
+                position = 0
+
+        # Update equity
+        if position != 0:
+            if position == 1:
+                unrealized = (y[i] - entry_price_y) - (x[i] - entry_price_x) * hedge_ratio
+            else:
+                unrealized = -(y[i] - entry_price_y) + (x[i] - entry_price_x) * hedge_ratio
+            equity.append(equity[-1] + unrealized)
+        else:
+            equity.append(equity[-1])
+
+    equity = np.array(equity)
+
+    # Calculate metrics
+    total_return = (equity[-1] - capital) / capital
+
+    daily_returns = np.diff(equity) / equity[:-1]
+    daily_returns = daily_returns[np.isfinite(daily_returns)]
+
+    if len(daily_returns) > 0 and np.std(daily_returns) > 0:
+        sharpe = np.sqrt(252) * np.mean(daily_returns) / np.std(daily_returns)
+    else:
+        sharpe = 0
+
+    # Max drawdown
+    peak = np.maximum.accumulate(equity)
+    drawdown = (peak - equity) / peak
+    max_dd = np.max(drawdown)
+
+    # Win rate
+    if len(pnl) > 0:
+        win_rate = np.sum(np.array(pnl) > 0) / len(pnl)
+    else:
+        win_rate = 0
+
+    # Half-life
+    half_life = calculate_half_life(spread)
+
+    return PairsTradingResult(
+        total_return=total_return,
+        sharpe_ratio=sharpe,
+        max_drawdown=max_dd,
+        win_rate=win_rate,
+        n_trades=len(pnl),
+        hedge_ratio=hedge_ratio,
+        half_life=half_life
+    )
+
+
+# Example: Full pairs trading workflow
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Generate synthetic cointegrated pair
+    n = 500
+    stock_x = 50 + np.cumsum(np.random.randn(n) * 0.5)
+    stock_y = 1.5 * stock_x + np.random.randn(n) * 2 + 10
+
+    # Add some mean reversion noise
+    noise = np.zeros(n)
+    for i in range(1, n):
+        noise[i] = 0.9 * noise[i-1] + np.random.randn() * 0.5
+    stock_y += noise
+
+    # Test cointegration
+    coint = test_cointegration(stock_y, stock_x)
+    print(f"Cointegration Test: {coint}")
+
+    # Run backtest
+    result = backtest_pairs_strategy(
+        stock_y, stock_x,
+        hedge_ratio=coint.hedge_ratio,
+        z_entry=2.0,
+        z_exit=0.5
+    )
+
+    print(f"\n{'='*50}")
+    print("PAIRS TRADING BACKTEST RESULTS")
+    print(f"{'='*50}")
+    print(f"Total Return: {result.total_return:.2%}")
+    print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
+    print(f"Max Drawdown: {result.max_drawdown:.2%}")
+    print(f"Win Rate: {result.win_rate:.2%}")
+    print(f"Number of Trades: {result.n_trades}")
+    print(f"Hedge Ratio: {result.hedge_ratio:.3f}")
+    print(f"Half-Life: {result.half_life:.1f} days")
+</code></pre>
+            </div>
+
+            <div class="key-concept">
+                <h3>Pairs Trading Strategy Rules</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Rule</th>
+                            <th>Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pair Selection</td>
+                            <td>ADF p-value < 0.05</td>
+                            <td>Statistically significant cointegration</td>
+                        </tr>
+                        <tr>
+                            <td>Half-Life Filter</td>
+                            <td>1 < half-life < 30 days</td>
+                            <td>Tradeable mean reversion speed</td>
+                        </tr>
+                        <tr>
+                            <td>Entry Signal</td>
+                            <td>|Z-score| > 2.0</td>
+                            <td>Spread at extreme, expect reversion</td>
+                        </tr>
+                        <tr>
+                            <td>Exit Signal</td>
+                            <td>|Z-score| < 0.5</td>
+                            <td>Spread returned near mean</td>
+                        </tr>
+                        <tr>
+                            <td>Position Sizing</td>
+                            <td>Equal dollar weight per leg</td>
+                            <td>Market-neutral exposure</td>
+                        </tr>
+                        <tr>
+                            <td>Risk Management</td>
+                            <td>Stop-loss at Z = 4.0</td>
+                            <td>Limit losses if cointegration breaks</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 8: Quiz -->
+        <section class="content-section fade-in">
+            <h2>8. Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>Question 1: What does the ADF test null hypothesis state?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'A')">A) The series is stationary</button>
+                        <button onclick="checkAnswer(1, 'B')">B) The series has a unit root (non-stationary)</button>
+                        <button onclick="checkAnswer(1, 'C')">C) The series has no autocorrelation</button>
+                        <button onclick="checkAnswer(1, 'D')">D) The series follows a normal distribution</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>Question 2: Two stocks are cointegrated. What does this mean for pairs trading?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'A')">A) Their correlation is exactly 1.0</button>
+                        <button onclick="checkAnswer(2, 'B')">B) A linear combination of their prices is stationary</button>
+                        <button onclick="checkAnswer(2, 'C')">C) They always move in the same direction</button>
+                        <button onclick="checkAnswer(2, 'D')">D) Their volatilities are identical</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>Question 3: What does the half-life of mean reversion measure?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'A')">A) Time for the spread to go to zero</button>
+                        <button onclick="checkAnswer(3, 'B')">B) Time for the spread to double</button>
+                        <button onclick="checkAnswer(3, 'C')">C) Time for the spread to revert halfway to its mean</button>
+                        <button onclick="checkAnswer(3, 'D')">D) Time between trades</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>Question 4: In ARIMA(2,1,1), what does the "1" in the middle represent?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'A')">A) One autoregressive term</button>
+                        <button onclick="checkAnswer(4, 'B')">B) One moving average term</button>
+                        <button onclick="checkAnswer(4, 'C')">C) One differencing operation</button>
+                        <button onclick="checkAnswer(4, 'D')">D) One seasonal component</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>Question 5: Why do we use returns instead of prices for most time series analysis?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'A')">A) Returns are easier to calculate</button>
+                        <button onclick="checkAnswer(5, 'B')">B) Prices are non-stationary; returns are usually stationary</button>
+                        <button onclick="checkAnswer(5, 'C')">C) Returns are always positive</button>
+                        <button onclick="checkAnswer(5, 'D')">D) Returns have lower variance</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+            </div>
+
+            <div class="score-container" id="scoreContainer" style="display:none;">
+                <h3>Your Score: <span id="finalScore"></span>/5</h3>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script>
+        let timeSeriesChart, acfChart, spreadChart;
+        let quizAnswers = {};
+        const correctAnswers = {
+            1: 'B',
+            2: 'B',
+            3: 'C',
+            4: 'C',
+            5: 'B'
+        };
+
+        const explanations = {
+            1: {
+                'A': 'Incorrect. The null hypothesis is that the series is NON-stationary (has a unit root). We reject this to conclude stationarity.',
+                'B': 'Correct! The ADF test null hypothesis is that the series has a unit root (non-stationary). A low p-value rejects this, indicating stationarity.',
+                'C': 'Incorrect. The ADF test is about stationarity, not autocorrelation specifically.',
+                'D': 'Incorrect. Stationarity is about constant mean/variance, not the distribution shape.'
+            },
+            2: {
+                'A': 'Incorrect. Correlation can be high but cointegration is about long-term equilibrium, not short-term correlation.',
+                'B': 'Correct! Cointegration means a linear combination (the spread) is stationary, which enables mean-reversion trading.',
+                'C': 'Incorrect. Cointegrated stocks can move in opposite directions short-term while maintaining long-term equilibrium.',
+                'D': 'Incorrect. Cointegration has no requirement about volatility matching.'
+            },
+            3: {
+                'A': 'Incorrect. The spread reverts to its mean, not zero (unless the mean is zero).',
+                'B': 'Incorrect. Half-life is about reversion, not divergence.',
+                'C': 'Correct! Half-life measures how many periods it takes for the spread to revert 50% of the way back to its mean.',
+                'D': 'Incorrect. Half-life is about mean reversion speed, not trade frequency.'
+            },
+            4: {
+                'A': 'Incorrect. The first number (2) is the autoregressive order.',
+                'B': 'Incorrect. The third number (1) is the moving average order.',
+                'C': 'Correct! The middle number (d=1) means we apply first differencing to make the series stationary.',
+                'D': 'Incorrect. Seasonal components are specified in SARIMA, not basic ARIMA.'
+            },
+            5: {
+                'A': 'Incorrect. While true, this isn\'t the statistical reason.',
+                'B': 'Correct! Stock prices are non-stationary (trending), violating assumptions of most statistical tests. Log returns are typically stationary.',
+                'C': 'Incorrect. Returns can be negative.',
+                'D': 'Incorrect. Returns can have high variance, especially during volatility clusters.'
+            }
+        };
+
+        document.getElementById('dataType').addEventListener('change', function() {
+            const type = this.value;
+            document.getElementById('hedgeRatioGroup').style.display = type === 'cointegrated' ? 'block' : 'none';
+            document.getElementById('meanRevSpeedGroup').style.display = type === 'mean_reverting' ? 'block' : 'none';
+            document.getElementById('spreadChartContainer').style.display = type === 'cointegrated' ? 'block' : 'none';
+        });
+
+        function generateTimeSeries(type, n, params = {}) {
+            const data = { series1: [], series2: null, labels: [] };
+
+            for (let i = 0; i < n; i++) {
+                data.labels.push(i);
+            }
+
+            if (type === 'random_walk') {
+                let value = 100;
+                for (let i = 0; i < n; i++) {
+                    value += (Math.random() - 0.5) * 2;
+                    data.series1.push(value);
+                }
+            } else if (type === 'mean_reverting') {
+                const phi = 1 - params.speed;
+                const mean = 100;
+                let value = mean;
+                for (let i = 0; i < n; i++) {
+                    value = phi * value + (1 - phi) * mean + (Math.random() - 0.5) * 3;
+                    data.series1.push(value);
+                }
+            } else if (type === 'trending') {
+                let value = 100;
+                const trend = 0.05;
+                for (let i = 0; i < n; i++) {
+                    value += trend + (Math.random() - 0.5) * 2;
+                    data.series1.push(value);
+                }
+            } else if (type === 'cointegrated') {
+                data.series2 = [];
+                // Generate series X (random walk)
+                let x = 50;
+                for (let i = 0; i < n; i++) {
+                    x += (Math.random() - 0.5) * 1;
+                    data.series2.push(x);
+                }
+                // Generate series Y (cointegrated with X)
+                const beta = params.hedgeRatio;
+                let noise = 0;
+                for (let i = 0; i < n; i++) {
+                    noise = 0.9 * noise + (Math.random() - 0.5) * 2;
+                    data.series1.push(beta * data.series2[i] + 10 + noise);
+                }
+            }
+
+            return data;
+        }
+
+        function adfTest(series) {
+            const n = series.length;
+            const diff = [];
+            for (let i = 1; i < n; i++) {
+                diff.push(series[i] - series[i-1]);
+            }
+
+            // Simple ADF approximation using lag-1
+            const y = diff.slice(1);
+            const x = series.slice(1, -1);
+
+            // OLS regression: diff_t = alpha + gamma * series_{t-1} + error
+            const n_obs = y.length;
+            const sumX = x.reduce((a, b) => a + b, 0);
+            const sumY = y.reduce((a, b) => a + b, 0);
+            const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+            const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+            const gamma = (n_obs * sumXY - sumX * sumY) / (n_obs * sumX2 - sumX * sumX);
+            const alpha = (sumY - gamma * sumX) / n_obs;
+
+            // Calculate residuals and standard error
+            const residuals = y.map((yi, i) => yi - alpha - gamma * x[i]);
+            const ssr = residuals.reduce((sum, r) => sum + r * r, 0);
+            const sigma2 = ssr / (n_obs - 2);
+            const seGamma = Math.sqrt(sigma2 / (sumX2 - sumX * sumX / n_obs));
+
+            const adfStat = gamma / seGamma;
+
+            // Approximate p-value
+            let pValue;
+            if (adfStat < -3.43) pValue = 0.01;
+            else if (adfStat < -2.86) pValue = 0.05;
+            else if (adfStat < -2.57) pValue = 0.10;
+            else pValue = Math.min(1, 0.10 + (adfStat + 2.57) * 0.15);
+
+            return {
+                statistic: adfStat,
+                pValue: pValue,
+                isStationary: pValue < 0.05
+            };
+        }
+
+        function calculateACF(series, maxLag = 20) {
+            const n = series.length;
+            const mean = series.reduce((a, b) => a + b, 0) / n;
+            const variance = series.reduce((sum, x) => sum + (x - mean) ** 2, 0) / n;
+
+            const acf = [];
+            for (let k = 0; k <= maxLag; k++) {
+                if (k === 0) {
+                    acf.push(1);
+                } else {
+                    let cov = 0;
+                    for (let i = 0; i < n - k; i++) {
+                        cov += (series[i] - mean) * (series[i + k] - mean);
+                    }
+                    cov /= n;
+                    acf.push(cov / variance);
+                }
+            }
+            return acf;
+        }
+
+        function testCointegration(y, x) {
+            const n = y.length;
+
+            // OLS: y = alpha + beta * x
+            const sumX = x.reduce((a, b) => a + b, 0);
+            const sumY = y.reduce((a, b) => a + b, 0);
+            const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+            const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+            const beta = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const alpha = (sumY - beta * sumX) / n;
+
+            // Calculate spread
+            const spread = y.map((yi, i) => yi - beta * x[i] - alpha);
+
+            // Test spread for stationarity
+            const adf = adfTest(spread);
+
+            // Calculate half-life
+            const spreadLag = spread.slice(0, -1);
+            const spreadDiff = spread.slice(1).map((s, i) => s - spreadLag[i]);
+
+            const sumLag = spreadLag.reduce((a, b) => a + b, 0);
+            const sumDiff = spreadDiff.reduce((a, b) => a + b, 0);
+            const sumLagDiff = spreadLag.reduce((sum, lag, i) => sum + lag * spreadDiff[i], 0);
+            const sumLag2 = spreadLag.reduce((sum, lag) => sum + lag * lag, 0);
+            const n2 = spreadLag.length;
+
+            const phi = (n2 * sumLagDiff - sumLag * sumDiff) / (n2 * sumLag2 - sumLag * sumLag) + 1;
+            const halfLife = phi > 0 && phi < 1 ? -Math.log(2) / Math.log(phi) : Infinity;
+
+            return {
+                hedgeRatio: beta,
+                spread: spread,
+                adfStatistic: adf.statistic,
+                pValue: adf.pValue,
+                isCointegrated: adf.isStationary,
+                halfLife: halfLife
+            };
+        }
+
+        function runTimeSeriesAnalysis() {
+            const type = document.getElementById('dataType').value;
+            const n = parseInt(document.getElementById('sampleSize').value);
+            const hedgeRatio = parseFloat(document.getElementById('trueHedgeRatio').value);
+            const speed = parseFloat(document.getElementById('meanRevSpeed').value);
+
+            const data = generateTimeSeries(type, n, { hedgeRatio, speed });
+
+            // ADF test on series1
+            const adf1 = adfTest(data.series1);
+
+            // Calculate ACF
+            const acf = calculateACF(data.series1, 15);
+
+            // Build results HTML
+            let html = '<div class="result-grid">';
+            html += '<div class="result-item">';
+            html += '<span class="result-label">ADF Statistic:</span>';
+            html += `<span class="result-value">${adf1.statistic.toFixed(4)}</span>`;
+            html += '</div>';
+            html += '<div class="result-item">';
+            html += '<span class="result-label">P-Value:</span>';
+            html += `<span class="result-value">${adf1.pValue.toFixed(4)}</span>`;
+            html += '</div>';
+            html += '<div class="result-item">';
+            html += '<span class="result-label">Stationarity:</span>';
+            html += `<span class="result-value ${adf1.isStationary ? 'positive' : 'negative'}">${adf1.isStationary ? 'STATIONARY' : 'NON-STATIONARY'}</span>`;
+            html += '</div>';
+
+            let coint = null;
+            if (type === 'cointegrated') {
+                coint = testCointegration(data.series1, data.series2);
+                html += '<div class="result-item">';
+                html += '<span class="result-label">Estimated Hedge Ratio:</span>';
+                html += `<span class="result-value">${coint.hedgeRatio.toFixed(4)}</span>`;
+                html += '</div>';
+                html += '<div class="result-item">';
+                html += '<span class="result-label">Cointegration P-Value:</span>';
+                html += `<span class="result-value">${coint.pValue.toFixed(4)}</span>`;
+                html += '</div>';
+                html += '<div class="result-item">';
+                html += '<span class="result-label">Cointegrated:</span>';
+                html += `<span class="result-value ${coint.isCointegrated ? 'positive' : 'negative'}">${coint.isCointegrated ? 'YES' : 'NO'}</span>`;
+                html += '</div>';
+                html += '<div class="result-item">';
+                html += '<span class="result-label">Half-Life:</span>';
+                html += `<span class="result-value">${isFinite(coint.halfLife) ? coint.halfLife.toFixed(1) + ' periods' : 'N/A'}</span>`;
+                html += '</div>';
+            }
+
+            html += '</div>';
+            document.getElementById('tsOutput').innerHTML = html;
+
+            // Update charts
+            updateTimeSeriesChart(data, type);
+            updateACFChart(acf);
+
+            if (type === 'cointegrated' && coint) {
+                document.getElementById('spreadChartContainer').style.display = 'block';
+                updateSpreadChart(coint.spread, data.labels);
+            } else {
+                document.getElementById('spreadChartContainer').style.display = 'none';
+            }
+        }
+
+        function updateTimeSeriesChart(data, type) {
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+
+            if (timeSeriesChart) {
+                timeSeriesChart.destroy();
+            }
+
+            const datasets = [{
+                label: type === 'cointegrated' ? 'Stock Y' : 'Time Series',
+                data: data.series1,
+                borderColor: 'rgba(255, 193, 7, 1)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.1,
+                pointRadius: 0
+            }];
+
+            if (data.series2) {
+                datasets.push({
+                    label: 'Stock X',
+                    data: data.series2,
+                    borderColor: 'rgba(0, 188, 212, 1)',
+                    backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                    tension: 0.1,
+                    pointRadius: 0
+                });
+            }
+
+            timeSeriesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Time Series Data',
+                            color: '#e0e0e0'
+                        },
+                        legend: {
+                            labels: { color: '#b0b0b0' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time Period', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Price', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateACFChart(acf) {
+            const ctx = document.getElementById('acfChart').getContext('2d');
+
+            if (acfChart) {
+                acfChart.destroy();
+            }
+
+            const labels = acf.map((_, i) => i);
+            const confBound = 1.96 / Math.sqrt(200); // Approximate confidence bound
+
+            acfChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ACF',
+                        data: acf,
+                        backgroundColor: acf.map(v => v > 0 ? 'rgba(76, 175, 80, 0.7)' : 'rgba(244, 67, 54, 0.7)'),
+                        borderColor: acf.map(v => v > 0 ? 'rgba(76, 175, 80, 1)' : 'rgba(244, 67, 54, 1)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Autocorrelation Function (ACF)',
+                            color: '#e0e0e0'
+                        },
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                upper: {
+                                    type: 'line',
+                                    yMin: confBound,
+                                    yMax: confBound,
+                                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                },
+                                lower: {
+                                    type: 'line',
+                                    yMin: -confBound,
+                                    yMax: -confBound,
+                                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Lag', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'ACF', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            min: -1,
+                            max: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSpreadChart(spread, labels) {
+            const ctx = document.getElementById('spreadChart').getContext('2d');
+
+            if (spreadChart) {
+                spreadChart.destroy();
+            }
+
+            const mean = spread.reduce((a, b) => a + b, 0) / spread.length;
+            const std = Math.sqrt(spread.reduce((sum, x) => sum + (x - mean) ** 2, 0) / spread.length);
+
+            spreadChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Spread (Y - β*X)',
+                            data: spread,
+                            borderColor: 'rgba(156, 39, 176, 1)',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            tension: 0.1,
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Mean',
+                            data: Array(spread.length).fill(mean),
+                            borderColor: 'rgba(255, 255, 255, 0.5)',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: '+2σ',
+                            data: Array(spread.length).fill(mean + 2 * std),
+                            borderColor: 'rgba(244, 67, 54, 0.5)',
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: '-2σ',
+                            data: Array(spread.length).fill(mean - 2 * std),
+                            borderColor: 'rgba(76, 175, 80, 0.5)',
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cointegration Spread with Trading Bands',
+                            color: '#e0e0e0'
+                        },
+                        legend: {
+                            labels: { color: '#b0b0b0' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time Period', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Spread Value', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function checkAnswer(questionNum, answer) {
+            const feedback = document.getElementById(`feedback${questionNum}`);
+            const isCorrect = answer === correctAnswers[questionNum];
+
+            quizAnswers[questionNum] = answer;
+
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[questionNum][answer]}
+            </div>`;
+            feedback.style.display = 'block';
+
+            // Disable buttons after answering
+            const buttons = document.querySelectorAll(`#q${questionNum} button`);
+            buttons.forEach(btn => btn.disabled = true);
+
+            // Check if all questions answered
+            if (Object.keys(quizAnswers).length === 5) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const score = Object.keys(quizAnswers).reduce((sum, q) =>
+                sum + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('scoreContainer').style.display = 'block';
+        }
+
+        // Initialize with default analysis
+        window.onload = function() {
+            runTimeSeriesAnalysis();
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

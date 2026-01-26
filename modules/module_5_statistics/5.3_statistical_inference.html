@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master statistical inference for quantitative trading. Learn hypothesis testing, confidence intervals, and p-values for strategy validation.">
+    <title>5.3 Statistical Inference | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
+
+    <style>
+        .hypothesis-box { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .hypothesis-box.null { border-left: 4px solid #94a3b8; }
+        .hypothesis-box.alt { border-left: 4px solid #10b981; }
+        .error-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 2px; margin: 20px 0; }
+        .error-cell { padding: 15px; text-align: center; }
+        .error-cell.header { background: rgba(99, 102, 241, 0.2); font-weight: bold; }
+        .error-cell.type1 { background: rgba(239, 68, 68, 0.2); }
+        .error-cell.type2 { background: rgba(245, 158, 11, 0.2); }
+        .error-cell.correct { background: rgba(16, 185, 129, 0.2); }
+        .ci-visual { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; }
+        .ci-bar { height: 8px; background: #6366f1; border-radius: 4px; }
+        .ci-point { width: 12px; height: 12px; background: #10b981; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.3</span>
+                    <span class="nav-module-title">Statistical Inference</span>
+                </div>
+                <a href="5.4_correlation_analysis.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.3 Statistical Inference</span>
+                </div>
+                <h1>Statistical Inference</h1>
+                <p class="module-subtitle">
+                    Test hypotheses, calculate confidence intervals, and determine if your strategy alpha is real or luck.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 35 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Hypothesis Tester</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">Is Your Alpha Real?</div>
+                <p>
+                    Your backtest shows 2% monthly alpha. Is it skill or luck? With enough backtests, you'll find
+                    "significant" results by chance. Statistical inference helps distinguish real edge from noise.
+                </p>
+            </div>
+
+            <div class="grid grid-3">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">📊 Strategy Validation</h4>
+                    <p>Test if returns are statistically different from zero (or benchmark).</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">🎯 Confidence Intervals</h4>
+                    <p>Quantify uncertainty around expected returns. "True alpha is between 1% and 3%."</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">⚠️ Avoid False Discoveries</h4>
+                    <p>Multiple testing adjustments prevent finding "alpha" that's just noise.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="hypothesis-box null">
+                <h4 style="color: #94a3b8;">H₀: Null Hypothesis</h4>
+                <p>"No effect"—strategy has zero alpha, no edge over benchmark. We assume this is true until evidence suggests otherwise.</p>
+            </div>
+
+            <div class="hypothesis-box alt">
+                <h4 style="color: #10b981;">H₁: Alternative Hypothesis</h4>
+                <p>"There is an effect"—strategy has positive (or nonzero) alpha. This is what we're trying to prove.</p>
+            </div>
+
+            <h3>Type I and Type II Errors</h3>
+            <div class="error-grid">
+                <div class="error-cell header"></div>
+                <div class="error-cell header">H₀ True (No Alpha)</div>
+                <div class="error-cell header">H₀ False (Real Alpha)</div>
+                <div class="error-cell header">Reject H₀</div>
+                <div class="error-cell type1">Type I Error (α)<br><small>False Positive</small></div>
+                <div class="error-cell correct">Correct!<br><small>True Positive</small></div>
+                <div class="error-cell header">Fail to Reject H₀</div>
+                <div class="error-cell correct">Correct!<br><small>True Negative</small></div>
+                <div class="error-cell type2">Type II Error (β)<br><small>False Negative</small></div>
+            </div>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">p-value Interpretation</div>
+                <p>
+                    p-value = P(seeing data this extreme | H₀ is true)<br>
+                    Small p-value (< 0.05) → unlikely if H₀ true → reject H₀<br>
+                    p-value is NOT the probability H₀ is true!
+                </p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>t-statistic for Mean</h3>
+                <div class="formula">t = (x̄ - μ₀) / (s / √n)</div>
+                <p>Tests if sample mean differs from hypothesized value μ₀. Compare to t-distribution with n-1 df.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Confidence Interval for Mean</h3>
+                <div class="formula">CI = x̄ ± t*(α/2, n-1) × (s / √n)</div>
+                <p>95% CI: We're 95% confident the true mean falls in this interval.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Two-Sample t-test</h3>
+                <div class="formula">t = (x̄₁ - x̄₂) / √(s₁²/n₁ + s₂²/n₂)</div>
+                <p>Tests if two samples have different means (e.g., strategy vs benchmark).</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Statistical Power</h3>
+                <div class="formula">Power = 1 - β = P(reject H₀ | H₁ true)</div>
+                <p>Probability of detecting an effect when it exists. Aim for power ≥ 0.8.</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Key Properties</h2>
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Significance ≠ Importance</span>
+                    <span class="property-desc">p < 0.05 with tiny effect size may not be economically meaningful.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Sample Size Matters</span>
+                    <span class="property-desc">Large n → small standard error → easier to find significance. Can detect tiny effects.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Multiple Testing Problem</span>
+                    <span class="property-desc">Test 20 strategies at α=0.05, expect 1 false positive. Adjust with Bonferroni or FDR.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Confidence Interval Width</span>
+                    <span class="property-desc">Width ∝ 1/√n. Need 4x data to halve the interval.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Hypothesis Testing for Strategy Returns</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy import stats
+from typing import Dict, Tuple
+
+
+def test_strategy_alpha(
+    returns: np.ndarray,
+    benchmark_return: float = 0.0,
+    alpha: float = 0.05
+) -> Dict:
+    """
+    Test if strategy has significant alpha.
+
+    H₀: μ = benchmark_return (no alpha)
+    H₁: μ ≠ benchmark_return (has alpha)
+
+    Args:
+        returns: Array of strategy returns
+        benchmark_return: Expected return under null (default 0)
+        alpha: Significance level
+
+    Returns:
+        Dictionary with test results
+    """
+    n = len(returns)
+    mean = np.mean(returns)
+    std = np.std(returns, ddof=1)
+    se = std / np.sqrt(n)
+
+    # t-statistic
+    t_stat = (mean - benchmark_return) / se
+
+    # Two-tailed p-value
+    p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df=n-1))
+
+    # Confidence interval
+    t_critical = stats.t.ppf(1 - alpha/2, df=n-1)
+    ci_lower = mean - t_critical * se
+    ci_upper = mean + t_critical * se
+
+    # Annualized metrics (assuming daily returns)
+    ann_mean = mean * 252
+    ann_ci_lower = ci_lower * 252
+    ann_ci_upper = ci_upper * 252
+
+    return {
+        'mean': mean,
+        'std': std,
+        'n': n,
+        't_statistic': t_stat,
+        'p_value': p_value,
+        'significant': p_value < alpha,
+        'ci_lower': ci_lower,
+        'ci_upper': ci_upper,
+        'annualized_mean': ann_mean,
+        'annualized_ci': (ann_ci_lower, ann_ci_upper)
+    }
+
+
+def compare_strategies(
+    returns_a: np.ndarray,
+    returns_b: np.ndarray,
+    alpha: float = 0.05
+) -> Dict:
+    """
+    Test if two strategies have different mean returns.
+
+    Uses Welch's t-test (unequal variances).
+    """
+    t_stat, p_value = stats.ttest_ind(returns_a, returns_b, equal_var=False)
+
+    mean_diff = np.mean(returns_a) - np.mean(returns_b)
+
+    return {
+        'mean_a': np.mean(returns_a),
+        'mean_b': np.mean(returns_b),
+        'mean_difference': mean_diff,
+        't_statistic': t_stat,
+        'p_value': p_value,
+        'significant': p_value < alpha,
+        'a_better': mean_diff > 0 and p_value < alpha
+    }
+
+
+# Example
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Simulate strategy with small positive alpha
+    n_days = 252 * 2  # 2 years
+    true_alpha = 0.0003  # 0.03% daily
+    returns = np.random.randn(n_days) * 0.01 + true_alpha
+
+    result = test_strategy_alpha(returns)
+
+    print("=" * 50)
+    print("STRATEGY ALPHA TEST")
+    print("=" * 50)
+    print(f"\nDaily Mean: {result['mean']*100:.4f}%")
+    print(f"Daily Std: {result['std']*100:.4f}%")
+    print(f"Sample Size: {result['n']} days")
+    print(f"\nt-statistic: {result['t_statistic']:.3f}")
+    print(f"p-value: {result['p_value']:.4f}")
+    print(f"Significant at 5%: {'Yes ✓' if result['significant'] else 'No'}")
+    print(f"\n95% CI: [{result['ci_lower']*100:.4f}%, {result['ci_upper']*100:.4f}%]")
+    print(f"Annualized: {result['annualized_mean']*100:.2f}% "
+          f"[{result['annualized_ci'][0]*100:.2f}%, {result['annualized_ci'][1]*100:.2f}%]")</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive Hypothesis Tester</h2>
+            <div class="calculator">
+                <h3>Test Strategy Alpha</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label for="sampleMean">Sample Mean (%):</label>
+                        <input type="number" id="sampleMean" value="0.05" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="sampleStd">Sample Std Dev (%):</label>
+                        <input type="number" id="sampleStd" value="1.0" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="sampleN">Sample Size (n):</label>
+                        <input type="number" id="sampleN" value="252" step="10">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="nullValue">Null Hypothesis Mean (%):</label>
+                    <input type="number" id="nullValue" value="0" step="0.01">
+                </div>
+                <button class="btn" onclick="runHypothesisTest()">Run Test</button>
+                <div id="testResults" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Sampling Distribution</h3>
+                <canvas id="samplingChart"></canvas>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Trading Applications</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Backtest Validation</h4>
+                    <p>Test if backtest returns significantly differ from zero or benchmark.</p>
+                    <div class="highlight">Require p < 0.01 for robustness</div>
+                </div>
+                <div class="card">
+                    <h4>Strategy Comparison</h4>
+                    <p>Is Strategy A significantly better than B? Use two-sample t-test.</p>
+                    <div class="highlight">Account for correlation if same period</div>
+                </div>
+                <div class="card">
+                    <h4>Sharpe Ratio Testing</h4>
+                    <p>Test if Sharpe > 0. SE(Sharpe) ≈ √((1 + SR²/2)/n)</p>
+                    <div class="highlight">High SR can still be insignificant with small n</div>
+                </div>
+                <div class="card">
+                    <h4>Multiple Testing Correction</h4>
+                    <p>Testing many strategies? Adjust p-values: Bonferroni, Holm, or FDR.</p>
+                    <div class="highlight">Bonferroni: α_adj = α/m tests</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Common Mistakes</h2>
+            <div class="warning-box">
+                <h3>Mistake 1: p-value = P(H₀ true)</h3>
+                <p>WRONG. p-value is P(data | H₀), not P(H₀ | data). These are very different.</p>
+            </div>
+            <div class="warning-box">
+                <h3>Mistake 2: Data Snooping</h3>
+                <p>Testing many strategies and only reporting significant ones inflates false positives. Use out-of-sample validation.</p>
+            </div>
+            <div class="warning-box">
+                <h3>Mistake 3: Ignoring Effect Size</h3>
+                <p>p < 0.001 but alpha = 0.01% annually? Statistically significant but economically meaningless after costs.</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Summary</h2>
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>Hypothesis testing:</strong> H₀ assumed true until evidence against it</li>
+                    <li><strong>p-value:</strong> P(data | H₀), not P(H₀ | data)</li>
+                    <li><strong>Confidence interval:</strong> Range of plausible values for true parameter</li>
+                    <li><strong>Multiple testing:</strong> Adjust for number of tests to avoid false discoveries</li>
+                </ul>
+            </div>
+            <div class="nav-buttons">
+                <a href="5.2_probability_distributions.html" class="nav-btn">← Previous: Distributions</a>
+                <a href="5.4_correlation_analysis.html" class="nav-btn">Next: Correlation →</a>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Test Your Knowledge</h2>
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Q1: What does a p-value of 0.03 mean?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> 3% chance H₀ is true</label>
+                        <label><input type="radio" name="q1" value="b"> 3% chance of seeing data this extreme if H₀ is true</label>
+                        <label><input type="radio" name="q1" value="c"> 97% chance H₁ is true</label>
+                        <label><input type="radio" name="q1" value="d"> Strategy has 3% alpha</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q2: Type I error is:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> Missing a real effect (false negative)</label>
+                        <label><input type="radio" name="q2" value="b"> Finding an effect that doesn't exist (false positive)</label>
+                        <label><input type="radio" name="q2" value="c"> Using the wrong test</label>
+                        <label><input type="radio" name="q2" value="d"> Having too small a sample</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q3: To halve the width of a confidence interval, you need:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> 2x the sample size</label>
+                        <label><input type="radio" name="q3" value="b"> 4x the sample size</label>
+                        <label><input type="radio" name="q3" value="c"> Half the sample size</label>
+                        <label><input type="radio" name="q3" value="d"> Lower significance level</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q4: Testing 100 strategies at α=0.05 with no real alpha, expected false positives:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> 0</label>
+                        <label><input type="radio" name="q4" value="b"> 1</label>
+                        <label><input type="radio" name="q4" value="c"> 5</label>
+                        <label><input type="radio" name="q4" value="d"> 50</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q5: A 95% confidence interval for alpha is [0.5%, 2.5%]. This means:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> True alpha is definitely between 0.5% and 2.5%</label>
+                        <label><input type="radio" name="q5" value="b"> We're 95% confident the interval contains the true alpha</label>
+                        <label><input type="radio" name="q5" value="c"> 95% of returns fall in this range</label>
+                        <label><input type="radio" name="q5" value="d"> p-value is 0.95</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let samplingChart;
+
+        function normalPDF(x, mu, sigma) {
+            return Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2)) / (sigma * Math.sqrt(2 * Math.PI));
+        }
+
+        function normalCDF(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+            const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.sqrt(2);
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return 0.5 * (1.0 + sign * y);
+        }
+
+        function runHypothesisTest() {
+            const mean = parseFloat(document.getElementById('sampleMean').value) / 100;
+            const std = parseFloat(document.getElementById('sampleStd').value) / 100;
+            const n = parseInt(document.getElementById('sampleN').value);
+            const null_val = parseFloat(document.getElementById('nullValue').value) / 100;
+
+            const se = std / Math.sqrt(n);
+            const t_stat = (mean - null_val) / se;
+            const p_value = 2 * (1 - normalCDF(Math.abs(t_stat)));
+
+            const t_crit = 1.96;
+            const ci_lower = mean - t_crit * se;
+            const ci_upper = mean + t_crit * se;
+
+            const significant = p_value < 0.05;
+
+            document.getElementById('testResults').innerHTML = `
+                <div class="grid grid-2" style="gap: 15px;">
+                    <div class="stat-card" style="background: rgba(99,102,241,0.1); border-radius: 12px; padding: 20px; text-align: center;">
+                        <h4 style="color: #6366f1;">t-statistic</h4>
+                        <div style="font-size: 1.5rem; font-weight: bold;">${t_stat.toFixed(3)}</div>
+                    </div>
+                    <div class="stat-card" style="background: rgba(${significant ? '16,185,129' : '239,68,68'},0.1); border-radius: 12px; padding: 20px; text-align: center;">
+                        <h4 style="color: ${significant ? '#10b981' : '#ef4444'};">p-value</h4>
+                        <div style="font-size: 1.5rem; font-weight: bold;">${p_value.toFixed(4)}</div>
+                    </div>
+                </div>
+                <div class="info-box info-box-${significant ? 'success' : 'warning'}" style="margin-top: 15px; background: rgba(${significant ? '16,185,129' : '245,158,11'},0.1); border-left: 4px solid ${significant ? '#10b981' : '#f59e0b'}; padding: 15px; border-radius: 0 8px 8px 0;">
+                    <p><strong>Result:</strong> ${significant ? 'Reject H₀ — Significant alpha detected!' : 'Fail to reject H₀ — No significant alpha'}</p>
+                    <p><strong>95% CI:</strong> [${(ci_lower * 100).toFixed(4)}%, ${(ci_upper * 100).toFixed(4)}%]</p>
+                    <p><strong>Annualized:</strong> ${(mean * 252 * 100).toFixed(2)}% [${(ci_lower * 252 * 100).toFixed(2)}%, ${(ci_upper * 252 * 100).toFixed(2)}%]</p>
+                </div>
+            `;
+
+            updateSamplingChart(null_val, se, mean, t_stat);
+        }
+
+        function updateSamplingChart(null_val, se, sample_mean, t_stat) {
+            const ctx = document.getElementById('samplingChart').getContext('2d');
+            if (samplingChart) samplingChart.destroy();
+
+            const x = [], y = [];
+            for (let xi = null_val - 4 * se; xi <= null_val + 4 * se; xi += se / 10) {
+                x.push((xi * 100).toFixed(3));
+                y.push(normalPDF(xi, null_val, se));
+            }
+
+            samplingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [{
+                        label: 'Sampling Distribution under H₀',
+                        data: y,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        title: { display: true, text: `Sample mean at ${(sample_mean * 100).toFixed(3)}% (t = ${t_stat.toFixed(2)})`, color: '#94a3b8' }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Mean (%)', color: '#94a3b8' }, ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'p-value is the probability of seeing data this extreme IF H₀ is true.' },
+                q2: { correct: 'b', explanation: 'Type I error is a false positive—rejecting H₀ when it\'s actually true.' },
+                q3: { correct: 'b', explanation: 'CI width ∝ 1/√n, so 4x sample size halves the width.' },
+                q4: { correct: 'c', explanation: 'Expected false positives = 100 × 0.05 = 5' },
+                q5: { correct: 'b', explanation: 'A CI captures the true parameter in 95% of repeated experiments.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+            document.getElementById('quizScore').innerHTML = `<h3>Score: ${score}/5 (${score * 20}%)</h3>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => runHypothesisTest());
+    </script>
+</body>
+</html>

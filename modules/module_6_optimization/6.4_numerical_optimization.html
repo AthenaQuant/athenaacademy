@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master numerical optimization methods for quantitative trading. Learn gradient descent, Newton's method, scipy.optimize, and constrained portfolio optimization.">
+    <title>6.4 Numerical Optimization Methods | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
+    <style>
+        .optimization-eq { font-size: 1.5rem; color: #6366f1; text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; margin: 20px 0; }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+        .convergence-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .convergence-table th, .convergence-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .convergence-table th { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+        .method-comparison { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .method-comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 6.4</span>
+                    <span class="nav-module-title">Numerical Optimization</span>
+                </div>
+                <a href="6.5_position_sizing.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 6: Optimization & Portfolio Theory</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>6.4 Numerical Optimization Methods</span>
+                </div>
+                <h1>Numerical Optimization Methods</h1>
+                <p class="module-subtitle">
+                    Find optimal solutions computationally. Master gradient descent, Newton's method, and constrained optimization for portfolio construction.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 40 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 Optimization Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">Finding Optimal Solutions Computationally</div>
+                <p>
+                    Most real-world optimization problems have no closed-form solution. Portfolio optimization with constraints,
+                    calibrating pricing models, fitting trading strategies—all require numerical methods. These algorithms
+                    iteratively search for the best solution when calculus alone cannot find it.
+                </p>
+            </div>
+
+            <div class="optimization-eq">x<sub>new</sub> = x<sub>old</sub> - α · ∇f(x)</div>
+            <p style="text-align: center; color: #94a3b8;">Gradient Descent: Move opposite to the gradient to minimize the objective</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Portfolio Optimization</h4>
+                    <p>Find weights that maximize Sharpe ratio subject to constraints (no shorting, position limits).</p>
+                </div>
+                <div class="card">
+                    <h4>Model Calibration</h4>
+                    <p>Fit options pricing models to market data by minimizing pricing errors.</p>
+                </div>
+                <div class="card">
+                    <h4>Strategy Tuning</h4>
+                    <p>Optimize trading parameters (lookback periods, thresholds) for maximum performance.</p>
+                </div>
+                <div class="card">
+                    <h4>Risk Management</h4>
+                    <p>Minimize portfolio variance while meeting return targets and constraints.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Gradient Descent Visualization</div>
+                <p>
+                    Imagine standing on a mountain in fog. You cannot see the valley, but you can feel which direction
+                    is downhill. Gradient descent works the same way: at each step, compute the local slope (gradient)
+                    and take a step in the steepest downhill direction. Repeat until you reach a minimum.
+                </p>
+            </div>
+
+            <div class="method-comparison">
+                <div class="card">
+                    <h4>Convex Optimization</h4>
+                    <p><strong>Bowl-shaped:</strong> Only one minimum (global). Any downhill path leads to the same answer.</p>
+                    <div class="highlight">Guaranteed to find optimal solution</div>
+                    <p>Examples: Mean-variance portfolio (no shorting), linear regression</p>
+                </div>
+                <div class="card">
+                    <h4>Non-Convex Optimization</h4>
+                    <p><strong>Multiple valleys:</strong> Many local minima. Where you end up depends on where you start.</p>
+                    <div class="highlight">May get stuck in suboptimal solutions</div>
+                    <p>Examples: Neural networks, complex trading strategies</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Optimization Landscape: Convex vs Non-Convex</h3>
+                <canvas id="landscapeChart"></canvas>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Learning Rate (α)</h4>
+                    <p>Step size. Too small = slow convergence. Too large = overshoot and diverge.</p>
+                    <div class="highlight">Critical hyperparameter</div>
+                </div>
+                <div class="card">
+                    <h4>Gradient (∇f)</h4>
+                    <p>Vector of partial derivatives. Points uphill—we go opposite direction to minimize.</p>
+                    <div class="highlight">Steepest ascent direction</div>
+                </div>
+                <div class="card">
+                    <h4>Convergence</h4>
+                    <p>When changes become negligible. Check: |f(x_new) - f(x_old)| < tolerance.</p>
+                    <div class="highlight">Stopping criterion</div>
+                </div>
+                <div class="card">
+                    <h4>Local vs Global</h4>
+                    <p>Local minimum: best nearby. Global minimum: best overall. Convex = same thing.</p>
+                    <div class="highlight">The fundamental challenge</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>Gradient Descent</h3>
+                <div class="formula">x<sup>(k+1)</sup> = x<sup>(k)</sup> - α · ∇f(x<sup>(k)</sup>)</div>
+                <p>At each iteration k, move in negative gradient direction with step size α</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Newton's Method</h3>
+                <div class="formula">x<sup>(k+1)</sup> = x<sup>(k)</sup> - [H(x<sup>(k)</sup>)]<sup>-1</sup> · ∇f(x<sup>(k)</sup>)</div>
+                <p>Use Hessian matrix H (second derivatives) for faster convergence near optimum</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Constrained Optimization (Lagrangian)</h3>
+                <div class="formula">L(x, λ) = f(x) + λ<sup>T</sup>g(x)</div>
+                <p>Minimize f(x) subject to g(x) = 0. Lagrange multipliers λ enforce constraints.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Quadratic Programming</h3>
+                <div class="formula">min<sub>w</sub> ½ w<sup>T</sup>Σw - λ w<sup>T</sup>μ</div>
+                <p>subject to: Σw<sub>i</sub> = 1, w<sub>i</sub> ≥ 0</p>
+                <p>Classic portfolio optimization: minimize variance, maximize return, weights sum to 1</p>
+            </div>
+
+            <table class="convergence-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Convergence Rate</th>
+                        <th>Per-Iteration Cost</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gradient Descent</td>
+                        <td>Linear O(1/k)</td>
+                        <td>O(n) - gradient only</td>
+                        <td>Large-scale problems</td>
+                    </tr>
+                    <tr>
+                        <td>Newton's Method</td>
+                        <td>Quadratic O(1/k²)</td>
+                        <td>O(n³) - Hessian inverse</td>
+                        <td>Small problems, near optimum</td>
+                    </tr>
+                    <tr>
+                        <td>BFGS/L-BFGS</td>
+                        <td>Superlinear</td>
+                        <td>O(n²) - Hessian approx</td>
+                        <td>Medium-scale, no Hessian</td>
+                    </tr>
+                    <tr>
+                        <td>SLSQP</td>
+                        <td>Superlinear</td>
+                        <td>O(n²)</td>
+                        <td>Constrained optimization</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Visualization</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Convergence Animation Concept</div>
+                <p>
+                    Watch how different optimization methods navigate a loss surface. Gradient descent takes
+                    many small steps, while Newton's method takes fewer but more informed steps using curvature
+                    information. The charts below show convergence behavior on a quadratic objective function.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3>Convergence Comparison: Gradient Descent vs Newton's Method</h3>
+                <canvas id="convergenceChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Optimization Path on Contour Plot</h3>
+                <canvas id="contourChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Loss Function Over Iterations</h3>
+                <canvas id="lossChart"></canvas>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Gradient Descent from Scratch</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from typing import Callable, Tuple, List
+
+
+def gradient_descent(
+    f: Callable,
+    grad_f: Callable,
+    x0: np.ndarray,
+    learning_rate: float = 0.01,
+    max_iter: int = 1000,
+    tol: float = 1e-6
+) -> Tuple[np.ndarray, List[float]]:
+    """
+    Gradient descent optimization from scratch.
+
+    Parameters:
+    -----------
+    f : callable - Objective function to minimize
+    grad_f : callable - Gradient of objective function
+    x0 : ndarray - Starting point
+    learning_rate : float - Step size (alpha)
+    max_iter : int - Maximum iterations
+    tol : float - Convergence tolerance
+
+    Returns:
+    --------
+    x_opt : optimal solution
+    history : list of objective values at each iteration
+    """
+    x = x0.copy()
+    history = [f(x)]
+
+    for i in range(max_iter):
+        # Compute gradient at current point
+        grad = grad_f(x)
+
+        # Update: move opposite to gradient
+        x_new = x - learning_rate * grad
+
+        # Record objective value
+        f_new = f(x_new)
+        history.append(f_new)
+
+        # Check convergence
+        if abs(f_new - history[-2]) < tol:
+            print(f"Converged after {i+1} iterations")
+            break
+
+        x = x_new
+
+    return x, history
+
+
+# Example: Minimize f(x) = x^2 + y^2 (simple quadratic)
+def quadratic(x):
+    return x[0]**2 + x[1]**2
+
+def grad_quadratic(x):
+    return np.array([2*x[0], 2*x[1]])
+
+
+# Run gradient descent
+x0 = np.array([5.0, 5.0])
+x_opt, history = gradient_descent(
+    quadratic, grad_quadratic, x0,
+    learning_rate=0.1, max_iter=100
+)
+print(f"Optimal x: {x_opt}")
+print(f"Optimal f(x): {quadratic(x_opt):.6f}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Using scipy.optimize.minimize</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize, OptimizeResult
+from typing import Dict
+
+
+def compare_scipy_methods(f, x0, methods=['BFGS', 'L-BFGS-B', 'Nelder-Mead', 'Powell']):
+    """
+    Compare different scipy optimization methods.
+    """
+    results = {}
+
+    for method in methods:
+        res = minimize(f, x0, method=method, options={'maxiter': 1000})
+        results[method] = {
+            'x': res.x,
+            'f(x)': res.fun,
+            'iterations': res.nit if hasattr(res, 'nit') else 'N/A',
+            'success': res.success
+        }
+        print(f"\n{method}:")
+        print(f"  Solution: {res.x}")
+        print(f"  f(x) = {res.fun:.6f}")
+        print(f"  Iterations: {results[method]['iterations']}")
+
+    return results
+
+
+# Rosenbrock function (classic test - non-convex with curved valley)
+def rosenbrock(x):
+    return (1 - x[0])**2 + 100 * (x[1] - x[0]**2)**2
+
+
+# Compare methods
+x0 = np.array([-1.0, 1.0])
+results = compare_scipy_methods(rosenbrock, x0)
+
+
+# Function with multiple local minima (demonstrates local vs global)
+def multimodal(x):
+    """Multiple local minima - gradient descent may get stuck."""
+    return np.sin(x[0]) * np.cos(x[1]) + (x[0]**2 + x[1]**2) / 20
+
+
+# Different starting points lead to different solutions
+print("\n" + "="*50)
+print("Local vs Global Minimum Demonstration")
+print("="*50)
+starting_points = [
+    np.array([0.0, 0.0]),
+    np.array([3.0, 3.0]),
+    np.array([-2.0, 2.0])
+]
+
+for x0 in starting_points:
+    res = minimize(multimodal, x0, method='BFGS')
+    print(f"Start: {x0} -> Solution: {res.x.round(3)}, f(x)={res.fun:.4f}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Portfolio Optimization with Constraints (SLSQP)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize
+
+
+def portfolio_optimization(
+    expected_returns: np.ndarray,
+    cov_matrix: np.ndarray,
+    target_return: float = None,
+    risk_free_rate: float = 0.02
+) -> Dict:
+    """
+    Portfolio optimization using SLSQP with constraints.
+
+    Constraints:
+    - Weights sum to 1 (equality)
+    - No short selling: w_i >= 0 (inequality)
+    - Optional: target return constraint
+
+    Parameters:
+    -----------
+    expected_returns : array - Expected returns for each asset
+    cov_matrix : array - Covariance matrix of returns
+    target_return : float - Target portfolio return (optional)
+    risk_free_rate : float - Risk-free rate for Sharpe ratio
+    """
+    n_assets = len(expected_returns)
+
+    # Objective: Minimize negative Sharpe ratio (maximize Sharpe)
+    def neg_sharpe(weights):
+        port_return = np.dot(weights, expected_returns)
+        port_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+        sharpe = (port_return - risk_free_rate) / port_vol
+        return -sharpe
+
+    # Objective: Minimize variance
+    def portfolio_variance(weights):
+        return np.dot(weights.T, np.dot(cov_matrix, weights))
+
+    # Constraint: weights sum to 1
+    constraints = [
+        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+    ]
+
+    # Optional: target return constraint
+    if target_return is not None:
+        constraints.append({
+            'type': 'eq',
+            'fun': lambda w: np.dot(w, expected_returns) - target_return
+        })
+
+    # Bounds: 0 <= w_i <= 1 (no shorting, no leverage)
+    bounds = tuple((0, 1) for _ in range(n_assets))
+
+    # Initial guess: equal weights
+    w0 = np.ones(n_assets) / n_assets
+
+    # Optimize for maximum Sharpe
+    result_sharpe = minimize(
+        neg_sharpe, w0, method='SLSQP',
+        bounds=bounds, constraints=constraints,
+        options={'ftol': 1e-9, 'maxiter': 1000}
+    )
+
+    # Optimize for minimum variance
+    result_minvar = minimize(
+        portfolio_variance, w0, method='SLSQP',
+        bounds=bounds, constraints=constraints[:1],  # Only sum=1 constraint
+        options={'ftol': 1e-9, 'maxiter': 1000}
+    )
+
+    return {
+        'max_sharpe': {
+            'weights': result_sharpe.x,
+            'return': np.dot(result_sharpe.x, expected_returns),
+            'volatility': np.sqrt(portfolio_variance(result_sharpe.x)),
+            'sharpe': -result_sharpe.fun
+        },
+        'min_variance': {
+            'weights': result_minvar.x,
+            'return': np.dot(result_minvar.x, expected_returns),
+            'volatility': np.sqrt(result_minvar.fun),
+            'sharpe': (np.dot(result_minvar.x, expected_returns) - risk_free_rate) /
+                      np.sqrt(result_minvar.fun)
+        }
+    }
+
+
+# Example with 4 assets
+np.random.seed(42)
+n_assets = 4
+expected_returns = np.array([0.12, 0.10, 0.08, 0.15])  # Annual returns
+volatilities = np.array([0.20, 0.15, 0.10, 0.25])
+
+# Create correlation matrix and convert to covariance
+corr_matrix = np.array([
+    [1.0, 0.3, 0.1, 0.5],
+    [0.3, 1.0, 0.2, 0.4],
+    [0.1, 0.2, 1.0, 0.1],
+    [0.5, 0.4, 0.1, 1.0]
+])
+cov_matrix = np.outer(volatilities, volatilities) * corr_matrix
+
+# Run optimization
+results = portfolio_optimization(expected_returns, cov_matrix)
+
+print("="*50)
+print("PORTFOLIO OPTIMIZATION RESULTS")
+print("="*50)
+print("\nMaximum Sharpe Ratio Portfolio:")
+print(f"  Weights: {results['max_sharpe']['weights'].round(3)}")
+print(f"  Return: {results['max_sharpe']['return']*100:.2f}%")
+print(f"  Volatility: {results['max_sharpe']['volatility']*100:.2f}%")
+print(f"  Sharpe: {results['max_sharpe']['sharpe']:.3f}")
+
+print("\nMinimum Variance Portfolio:")
+print(f"  Weights: {results['min_variance']['weights'].round(3)}")
+print(f"  Return: {results['min_variance']['return']*100:.2f}%")
+print(f"  Volatility: {results['min_variance']['volatility']*100:.2f}%")
+print(f"  Sharpe: {results['min_variance']['sharpe']:.3f}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Convergence Rate Comparison</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def compare_convergence():
+    """
+    Compare convergence rates of different optimization methods.
+    """
+    # Quadratic function: f(x) = 0.5 * x^T A x - b^T x
+    # Condition number affects convergence
+    A = np.array([[10, 0], [0, 1]])  # Ill-conditioned (ratio = 10)
+    b = np.array([1, 1])
+
+    def f(x):
+        return 0.5 * x @ A @ x - b @ x
+
+    def grad_f(x):
+        return A @ x - b
+
+    def hessian_f(x):
+        return A
+
+    # Optimal solution (A^-1 * b)
+    x_opt = np.linalg.solve(A, b)
+    f_opt = f(x_opt)
+
+    x0 = np.array([10.0, 10.0])
+
+    # Gradient Descent
+    x_gd = x0.copy()
+    gd_history = []
+    lr = 0.1  # Learning rate
+
+    for _ in range(50):
+        gd_history.append(f(x_gd) - f_opt)
+        x_gd = x_gd - lr * grad_f(x_gd)
+
+    # Newton's Method
+    x_newton = x0.copy()
+    newton_history = []
+
+    for _ in range(10):
+        newton_history.append(f(x_newton) - f_opt)
+        H_inv = np.linalg.inv(hessian_f(x_newton))
+        x_newton = x_newton - H_inv @ grad_f(x_newton)
+        if f(x_newton) - f_opt < 1e-15:
+            break
+
+    print("Gradient Descent iterations to converge:", len(gd_history))
+    print("Newton's Method iterations to converge:", len(newton_history))
+    print(f"\nOptimal solution: {x_opt}")
+    print(f"GD final: {x_gd.round(6)}")
+    print(f"Newton final: {x_newton.round(6)}")
+
+    return gd_history, newton_history
+
+
+gd_hist, newton_hist = compare_convergence()</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Local vs Global Minimum Trap</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize, differential_evolution
+
+
+def local_vs_global_demo():
+    """
+    Demonstrate how gradient-based methods can get trapped in local minima.
+    """
+    # Function with multiple local minima
+    def rastrigin(x):
+        """
+        Rastrigin function - highly multimodal.
+        Global minimum at x = [0, 0] with f(x) = 0
+        """
+        A = 10
+        n = len(x)
+        return A * n + sum(xi**2 - A * np.cos(2 * np.pi * xi) for xi in x)
+
+    print("="*60)
+    print("LOCAL VS GLOBAL OPTIMIZATION COMPARISON")
+    print("="*60)
+    print("\nRastrigin function: many local minima, global at (0,0)")
+
+    # Try gradient-based method from different starting points
+    print("\n1. Gradient-based (L-BFGS-B) - gets trapped:")
+    np.random.seed(42)
+    local_results = []
+
+    for i in range(5):
+        x0 = np.random.uniform(-5, 5, 2)
+        res = minimize(rastrigin, x0, method='L-BFGS-B')
+        local_results.append(res.fun)
+        print(f"   Start {x0.round(2)} -> f(x) = {res.fun:.4f}")
+
+    # Global optimization using differential evolution
+    print("\n2. Global optimization (Differential Evolution):")
+    bounds = [(-5, 5), (-5, 5)]
+    res_global = differential_evolution(rastrigin, bounds, seed=42)
+    print(f"   Solution: {res_global.x.round(6)}")
+    print(f"   f(x) = {res_global.fun:.6f}")
+    print(f"   (True global minimum = 0.0 at [0, 0])")
+
+    # Multi-start strategy
+    print("\n3. Multi-start strategy (run local optimizer many times):")
+    best_result = float('inf')
+    best_x = None
+
+    for _ in range(20):
+        x0 = np.random.uniform(-5, 5, 2)
+        res = minimize(rastrigin, x0, method='L-BFGS-B')
+        if res.fun < best_result:
+            best_result = res.fun
+            best_x = res.x
+
+    print(f"   Best found: f(x) = {best_result:.6f} at {best_x.round(4)}")
+
+    return local_results, res_global.fun
+
+
+local_vs_global_demo()</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive Optimization Calculator</h2>
+            <div class="calculator">
+                <h3>Function Optimization Demo</h3>
+                <p>Optimize f(x) = (x - a)² + (y - b)² (quadratic bowl with minimum at (a, b))</p>
+
+                <div class="input-group">
+                    <label for="targetA">Target A (true minimum x-coordinate):</label>
+                    <input type="number" id="targetA" value="3" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label for="targetB">Target B (true minimum y-coordinate):</label>
+                    <input type="number" id="targetB" value="2" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label for="startX">Starting X:</label>
+                    <input type="number" id="startX" value="-5" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label for="startY">Starting Y:</label>
+                    <input type="number" id="startY" value="-5" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label for="learningRate">Learning Rate (alpha):</label>
+                    <input type="number" id="learningRate" value="0.1" step="0.01" min="0.01" max="0.5">
+                </div>
+                <button class="btn" onclick="runOptimization()">Run Gradient Descent</button>
+                <div id="optResults" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Optimization Path</h3>
+                <canvas id="optimizationPathChart"></canvas>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Key Takeaways</h2>
+            <div class="key-concept">
+                <h3>Summary</h3>
+                <ul>
+                    <li><strong>Gradient Descent:</strong> x_new = x_old - α·∇f(x) — iteratively move downhill</li>
+                    <li><strong>Newton's Method:</strong> Uses Hessian for faster convergence but more computation per step</li>
+                    <li><strong>Convex vs Non-Convex:</strong> Convex has one minimum (guaranteed); non-convex may have many local minima</li>
+                    <li><strong>Constraints:</strong> Use SLSQP or trust-constr for equality and inequality constraints</li>
+                    <li><strong>scipy.optimize:</strong> minimize() is your Swiss Army knife — supports many methods</li>
+                    <li><strong>Local Minima:</strong> Use multi-start, global optimizers, or accept approximate solutions</li>
+                    <li><strong>Portfolio Optimization:</strong> Quadratic programming with SLSQP handles real constraints</li>
+                </ul>
+            </div>
+            <div class="nav-buttons">
+                <a href="6.3_risk_parity.html" class="nav-btn">← Previous: Risk Parity</a>
+                <a href="6.5_position_sizing.html" class="nav-btn">Next: Position Sizing →</a>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Test Your Knowledge</h2>
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Q1: What is gradient descent?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> An algorithm that randomly searches for the minimum</label>
+                        <label><input type="radio" name="q1" value="b"> An iterative method that moves opposite to the gradient to minimize a function</label>
+                        <label><input type="radio" name="q1" value="c"> A method that only works for linear functions</label>
+                        <label><input type="radio" name="q1" value="d"> A technique for maximizing portfolio returns</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q2: Why do we use constraints in portfolio optimization?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> To make the problem harder to solve</label>
+                        <label><input type="radio" name="q2" value="b"> To enforce real-world requirements like no short-selling and position limits</label>
+                        <label><input type="radio" name="q2" value="c"> Constraints are optional and never needed</label>
+                        <label><input type="radio" name="q2" value="d"> To slow down the optimization algorithm</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q3: What is the key difference between convex and non-convex optimization?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> Convex is faster, non-convex is slower</label>
+                        <label><input type="radio" name="q3" value="b"> Convex has one global minimum; non-convex may have multiple local minima</label>
+                        <label><input type="radio" name="q3" value="c"> There is no practical difference</label>
+                        <label><input type="radio" name="q3" value="d"> Convex only works with 2 variables</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q4: What does SLSQP stand for and when do you use it?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> Sequential Least Squares Programming — for constrained optimization</label>
+                        <label><input type="radio" name="q4" value="b"> Simple Linear Squared Quadratic Program — for linear problems</label>
+                        <label><input type="radio" name="q4" value="c"> Stochastic Learning Sequential Query Protocol — for machine learning</label>
+                        <label><input type="radio" name="q4" value="d"> Standard Lagrangian System for Quick Processing — for fast computation</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q5: How can you handle local minima in non-convex optimization?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> Local minima cannot be avoided — accept whatever solution you get</label>
+                        <label><input type="radio" name="q5" value="b"> Use multi-start strategies, global optimizers, or simulated annealing</label>
+                        <label><input type="radio" name="q5" value="c"> Increase the learning rate to jump out of local minima</label>
+                        <label><input type="radio" name="q5" value="d"> Convert the problem to convex by removing constraints</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script defer src="../../assets/js/shared-scripts.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let landscapeChart, convergenceChart, contourChart, lossChart, optimizationPathChart;
+
+        // Initialize charts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initLandscapeChart();
+            initConvergenceChart();
+            initContourChart();
+            initLossChart();
+        });
+
+        function initLandscapeChart() {
+            const ctx = document.getElementById('landscapeChart').getContext('2d');
+
+            // Generate data for convex (x^2) and non-convex (with local minima)
+            const xValues = [];
+            const convexY = [];
+            const nonConvexY = [];
+
+            for (let x = -4; x <= 4; x += 0.1) {
+                xValues.push(x.toFixed(1));
+                convexY.push(x * x);
+                // Non-convex: x^2/4 + sin(3x) - has multiple local minima
+                nonConvexY.push(x * x / 4 + Math.sin(3 * x) * 2);
+            }
+
+            landscapeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: xValues,
+                    datasets: [
+                        {
+                            label: 'Convex (x²)',
+                            data: convexY,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Non-Convex (x²/4 + 2sin(3x))',
+                            data: nonConvexY,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        title: { display: true, text: 'Convex vs Non-Convex Functions', color: '#e2e8f0' }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'x', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'f(x)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initConvergenceChart() {
+            const ctx = document.getElementById('convergenceChart').getContext('2d');
+
+            // Simulate convergence for gradient descent vs Newton
+            const iterations = Array.from({length: 30}, (_, i) => i + 1);
+            const gdConvergence = [];
+            const newtonConvergence = [];
+
+            let gdError = 100;
+            let newtonError = 100;
+
+            for (let i = 0; i < 30; i++) {
+                gdConvergence.push(gdError);
+                newtonConvergence.push(newtonError);
+
+                // GD: linear convergence
+                gdError *= 0.85;
+                // Newton: quadratic convergence (much faster)
+                newtonError *= 0.3;
+                if (newtonError < 0.0001) newtonError = 0.0001;
+            }
+
+            convergenceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: iterations,
+                    datasets: [
+                        {
+                            label: 'Gradient Descent',
+                            data: gdConvergence,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            tension: 0.4,
+                            pointRadius: 2
+                        },
+                        {
+                            label: "Newton's Method",
+                            data: newtonConvergence,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Iteration', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Error (log scale)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initContourChart() {
+            const ctx = document.getElementById('contourChart').getContext('2d');
+
+            // Simulate optimization path on a 2D surface
+            // Starting from (5, 5) moving to (0, 0)
+            const gdPath = [];
+            const newtonPath = [];
+
+            // Gradient descent path (many small steps)
+            let x = 5, y = 5;
+            const lr = 0.15;
+            for (let i = 0; i < 25; i++) {
+                gdPath.push({x: x, y: y});
+                x = x - lr * 2 * x;  // gradient of x^2
+                y = y - lr * 2 * y;  // gradient of y^2
+            }
+
+            // Newton's path (few large steps)
+            x = 5; y = 5;
+            for (let i = 0; i < 5; i++) {
+                newtonPath.push({x: x, y: y});
+                // Newton step goes directly toward optimum for quadratic
+                x = x * 0.1;
+                y = y * 0.1;
+            }
+            newtonPath.push({x: 0, y: 0});
+
+            // Create contour-like circles
+            const contourCircles = [];
+            for (let r = 1; r <= 7; r++) {
+                const circle = [];
+                for (let theta = 0; theta <= 2 * Math.PI; theta += 0.1) {
+                    circle.push({x: r * Math.cos(theta), y: r * Math.sin(theta)});
+                }
+                contourCircles.push(circle);
+            }
+
+            const datasets = [
+                {
+                    label: 'Gradient Descent Path',
+                    data: gdPath,
+                    borderColor: '#6366f1',
+                    backgroundColor: '#6366f1',
+                    showLine: true,
+                    tension: 0,
+                    pointRadius: 4
+                },
+                {
+                    label: "Newton's Method Path",
+                    data: newtonPath,
+                    borderColor: '#10b981',
+                    backgroundColor: '#10b981',
+                    showLine: true,
+                    tension: 0,
+                    pointRadius: 6
+                },
+                {
+                    label: 'Optimum',
+                    data: [{x: 0, y: 0}],
+                    backgroundColor: '#ef4444',
+                    pointRadius: 10,
+                    pointStyle: 'star'
+                }
+            ];
+
+            // Add contour circles
+            contourCircles.forEach((circle, i) => {
+                datasets.push({
+                    label: `Contour ${i+1}`,
+                    data: circle,
+                    borderColor: `rgba(148, 163, 184, ${0.3 - i * 0.03})`,
+                    showLine: true,
+                    pointRadius: 0,
+                    borderDash: [5, 5]
+                });
+            });
+
+            contourChart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e2e8f0',
+                                filter: function(item) {
+                                    return !item.text.startsWith('Contour');
+                                }
+                            }
+                        },
+                        title: { display: true, text: 'Optimization Paths (f(x,y) = x² + y²)', color: '#e2e8f0' }
+                    },
+                    scales: {
+                        x: {
+                            min: -2, max: 7,
+                            title: { display: true, text: 'x', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            min: -2, max: 7,
+                            title: { display: true, text: 'y', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initLossChart() {
+            const ctx = document.getElementById('lossChart').getContext('2d');
+
+            const iterations = Array.from({length: 50}, (_, i) => i + 1);
+            const gdLoss = [];
+            const bfgsLoss = [];
+            const newtonLoss = [];
+
+            let gd = 50, bfgs = 50, newton = 50;
+
+            for (let i = 0; i < 50; i++) {
+                gdLoss.push(gd);
+                bfgsLoss.push(bfgs);
+                newtonLoss.push(newton);
+
+                gd *= 0.92;
+                bfgs *= 0.8;
+                newton *= 0.4;
+                if (newton < 0.001) newton = 0.001;
+                if (bfgs < 0.001) bfgs = 0.001;
+            }
+
+            lossChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: iterations,
+                    datasets: [
+                        {
+                            label: 'Gradient Descent',
+                            data: gdLoss,
+                            borderColor: '#6366f1',
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'BFGS',
+                            data: bfgsLoss,
+                            borderColor: '#f59e0b',
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: "Newton's Method",
+                            data: newtonLoss,
+                            borderColor: '#10b981',
+                            tension: 0.4,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Iteration', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Objective Function Value', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function runOptimization() {
+            const targetA = parseFloat(document.getElementById('targetA').value);
+            const targetB = parseFloat(document.getElementById('targetB').value);
+            const startX = parseFloat(document.getElementById('startX').value);
+            const startY = parseFloat(document.getElementById('startY').value);
+            const lr = parseFloat(document.getElementById('learningRate').value);
+
+            // Run gradient descent
+            let x = startX;
+            let y = startY;
+            const path = [{x: x, y: y}];
+            const losses = [];
+
+            const f = (x, y) => (x - targetA) ** 2 + (y - targetB) ** 2;
+
+            losses.push(f(x, y));
+
+            for (let i = 0; i < 100; i++) {
+                // Gradient: [2(x-a), 2(y-b)]
+                const gradX = 2 * (x - targetA);
+                const gradY = 2 * (y - targetB);
+
+                x = x - lr * gradX;
+                y = y - lr * gradY;
+
+                path.push({x: x, y: y});
+                losses.push(f(x, y));
+
+                // Check convergence
+                if (f(x, y) < 1e-8) break;
+            }
+
+            const iterations = path.length - 1;
+            const finalLoss = f(x, y);
+
+            document.getElementById('optResults').innerHTML = `
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">${x.toFixed(4)}</div>
+                        <div>Final X</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${y.toFixed(4)}</div>
+                        <div>Final Y</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${iterations}</div>
+                        <div>Iterations</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${finalLoss.toExponential(2)}</div>
+                        <div>Final Loss</div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #94a3b8;">
+                    True minimum at (${targetA}, ${targetB}) | Started at (${startX}, ${startY}) | Learning rate: ${lr}
+                </p>
+            `;
+
+            updateOptimizationPathChart(path, targetA, targetB);
+        }
+
+        function updateOptimizationPathChart(path, targetA, targetB) {
+            const ctx = document.getElementById('optimizationPathChart').getContext('2d');
+            if (optimizationPathChart) optimizationPathChart.destroy();
+
+            // Generate contour circles around target
+            const contourCircles = [];
+            for (let r = 1; r <= 8; r += 1.5) {
+                const circle = [];
+                for (let theta = 0; theta <= 2 * Math.PI + 0.1; theta += 0.1) {
+                    circle.push({x: targetA + r * Math.cos(theta), y: targetB + r * Math.sin(theta)});
+                }
+                contourCircles.push(circle);
+            }
+
+            const datasets = [
+                {
+                    label: 'Optimization Path',
+                    data: path,
+                    borderColor: '#6366f1',
+                    backgroundColor: '#6366f1',
+                    showLine: true,
+                    tension: 0,
+                    pointRadius: 3
+                },
+                {
+                    label: 'Start',
+                    data: [path[0]],
+                    backgroundColor: '#f59e0b',
+                    pointRadius: 10,
+                    pointStyle: 'triangle'
+                },
+                {
+                    label: 'End',
+                    data: [path[path.length - 1]],
+                    backgroundColor: '#10b981',
+                    pointRadius: 10,
+                    pointStyle: 'circle'
+                },
+                {
+                    label: 'True Minimum',
+                    data: [{x: targetA, y: targetB}],
+                    backgroundColor: '#ef4444',
+                    pointRadius: 12,
+                    pointStyle: 'star'
+                }
+            ];
+
+            contourCircles.forEach((circle, i) => {
+                datasets.push({
+                    label: `Level ${i+1}`,
+                    data: circle,
+                    borderColor: `rgba(148, 163, 184, ${0.4 - i * 0.05})`,
+                    showLine: true,
+                    pointRadius: 0,
+                    borderDash: [3, 3]
+                });
+            });
+
+            // Calculate bounds
+            const allX = path.map(p => p.x).concat([targetA]);
+            const allY = path.map(p => p.y).concat([targetB]);
+            const minX = Math.min(...allX) - 2;
+            const maxX = Math.max(...allX) + 2;
+            const minY = Math.min(...allY) - 2;
+            const maxY = Math.max(...allY) + 2;
+
+            optimizationPathChart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e2e8f0',
+                                filter: function(item) {
+                                    return !item.text.startsWith('Level');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: minX, max: maxX,
+                            title: { display: true, text: 'x', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            min: minY, max: maxY,
+                            title: { display: true, text: 'y', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'Gradient descent iteratively updates x by moving in the negative gradient direction (steepest descent) with step size α.' },
+                q2: { correct: 'b', explanation: 'Constraints enforce real-world requirements: no short-selling (w >= 0), position limits, and weights summing to 1.' },
+                q3: { correct: 'b', explanation: 'Convex functions have a single global minimum—any local minimum is the global minimum. Non-convex functions may have multiple local minima where optimization can get stuck.' },
+                q4: { correct: 'a', explanation: 'SLSQP = Sequential Least Squares Programming. It handles both equality and inequality constraints, making it ideal for portfolio optimization.' },
+                q5: { correct: 'b', explanation: 'Multi-start (running optimization from many starting points), global optimizers (differential evolution, simulated annealing), or basin-hopping can help escape local minima.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+            document.getElementById('quizScore').innerHTML = `<h3>Score: ${score}/5 (${score * 20}%)</h3>`;
+        }
+
+        // Run initial optimization demo on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runOptimization, 500);
+        });
+    </script>
+</body>
+</html>

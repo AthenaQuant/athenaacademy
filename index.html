@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master quantitative trading with 32 institutional-grade modules covering returns, linear algebra, calculus, volume analysis, statistics, optimization, and risk metrics.">
+    <title>Quantitative Trading Mastery | 32-Module Professional Course</title>
+
+    <link rel="stylesheet" href="assets/css/shared-styles.css">
+    <link rel="icon" href="assets/images/logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1f2937;
+            --bg-card: #151c2c;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-pink: #ec4899;
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            --gradient-hero: linear-gradient(135deg, #0a0e1a 0%, #1a1f3a 50%, #0d1025 100%);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ============================================
+           NAVIGATION
+        ============================================ */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0.75rem 0;
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .nav-logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            object-fit: contain;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            background: var(--gradient-primary);
+            color: white !important;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* ============================================
+           HERO SECTION
+        ============================================ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 8rem 0 6rem;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gradient-hero);
+            z-index: -2;
+        }
+
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 30% at 20% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+            animation: heroGlow 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes heroGlow {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .hero-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease 0.1s forwards;
+            opacity: 0;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            animation: fadeInUp 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 4rem;
+            animation: fadeInUp 0.8s ease 0.3s forwards;
+            opacity: 0;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeInUp 0.8s ease 0.4s forwards;
+            opacity: 0;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           FEATURES SECTION
+        ============================================ */
+        .features {
+            padding: 6rem 0;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           CURRICULUM SECTION
+        ============================================ */
+        .curriculum {
+            padding: 6rem 0;
+            background: var(--bg-primary);
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .module-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .module-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .module-header {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .module-header:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .module-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .module-1 .module-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .module-2 .module-icon { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .module-3 .module-icon { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .module-4 .module-icon { background: linear-gradient(135deg, #10b981, #059669); }
+        .module-5 .module-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .module-6 .module-icon { background: linear-gradient(135deg, #ec4899, #db2777); }
+        .module-7 .module-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        .module-info {
+            flex: 1;
+        }
+
+        .module-number {
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .module-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .module-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .module-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        .module-toggle {
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+        }
+
+        .module-card.expanded .module-toggle {
+            transform: rotate(180deg);
+        }
+
+        .module-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .module-card.expanded .module-content {
+            max-height: 500px;
+        }
+
+        .submodules-list {
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .submodule-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .submodule-item:last-child {
+            border-bottom: none;
+        }
+
+        .submodule-item:hover {
+            color: var(--text-primary);
+            padding-left: 0.5rem;
+        }
+
+        .submodule-item::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .submodule-item span {
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           LEARNING PATH SECTION
+        ============================================ */
+        .learning-path {
+            padding: 6rem 0;
+            background: var(--bg-secondary);
+        }
+
+        .path-container {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+        }
+
+        .path-step {
+            flex: 1;
+            min-width: 280px;
+            max-width: 380px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .path-step::after {
+            content: '';
+            position: absolute;
+            right: -2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2rem;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .path-step:last-child::after {
+            display: none;
+        }
+
+        .path-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .path-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .path-subtitle {
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .path-modules {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           SPECIAL FEATURES SECTION
+        ============================================ */
+        .special-features {
+            padding: 6rem 0;
+            background: var(--bg-primary);
+        }
+
+        .special-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .special-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .special-card:hover {
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateX(5px);
+        }
+
+        .special-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .special-content h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .special-content p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           STATS BANNER
+        ============================================ */
+        .stats-banner {
+            padding: 4rem 0;
+            background: var(--gradient-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-banner-item {
+            text-align: center;
+        }
+
+        .stat-banner-number {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-banner-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           FOOTER
+        ============================================ */
+        .footer {
+            padding: 4rem 0 2rem;
+            background: var(--bg-tertiary);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .footer-links h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           RESPONSIVE
+        ============================================ */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar .container {
+                flex-wrap: wrap;
+            }
+
+            .nav-links {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                margin-top: 1rem;
+                gap: 1rem;
+                display: none;
+            }
+
+            .navbar.scrolled .nav-links {
+                display: flex;
+            }
+
+            .hero-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .path-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .path-step::after {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid,
+            .special-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* ============================================
+           ANIMATIONS
+        ============================================ */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="#" class="nav-logo">
+                <img src="assets/images/logo.png" alt="Logo" class="nav-logo-icon">
+                <span>QT Mastery</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#curriculum">Curriculum</a>
+                <a href="#path">Learning Path</a>
+                <a href="#curriculum" class="nav-cta">Start Learning</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span>🎓</span> Professional Trading Education
+                </div>
+                <h1 class="hero-title">Quantitative Trading Mastery</h1>
+                <p class="hero-subtitle">
+                    Master 32 Institutional-Grade Modules from Foundation to Advanced Portfolio Management.
+                    Learn the mathematical frameworks used by hedge funds and proprietary trading firms.
+                </p>
+                <div class="hero-cta-group">
+                    <a href="#curriculum" class="btn-primary">
+                        Start Learning <span>→</span>
+                    </a>
+                    <a href="#features" class="btn-secondary">
+                        <span>📋</span> View Features
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" data-target="32">0</div>
+                        <div class="stat-label">Complete Modules</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" data-target="7">0</div>
+                        <div class="stat-label">Major Topics</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">✓</div>
+                        <div class="stat-label">Interactive Learning</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">💻</div>
+                        <div class="stat-label">Production Code</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Features</div>
+                <h2 class="section-title">Everything You Need to Succeed</h2>
+                <p class="section-subtitle">
+                    Each module is packed with interactive tools and professional-grade content
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">📝</div>
+                    <h3>Interactive Quizzes</h3>
+                    <p>Test your knowledge instantly with built-in quizzes that provide immediate feedback and explanations.</p>
+                </div>
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">🧮</div>
+                    <h3>Live Calculators</h3>
+                    <p>Experiment with real calculations using interactive tools that update in real-time as you change inputs.</p>
+                </div>
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">🐍</div>
+                    <h3>Professional Python Code</h3>
+                    <p>Every code snippet follows best practices with type hints, docstrings, and production-ready standards.</p>
+                </div>
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">📊</div>
+                    <h3>Chart.js Visualizations</h3>
+                    <p>Beautiful, interactive charts that help you understand complex concepts through visual representation.</p>
+                </div>
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">💻</div>
+                    <h3>MacBook Code Blocks</h3>
+                    <p>Syntax-highlighted code with copy-button enabled, styled like a professional IDE terminal.</p>
+                </div>
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Trading Applications</h3>
+                    <p>Every concept is connected to real-world trading scenarios and institutional use cases.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Curriculum Section -->
+    <section class="curriculum" id="curriculum">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Curriculum</div>
+                <h2 class="section-title">32 Complete Modules</h2>
+                <p class="section-subtitle">
+                    A comprehensive journey from mathematical foundations to advanced portfolio management
+                </p>
+            </div>
+            <div class="modules-grid">
+                <!-- Module 1 -->
+                <div class="module-card module-1" data-module="1">
+                    <div class="module-header" onclick="toggleModule(1)">
+                        <div class="module-icon">📊</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 1</div>
+                            <div class="module-title">Price Action & Returns</div>
+                            <div class="module-description">Master return calculations, cumulative wealth, normalization, and volatility analysis</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 4 modules</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_1_price_action/1.1_simple_vs_log_returns.html" class="submodule-item"><span>1.1 Simple vs Log Returns</span></a>
+                            <a href="modules/module_1_price_action/1.2_cumulative_returns.html" class="submodule-item"><span>1.2 Cumulative Returns</span></a>
+                            <a href="modules/module_1_price_action/1.3_price_normalization.html" class="submodule-item"><span>1.3 Price Normalization</span></a>
+                            <a href="modules/module_1_price_action/1.4_volatility_calculation.html" class="submodule-item"><span>1.4 Volatility Calculation</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 2 -->
+                <div class="module-card module-2" data-module="2">
+                    <div class="module-header" onclick="toggleModule(2)">
+                        <div class="module-icon">🧮</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 2</div>
+                            <div class="module-title">Linear Algebra</div>
+                            <div class="module-description">Vectors, matrices, eigenvalues, and decomposition for portfolio mathematics</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 4 modules</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_2_linear_algebra/2.1_vectors_matrices.html" class="submodule-item"><span>2.1 Vectors & Matrices</span></a>
+                            <a href="modules/module_2_linear_algebra/2.2_eigenvalues_eigenvectors.html" class="submodule-item"><span>2.2 Eigenvalues & Eigenvectors</span></a>
+                            <a href="modules/module_2_linear_algebra/2.3_matrix_decomposition.html" class="submodule-item"><span>2.3 Matrix Decomposition</span></a>
+                            <a href="modules/module_2_linear_algebra/2.4_linear_systems.html" class="submodule-item"><span>2.4 Linear Systems</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 3 -->
+                <div class="module-card module-3" data-module="3">
+                    <div class="module-header" onclick="toggleModule(3)">
+                        <div class="module-icon">📐</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 3</div>
+                            <div class="module-title">Calculus</div>
+                            <div class="module-description">Derivatives, integrals, multivariate calculus, and optimization techniques</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 4 modules</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_3_calculus/3.1_differential_calculus.html" class="submodule-item"><span>3.1 Differential Calculus</span></a>
+                            <a href="modules/module_3_calculus/3.2_integral_calculus.html" class="submodule-item"><span>3.2 Integral Calculus</span></a>
+                            <a href="modules/module_3_calculus/3.3_multivariate_calculus.html" class="submodule-item"><span>3.3 Multivariate Calculus</span></a>
+                            <a href="modules/module_3_calculus/3.4_optimization_techniques.html" class="submodule-item"><span>3.4 Optimization Techniques</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 4 -->
+                <div class="module-card module-4" data-module="4">
+                    <div class="module-header" onclick="toggleModule(4)">
+                        <div class="module-icon">📈</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 4</div>
+                            <div class="module-title">Institutional Volume Analysis</div>
+                            <div class="module-description">Volume profile, VWAP, and combined strategies for institutional trading</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 3 modules</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_4_volume_analysis/4.1_volume_profile_analysis.html" class="submodule-item"><span>4.1 Volume Profile Analysis</span></a>
+                            <a href="modules/module_4_volume_analysis/4.2_vwap_analysis.html" class="submodule-item"><span>4.2 VWAP Analysis</span></a>
+                            <a href="modules/module_4_volume_analysis/4.3_combined_volume_strategies.html" class="submodule-item"><span>4.3 Combined Volume Strategies</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 5 -->
+                <div class="module-card module-5" data-module="5">
+                    <div class="module-header" onclick="toggleModule(5)">
+                        <div class="module-icon">📊</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 5</div>
+                            <div class="module-title">Statistics & Probability</div>
+                            <div class="module-description">Complete statistical framework from descriptive stats to Bayesian methods</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 10 modules</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_5_statistics/5.1_descriptive_statistics.html" class="submodule-item"><span>5.1 Descriptive Statistics</span></a>
+                            <a href="modules/module_5_statistics/5.2_probability_distributions.html" class="submodule-item"><span>5.2 Probability Distributions</span></a>
+                            <a href="modules/module_5_statistics/5.3_statistical_inference.html" class="submodule-item"><span>5.3 Statistical Inference</span></a>
+                            <a href="modules/module_5_statistics/5.4_correlation_analysis.html" class="submodule-item"><span>5.4 Correlation Analysis</span></a>
+                            <a href="modules/module_5_statistics/5.5_regression_analysis.html" class="submodule-item"><span>5.5 Regression Analysis</span></a>
+                            <a href="modules/module_5_statistics/5.6_time_series_analysis.html" class="submodule-item"><span>5.6 Time Series Analysis</span></a>
+                            <a href="modules/module_5_statistics/5.7_monte_carlo_simulation.html" class="submodule-item"><span>5.7 Monte Carlo Simulation</span></a>
+                            <a href="modules/module_5_statistics/5.8_bayesian_statistics.html" class="submodule-item"><span>5.8 Bayesian Statistics</span></a>
+                            <a href="modules/module_5_statistics/5.9_resampling_methods.html" class="submodule-item"><span>5.9 Resampling Methods</span></a>
+                            <a href="modules/module_5_statistics/5.10_non_parametric_tests.html" class="submodule-item"><span>5.10 Non-Parametric Tests</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 6 -->
+                <div class="module-card module-6" data-module="6">
+                    <div class="module-header" onclick="toggleModule(6)">
+                        <div class="module-icon">🎯</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 6</div>
+                            <div class="module-title">Optimization & Portfolio Theory</div>
+                            <div class="module-description">Markowitz, Kelly, risk parity, and multi-objective optimization</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 6 modules</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_6_optimization/6.1_markowitz_optimization.html" class="submodule-item"><span>6.1 Markowitz Mean-Variance</span></a>
+                            <a href="modules/module_6_optimization/6.2_kelly_criterion.html" class="submodule-item"><span>6.2 Kelly Criterion</span></a>
+                            <a href="modules/module_6_optimization/6.3_risk_parity.html" class="submodule-item"><span>6.3 Risk Parity Allocation</span></a>
+                            <a href="modules/module_6_optimization/6.4_numerical_optimization.html" class="submodule-item"><span>6.4 Numerical Optimization</span></a>
+                            <a href="modules/module_6_optimization/6.5_position_sizing.html" class="submodule-item"><span>6.5 Position Sizing Algorithms</span></a>
+                            <a href="modules/module_6_optimization/6.6_multi_objective.html" class="submodule-item"><span>6.6 Multi-Objective Optimization</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 7 -->
+                <div class="module-card module-7" data-module="7">
+                    <div class="module-header" onclick="toggleModule(7)">
+                        <div class="module-icon">🛡️</div>
+                        <div class="module-info">
+                            <div class="module-number">Module 7</div>
+                            <div class="module-title">Risk Metrics</div>
+                            <div class="module-description">Comprehensive risk management: Sharpe, drawdown, VaR, CVaR, and more</div>
+                            <div class="module-meta">
+                                <span class="module-count">📚 1 module</span>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="module-toggle">▼</div>
+                    </div>
+                    <div class="module-content">
+                        <div class="submodules-list">
+                            <a href="modules/module_7_risk_metrics/7.1_risk_framework.html" class="submodule-item"><span>7.1 Complete Risk Management Framework</span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Learning Path Section -->
+    <section class="learning-path" id="path">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Learning Path</div>
+                <h2 class="section-title">Your Journey to Mastery</h2>
+                <p class="section-subtitle">
+                    A structured progression from foundational concepts to advanced applications
+                </p>
+            </div>
+            <div class="path-container">
+                <div class="path-step animate-on-scroll">
+                    <div class="path-icon">🏗️</div>
+                    <div class="path-title">Foundation</div>
+                    <div class="path-subtitle">Modules 1-3</div>
+                    <div class="path-modules">Returns, Linear Algebra, Calculus</div>
+                </div>
+                <div class="path-step animate-on-scroll">
+                    <div class="path-icon">🔍</div>
+                    <div class="path-title">Analysis</div>
+                    <div class="path-subtitle">Modules 4-5</div>
+                    <div class="path-modules">Volume Analysis, Statistics</div>
+                </div>
+                <div class="path-step animate-on-scroll">
+                    <div class="path-icon">🚀</div>
+                    <div class="path-title">Application</div>
+                    <div class="path-subtitle">Modules 6-7</div>
+                    <div class="path-modules">Optimization, Risk Management</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Special Features Section -->
+    <section class="special-features">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Why Choose This Course</div>
+                <h2 class="section-title">What Makes This Course Special</h2>
+                <p class="section-subtitle">
+                    Built with real hedge fund experience and modern learning principles
+                </p>
+            </div>
+            <div class="special-grid">
+                <div class="special-card animate-on-scroll">
+                    <div class="special-icon">🎓</div>
+                    <div class="special-content">
+                        <h3>Institutional-Grade Content</h3>
+                        <p>Concepts and techniques used by professional quants at hedge funds and prop trading firms.</p>
+                    </div>
+                </div>
+                <div class="special-card animate-on-scroll">
+                    <div class="special-icon">💻</div>
+                    <div class="special-content">
+                        <h3>Production-Ready Code</h3>
+                        <p>Every Python snippet includes type hints, docstrings, and follows PEP-8 professional standards.</p>
+                    </div>
+                </div>
+                <div class="special-card animate-on-scroll">
+                    <div class="special-icon">🎮</div>
+                    <div class="special-content">
+                        <h3>Interactive Learning</h3>
+                        <p>Quizzes, calculators, and visualizations provide immediate feedback as you learn.</p>
+                    </div>
+                </div>
+                <div class="special-card animate-on-scroll">
+                    <div class="special-icon">📊</div>
+                    <div class="special-content">
+                        <h3>Beautiful Visualizations</h3>
+                        <p>Chart.js and SVG diagrams make complex mathematical concepts visually intuitive.</p>
+                    </div>
+                </div>
+                <div class="special-card animate-on-scroll">
+                    <div class="special-icon">🔍</div>
+                    <div class="special-content">
+                        <h3>Zero Assumptions</h3>
+                        <p>Start from absolute basics. Every concept is explained from first principles.</p>
+                    </div>
+                </div>
+                <div class="special-card animate-on-scroll">
+                    <div class="special-icon">🚀</div>
+                    <div class="special-content">
+                        <h3>Incremental Building</h3>
+                        <p>Each module builds on previous ones, creating a solid foundation for advanced topics.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Banner -->
+    <section class="stats-banner">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-banner-item">
+                    <div class="stat-banner-number">32</div>
+                    <div class="stat-banner-label">Complete Modules</div>
+                </div>
+                <div class="stat-banner-item">
+                    <div class="stat-banner-number">100+</div>
+                    <div class="stat-banner-label">Interactive Examples</div>
+                </div>
+                <div class="stat-banner-item">
+                    <div class="stat-banner-number">200+</div>
+                    <div class="stat-banner-label">Python Snippets</div>
+                </div>
+                <div class="stat-banner-item">
+                    <div class="stat-banner-number">150+</div>
+                    <div class="stat-banner-label">Visualizations</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>📈 Quantitative Trading Mastery</h3>
+                    <p>A comprehensive course designed to transform you into a professional quantitative trader. Built with passion for quantitative education and real-world hedge fund experience.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Foundation</h4>
+                    <ul>
+                        <li><a href="modules/module_1_price_action/1.1_simple_vs_log_returns.html">Price Action</a></li>
+                        <li><a href="modules/module_2_linear_algebra/2.1_vectors_matrices.html">Linear Algebra</a></li>
+                        <li><a href="modules/module_3_calculus/3.1_differential_calculus.html">Calculus</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Analysis</h4>
+                    <ul>
+                        <li><a href="modules/module_4_volume_analysis/4.1_volume_profile_analysis.html">Volume Analysis</a></li>
+                        <li><a href="modules/module_5_statistics/5.1_descriptive_statistics.html">Statistics</a></li>
+                        <li><a href="modules/module_5_statistics/5.7_monte_carlo_simulation.html">Monte Carlo</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Application</h4>
+                    <ul>
+                        <li><a href="modules/module_6_optimization/6.1_markowitz_optimization.html">Optimization</a></li>
+                        <li><a href="modules/module_6_optimization/6.2_kelly_criterion.html">Kelly Criterion</a></li>
+                        <li><a href="modules/module_7_risk_metrics/7.1_risk_framework.html">Risk Metrics</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 Quantitative Trading Mastery. All modules available for learning.</p>
+                <p>Built with passion for quantitative education</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Module toggle
+        function toggleModule(moduleNum) {
+            const card = document.querySelector(`[data-module="${moduleNum}"]`);
+            card.classList.toggle('expanded');
+        }
+
+        // Counter animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number[data-target]');
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target'));
+                const duration = 2000;
+                const step = target / (duration / 16);
+                let current = 0;
+
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        counter.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current);
+                    }
+                }, 16);
+            });
+        }
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Start counter animation when hero is visible
+        const heroObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                animateCounters();
+                heroObserver.disconnect();
+            }
+        }, { threshold: 0.5 });
+
+        heroObserver.observe(document.querySelector('.hero'));
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

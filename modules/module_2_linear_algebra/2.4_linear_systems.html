@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master solving linear systems for portfolio optimization, factor models, and trading algorithms. Learn Markowitz optimization, KKT systems, and numerical stability.">
+  <title>2.4 Solving Linear Systems | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
+
+  <style>
+        .system-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .matrix-display {
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid #6366f1;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+        }
+        .vector-display {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 15px 20px;
+        }
+        .optimization-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 20px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+            border-radius: 12px;
+            border-left: 4px solid #6366f1;
+        }
+        .optimization-step .step-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        .constraint-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .method-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .method-card h4 {
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        .complexity-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .complexity-badge.fast {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .complexity-badge.medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .complexity-badge.slow {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .solution-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .solution-table th,
+        .solution-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .solution-table th {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+        .solution-table tr:nth-child(even) {
+            background: rgba(99, 102, 241, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 2.4</span>
+          <span class="nav-module-title">Solving Linear Systems</span>
+        </div>
+        <a href="../module_3_statistics/3.1_distributions.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 2: Linear Algebra</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>2.4 Solving Linear Systems</span>
+        </div>
+        <h1>Solving Linear Systems</h1>
+        <p class="module-subtitle">
+          From portfolio optimization to factor models - Ax = b everywhere.
+          Master the computational backbone of modern quantitative finance.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 25 min read</span>
+          <span class="meta-item">📊 2 Visualizations</span>
+          <span class="meta-item">💻 Interactive Optimizer</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+        <!-- Section 1: Why Should You Care? -->
+        <section class="content-section">
+            <h2>1. Why Should You Care? 🎯</h2>
+
+            <div class="key-concept">
+                <h3>The Foundation of Quantitative Finance</h3>
+                <p>Nearly every quantitative trading problem reduces to solving a linear system. Portfolio optimization? Solve Σw = λμ. Factor model estimation? Solve X'Xβ = X'y. Risk parity? Iteratively solve for weights. Master linear systems, and you've mastered the computational backbone of modern finance.</p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>📊 Mean-Variance Optimization</h4>
+                    <p>The optimal portfolio solves Σw = λμ, a linear system where Σ is covariance and μ is expected returns.</p>
+                </div>
+                <div class="card">
+                    <h4>🎯 Factor Model Estimation</h4>
+                    <p>Estimating factor exposures requires solving the normal equations X'Xβ = X'y for thousands of securities.</p>
+                </div>
+                <div class="card">
+                    <h4>⚡ Real-Time Rebalancing</h4>
+                    <p>Trade execution algorithms solve linear systems in milliseconds to minimize market impact.</p>
+                </div>
+                <div class="card">
+                    <h4>🔄 Kalman Filtering</h4>
+                    <p>State-space models for volatility and factor tracking require solving linear systems at each timestep.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Building Intuition -->
+        <section class="content-section">
+            <h2>2. Building Intuition 🧠</h2>
+
+            <div class="info-box info">
+                <h3>The Balancing Act</h3>
+                <p>Solving Ax = b is like finding the exact amounts of ingredients (x) that produce a target dish (b), given how each ingredient contributes to each flavor (A). In finance, we find the portfolio weights (x) that achieve target risk/return characteristics (b) given asset covariances (A).</p>
+            </div>
+
+            <svg viewBox="0 0 700 300" class="svg-diagram">
+                <!-- Visual representation of Ax = b -->
+                <text x="350" y="30" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="bold">Linear System: Ax = b</text>
+
+                <!-- Matrix A -->
+                <g transform="translate(100, 150)">
+                    <rect x="-60" y="-60" width="120" height="120" fill="rgba(99, 102, 241, 0.2)" stroke="#6366f1" stroke-width="2" rx="8"/>
+                    <text x="0" y="-75" text-anchor="middle" fill="#818cf8" font-size="12">Covariance Matrix</text>
+                    <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="bold">Σ</text>
+                    <text x="0" y="85" text-anchor="middle" fill="#94a3b8" font-size="11">(n×n)</text>
+                </g>
+
+                <!-- Multiplication symbol -->
+                <text x="200" y="150" fill="#94a3b8" font-size="24">×</text>
+
+                <!-- Vector x (weights) -->
+                <g transform="translate(270, 150)">
+                    <rect x="-30" y="-60" width="60" height="120" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2" rx="8"/>
+                    <text x="0" y="-75" text-anchor="middle" fill="#10b981" font-size="12">Weights</text>
+                    <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="bold">w</text>
+                    <text x="0" y="85" text-anchor="middle" fill="#94a3b8" font-size="11">(n×1)</text>
+                </g>
+
+                <!-- Equals symbol -->
+                <text x="340" y="150" fill="#94a3b8" font-size="24">=</text>
+
+                <!-- Vector b (target) -->
+                <g transform="translate(410, 150)">
+                    <rect x="-30" y="-60" width="60" height="120" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="2" rx="8"/>
+                    <text x="0" y="-75" text-anchor="middle" fill="#f59e0b" font-size="12">Target</text>
+                    <text x="0" y="5" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="bold">b</text>
+                    <text x="0" y="85" text-anchor="middle" fill="#94a3b8" font-size="11">(n×1)</text>
+                </g>
+
+                <!-- Arrow to solution -->
+                <path d="M 480 150 L 530 150" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+
+                <!-- Solution -->
+                <g transform="translate(600, 150)">
+                    <rect x="-50" y="-50" width="100" height="100" fill="rgba(139, 92, 246, 0.2)" stroke="#8b5cf6" stroke-width="2" rx="8"/>
+                    <text x="0" y="-60" text-anchor="middle" fill="#8b5cf6" font-size="12">Solution</text>
+                    <text x="0" y="0" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="bold">w = Σ⁻¹b</text>
+                    <text x="0" y="30" text-anchor="middle" fill="#94a3b8" font-size="10">(but don't invert!)</text>
+                </g>
+
+                <defs>
+                    <marker id="arrowGray" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"/>
+                    </marker>
+                </defs>
+            </svg>
+
+            <div class="system-visual">
+                <div class="matrix-display">
+                    <div style="color: #818cf8; margin-bottom: 10px;">System of equations:</div>
+                    σ₁₁w₁ + σ₁₂w₂ + σ₁₃w₃ = b₁<br>
+                    σ₂₁w₁ + σ₂₂w₂ + σ₂₃w₃ = b₂<br>
+                    σ₃₁w₁ + σ₃₂w₂ + σ₃₃w₃ = b₃
+                </div>
+                <div style="font-size: 2rem; color: #94a3b8;">⟺</div>
+                <div class="vector-display">
+                    <div style="color: #10b981; margin-bottom: 10px;">Matrix form:</div>
+                    <strong>Σw = b</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: The Mathematics -->
+        <section class="content-section">
+            <h2>3. The Mathematics 📐</h2>
+
+            <div class="formula-box">
+                <h3>Standard Linear System</h3>
+                <div class="formula">
+                    Ax = b  →  x = A⁻¹b
+                </div>
+                <p>But NEVER compute A⁻¹ explicitly! Use specialized solvers instead.</p>
+            </div>
+
+            <div class="info-box warning">
+                <h3>Why Not Matrix Inversion?</h3>
+                <ul>
+                    <li><strong>Computational cost:</strong> O(n³) for inversion vs O(n²) for solving one system</li>
+                    <li><strong>Numerical instability:</strong> Inversion amplifies floating-point errors</li>
+                    <li><strong>Memory:</strong> Storing A⁻¹ requires n² space even if A is sparse</li>
+                    <li><strong>Always use:</strong> np.linalg.solve(A, b) instead of np.linalg.inv(A) @ b</li>
+                </ul>
+            </div>
+
+            <div class="formula-box">
+                <h3>Markowitz Portfolio Optimization</h3>
+                <div class="formula">
+                    min½ w'Σw - λμ'w  subject to  1'w = 1
+                </div>
+                <p>KKT conditions lead to the linear system:</p>
+                <div class="formula" style="font-size: 1.1rem;">
+                    [Σ   1] [w]   [λμ]
+                    [1'  0] [ν] = [1 ]
+                </div>
+            </div>
+
+            <div class="formula-box">
+                <h3>Least Squares via Normal Equations</h3>
+                <div class="formula">
+                    X'Xβ = X'y  →  β = (X'X)⁻¹X'y
+                </div>
+                <p>Solves min||Xβ - y||² but X'X can be ill-conditioned</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Constrained Optimization (Lagrangian)</h3>
+                <div class="formula">
+                    [H    A'] [x]   [-g]
+                    [A    0 ] [λ] = [b ]
+                </div>
+                <p>KKT system for quadratic programs with equality constraints Ax = b</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Solution Methods -->
+        <section class="content-section">
+            <h2>4. Solution Methods for Trading 📋</h2>
+
+            <div class="method-card">
+                <h4>Direct Methods (Exact Solution)</h4>
+                <span class="complexity-badge fast">Best for n < 10,000</span>
+                <ul>
+                    <li><strong>LU Decomposition:</strong> General matrices, O(n³/3)</li>
+                    <li><strong>Cholesky:</strong> Symmetric positive definite (covariance), O(n³/6) - 2x faster!</li>
+                    <li><strong>QR Decomposition:</strong> Overdetermined systems (regression), O(2mn²)</li>
+                </ul>
+            </div>
+
+            <div class="method-card">
+                <h4>Iterative Methods (Approximate Solution)</h4>
+                <span class="complexity-badge medium">Best for sparse/large systems</span>
+                <ul>
+                    <li><strong>Conjugate Gradient:</strong> SPD matrices, converges in n steps (often faster)</li>
+                    <li><strong>GMRES:</strong> General matrices, Krylov subspace method</li>
+                    <li><strong>Jacobi/Gauss-Seidel:</strong> Simple iteration, good for diagonal dominance</li>
+                </ul>
+            </div>
+
+            <table class="solution-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Matrix Type</th>
+                        <th>Complexity</th>
+                        <th>Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>np.linalg.solve</code></td>
+                        <td>General square</td>
+                        <td>O(n³)</td>
+                        <td>Default choice</td>
+                    </tr>
+                    <tr>
+                        <td><code>scipy.linalg.cho_solve</code></td>
+                        <td>Symmetric PD</td>
+                        <td>O(n³/6)</td>
+                        <td>Covariance systems</td>
+                    </tr>
+                    <tr>
+                        <td><code>scipy.linalg.lstsq</code></td>
+                        <td>Overdetermined</td>
+                        <td>O(mn²)</td>
+                        <td>Regression</td>
+                    </tr>
+                    <tr>
+                        <td><code>scipy.sparse.linalg.cg</code></td>
+                        <td>Sparse SPD</td>
+                        <td>O(n√κ)</td>
+                        <td>Large sparse systems</td>
+                    </tr>
+                    <tr>
+                        <td><code>scipy.optimize.nnls</code></td>
+                        <td>Non-negative</td>
+                        <td>Varies</td>
+                        <td>Long-only portfolios</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Condition Number κ(A)</span>
+                    <span class="property-desc">Measures sensitivity to errors: κ = ||A|| · ||A⁻¹||. High κ means small input changes cause large output changes.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Rule of Thumb</span>
+                    <span class="property-desc">Lose log₁₀(κ) digits of precision. κ = 10⁶ means only ~10 reliable digits in double precision.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Regularization</span>
+                    <span class="property-desc">Add λI to ill-conditioned matrices: solve (A + λI)x = b instead of Ax = b</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section">
+            <h2>5. Python Implementation 🐍</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Portfolio Optimization - Solving the KKT System</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy import linalg
+
+def markowitz_optimize(cov_matrix, expected_returns, risk_aversion=1.0):
+    """
+    Solve Markowitz mean-variance optimization via linear system.
+
+    min (1/2)w'Σw - λμ'w  subject to  1'w = 1
+
+    Parameters:
+    -----------
+    cov_matrix : np.array
+        Asset covariance matrix (n x n)
+    expected_returns : np.array
+        Expected returns (n,)
+    risk_aversion : float
+        Risk aversion parameter λ
+
+    Returns:
+    --------
+    dict : optimal weights, expected return, volatility
+    """
+    n = len(expected_returns)
+
+    # Build augmented KKT system:
+    # [Σ    1] [w]   [λμ]
+    # [1'   0] [ν] = [1 ]
+
+    # Top-left: covariance matrix
+    # Top-right: ones column (budget constraint gradient)
+    # Bottom-left: ones row (budget constraint)
+    # Bottom-right: zero (no constraint on Lagrange multiplier)
+
+    KKT = np.zeros((n + 1, n + 1))
+    KKT[:n, :n] = cov_matrix
+    KKT[:n, n] = 1  # Column of ones
+    KKT[n, :n] = 1  # Row of ones
+
+    # Right-hand side
+    rhs = np.zeros(n + 1)
+    rhs[:n] = risk_aversion * expected_returns
+    rhs[n] = 1  # Budget constraint
+
+    # Solve the system
+    solution = np.linalg.solve(KKT, rhs)
+
+    # Extract weights (first n elements)
+    weights = solution[:n]
+    lagrange_multiplier = solution[n]
+
+    # Calculate portfolio metrics
+    port_return = weights @ expected_returns
+    port_variance = weights @ cov_matrix @ weights
+    port_vol = np.sqrt(port_variance)
+
+    return {
+        'weights': weights,
+        'expected_return': port_return,
+        'volatility': port_vol,
+        'sharpe_ratio': port_return / port_vol if port_vol > 0 else 0,
+        'lagrange_multiplier': lagrange_multiplier
+    }
+
+# Example: 4-asset portfolio
+np.random.seed(42)
+
+# Expected returns (annualized)
+expected_returns = np.array([0.08, 0.12, 0.06, 0.10])
+
+# Covariance matrix (annualized)
+volatilities = np.array([0.15, 0.25, 0.10, 0.20])
+correlations = np.array([
+    [1.0, 0.5, 0.2, 0.4],
+    [0.5, 1.0, 0.3, 0.6],
+    [0.2, 0.3, 1.0, 0.2],
+    [0.4, 0.6, 0.2, 1.0]
+])
+cov_matrix = np.diag(volatilities) @ correlations @ np.diag(volatilities)
+
+# Optimize for different risk aversions
+print("=" * 60)
+print("MARKOWITZ OPTIMIZATION VIA LINEAR SYSTEM")
+print("=" * 60)
+
+for risk_aversion in [0.5, 1.0, 2.0, 5.0]:
+    result = markowitz_optimize(cov_matrix, expected_returns, risk_aversion)
+    print(f"\nRisk Aversion λ = {risk_aversion}")
+    print(f"  Weights: {result['weights'].round(4)}")
+    print(f"  Expected Return: {result['expected_return']*100:.2f}%")
+    print(f"  Volatility: {result['volatility']*100:.2f}%")
+    print(f"  Sharpe Ratio: {result['sharpe_ratio']:.3f}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Efficient Frontier via Parametric Solution</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def efficient_frontier(cov_matrix, expected_returns, n_points=50):
+    """
+    Compute entire efficient frontier by solving linear systems
+    for different target returns.
+
+    The minimum variance portfolio for target return μ_target solves:
+    [Σ    μ    1] [w ]   [0        ]
+    [μ'   0    0] [λ₁] = [μ_target ]
+    [1'   0    0] [λ₂]   [1        ]
+
+    Parameters:
+    -----------
+    cov_matrix : np.array
+        Covariance matrix
+    expected_returns : np.array
+        Expected returns
+    n_points : int
+        Number of frontier points
+
+    Returns:
+    --------
+    tuple : (volatilities, returns, weights_list)
+    """
+    n = len(expected_returns)
+
+    # Build system matrix (constant for all target returns)
+    A = np.zeros((n + 2, n + 2))
+    A[:n, :n] = cov_matrix
+    A[:n, n] = expected_returns
+    A[:n, n+1] = 1
+    A[n, :n] = expected_returns
+    A[n+1, :n] = 1
+
+    # Range of target returns
+    min_ret = expected_returns.min()
+    max_ret = expected_returns.max()
+    target_returns = np.linspace(min_ret, max_ret, n_points)
+
+    volatilities = []
+    weights_list = []
+
+    for target in target_returns:
+        # Right-hand side changes with target
+        b = np.zeros(n + 2)
+        b[n] = target  # Target return constraint
+        b[n+1] = 1     # Budget constraint
+
+        # Solve
+        try:
+            solution = np.linalg.solve(A, b)
+            weights = solution[:n]
+            vol = np.sqrt(weights @ cov_matrix @ weights)
+            volatilities.append(vol)
+            weights_list.append(weights)
+        except np.linalg.LinAlgError:
+            volatilities.append(np.nan)
+            weights_list.append(np.full(n, np.nan))
+
+    return np.array(volatilities), target_returns, weights_list
+
+# Compute efficient frontier
+vols, rets, weights = efficient_frontier(cov_matrix, expected_returns)
+
+print("\n" + "=" * 60)
+print("EFFICIENT FRONTIER (Selected Points)")
+print("=" * 60)
+print(f"{'Return':>10} {'Volatility':>12} {'Sharpe':>8} {'Weights'}")
+print("-" * 60)
+
+for i in range(0, len(rets), 10):
+    if not np.isnan(vols[i]):
+        sharpe = rets[i] / vols[i] if vols[i] > 0 else 0
+        w_str = ', '.join([f"{w:.2f}" for w in weights[i]])
+        print(f"{rets[i]*100:>9.2f}% {vols[i]*100:>11.2f}% {sharpe:>7.3f}  [{w_str}]")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Factor Model Estimation with Regularization</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def ridge_regression(X, y, alpha=0.01):
+    """
+    Ridge regression: solve (X'X + αI)β = X'y
+
+    Regularization improves numerical stability and prevents overfitting.
+
+    Parameters:
+    -----------
+    X : np.array
+        Factor returns (T x K)
+    y : np.array
+        Asset return (T,)
+    alpha : float
+        Regularization parameter
+
+    Returns:
+    --------
+    np.array : Regularized factor exposures
+    """
+    n_factors = X.shape[1]
+
+    # Form normal equations with regularization
+    XtX = X.T @ X
+    Xty = X.T @ y
+
+    # Add regularization: (X'X + αI)
+    XtX_reg = XtX + alpha * np.eye(n_factors)
+
+    # Solve using Cholesky (X'X is SPD after regularization)
+    L = np.linalg.cholesky(XtX_reg)
+
+    # Forward substitution: Lz = X'y
+    z = linalg.solve_triangular(L, Xty, lower=True)
+
+    # Back substitution: L'β = z
+    beta = linalg.solve_triangular(L.T, z, lower=False)
+
+    return beta
+
+def estimate_factor_model(returns_df, factor_returns_df, alpha=0.01):
+    """
+    Estimate factor exposures for all assets efficiently.
+    """
+    X = factor_returns_df.values
+    n_assets = returns_df.shape[1]
+    n_factors = X.shape[1]
+
+    # Pre-compute common terms
+    XtX = X.T @ X
+    XtX_reg = XtX + alpha * np.eye(n_factors)
+    L = np.linalg.cholesky(XtX_reg)
+
+    betas = np.zeros((n_assets, n_factors))
+    residuals = np.zeros_like(returns_df.values)
+
+    for i, asset in enumerate(returns_df.columns):
+        y = returns_df[asset].values
+        Xty = X.T @ y
+
+        # Solve using pre-computed Cholesky
+        z = linalg.solve_triangular(L, Xty, lower=True)
+        beta = linalg.solve_triangular(L.T, z, lower=False)
+
+        betas[i] = beta
+        residuals[:, i] = y - X @ beta
+
+    return {
+        'betas': betas,
+        'residuals': residuals,
+        'factor_names': factor_returns_df.columns.tolist(),
+        'asset_names': returns_df.columns.tolist()
+    }
+
+# Example: Estimate 3-factor model
+import pandas as pd
+
+np.random.seed(42)
+n_days = 252
+n_assets = 5
+n_factors = 3
+
+# Generate factor returns
+factor_names = ['Market', 'Size', 'Value']
+factor_data = {
+    'Market': np.random.normal(0.0004, 0.01, n_days),
+    'Size': np.random.normal(0.0001, 0.005, n_days),
+    'Value': np.random.normal(0.0002, 0.006, n_days)
+}
+factor_df = pd.DataFrame(factor_data)
+
+# Generate asset returns with known factor exposures
+true_betas = np.array([
+    [1.0, 0.2, -0.1],   # Asset 1
+    [1.2, -0.3, 0.4],   # Asset 2
+    [0.8, 0.5, 0.2],    # Asset 3
+    [1.1, 0.1, -0.3],   # Asset 4
+    [0.9, -0.2, 0.1]    # Asset 5
+])
+
+asset_names = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'META']
+asset_data = {}
+for i, name in enumerate(asset_names):
+    factor_component = factor_df.values @ true_betas[i]
+    idiosyncratic = np.random.normal(0, 0.008, n_days)
+    asset_data[name] = factor_component + idiosyncratic
+
+returns_df = pd.DataFrame(asset_data)
+
+# Estimate factor model
+results = estimate_factor_model(returns_df, factor_df, alpha=0.01)
+
+print("\n" + "=" * 60)
+print("FACTOR MODEL ESTIMATION")
+print("=" * 60)
+print("\nTrue Factor Exposures:")
+for i, name in enumerate(asset_names):
+    print(f"  {name}: {true_betas[i]}")
+
+print("\nEstimated Factor Exposures (with ridge regularization):")
+for i, name in enumerate(asset_names):
+    print(f"  {name}: {results['betas'][i].round(4)}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Constrained Optimization with Inequality Constraints</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">from scipy.optimize import minimize
+
+def optimize_with_constraints(cov_matrix, expected_returns,
+                              risk_aversion=1.0,
+                              long_only=True,
+                              max_weight=0.4):
+    """
+    Portfolio optimization with inequality constraints.
+
+    For inequality constraints, we can't use simple linear algebra.
+    Use quadratic programming or sequential least squares.
+
+    Parameters:
+    -----------
+    cov_matrix : np.array
+        Covariance matrix
+    expected_returns : np.array
+        Expected returns
+    risk_aversion : float
+        Risk aversion parameter
+    long_only : bool
+        Require non-negative weights
+    max_weight : float
+        Maximum weight per asset
+
+    Returns:
+    --------
+    dict : Optimal portfolio
+    """
+    n = len(expected_returns)
+
+    # Objective: minimize (1/2)w'Σw - λμ'w
+    def objective(w):
+        return 0.5 * w @ cov_matrix @ w - risk_aversion * expected_returns @ w
+
+    def gradient(w):
+        return cov_matrix @ w - risk_aversion * expected_returns
+
+    # Constraints
+    constraints = [
+        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}  # Budget
+    ]
+
+    # Bounds
+    if long_only:
+        bounds = [(0, max_weight) for _ in range(n)]
+    else:
+        bounds = [(-max_weight, max_weight) for _ in range(n)]
+
+    # Initial guess (equal weight)
+    w0 = np.ones(n) / n
+
+    # Solve
+    result = minimize(
+        objective,
+        w0,
+        method='SLSQP',
+        jac=gradient,
+        constraints=constraints,
+        bounds=bounds,
+        options={'ftol': 1e-10, 'maxiter': 1000}
+    )
+
+    if not result.success:
+        print(f"Warning: Optimization did not converge: {result.message}")
+
+    weights = result.x
+    port_return = weights @ expected_returns
+    port_vol = np.sqrt(weights @ cov_matrix @ weights)
+
+    return {
+        'weights': weights,
+        'expected_return': port_return,
+        'volatility': port_vol,
+        'sharpe_ratio': port_return / port_vol if port_vol > 0 else 0,
+        'converged': result.success
+    }
+
+# Compare unconstrained vs constrained
+print("\n" + "=" * 60)
+print("CONSTRAINED VS UNCONSTRAINED OPTIMIZATION")
+print("=" * 60)
+
+# Unconstrained (via linear system)
+unconstrained = markowitz_optimize(cov_matrix, expected_returns, risk_aversion=2.0)
+print(f"\nUnconstrained (may have short positions):")
+print(f"  Weights: {unconstrained['weights'].round(4)}")
+print(f"  Return: {unconstrained['expected_return']*100:.2f}%")
+print(f"  Volatility: {unconstrained['volatility']*100:.2f}%")
+
+# Long-only constrained
+constrained = optimize_with_constraints(
+    cov_matrix, expected_returns,
+    risk_aversion=2.0,
+    long_only=True,
+    max_weight=0.5
+)
+print(f"\nLong-only with 50% max weight:")
+print(f"  Weights: {constrained['weights'].round(4)}")
+print(f"  Return: {constrained['expected_return']*100:.2f}%")
+print(f"  Volatility: {constrained['volatility']*100:.2f}%")</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section">
+            <h2>6. Interactive Portfolio Optimizer 🔢</h2>
+
+            <div class="calculator">
+                <h3>2-Asset Portfolio Optimization</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4 style="color: #818cf8;">Asset 1</h4>
+                        <div class="input-group">
+                            <label for="mu1">Expected Return (%)</label>
+                            <input type="number" id="mu1" value="8" step="0.5">
+                        </div>
+                        <div class="input-group">
+                            <label for="sigma1">Volatility (%)</label>
+                            <input type="number" id="sigma1" value="15" step="1">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: #10b981;">Asset 2</h4>
+                        <div class="input-group">
+                            <label for="mu2">Expected Return (%)</label>
+                            <input type="number" id="mu2" value="12" step="0.5">
+                        </div>
+                        <div class="input-group">
+                            <label for="sigma2">Volatility (%)</label>
+                            <input type="number" id="sigma2" value="25" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="rho">Correlation (ρ)</label>
+                    <input type="range" id="rho" min="-1" max="1" step="0.1" value="0.3">
+                    <span id="rhoValue">0.3</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="riskAversion">Risk Aversion (λ)</label>
+                    <input type="range" id="riskAversion" min="0.1" max="10" step="0.1" value="2">
+                    <span id="riskAversionValue">2.0</span>
+                </div>
+
+                <button class="calculate-btn" onclick="optimizePortfolio()">Optimize Portfolio</button>
+
+                <div class="result" id="optResult">
+                    <!-- Results appear here -->
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Efficient Frontier</h3>
+                <canvas id="frontierChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 7: Trading Applications -->
+        <section class="content-section">
+            <h2>7. Trading Applications 💹</h2>
+
+            <div class="optimization-step">
+                <div class="step-icon">📊</div>
+                <div>
+                    <h4>Daily Portfolio Rebalancing</h4>
+                    <p>Solve the optimization system with updated covariance estimates each day. Use exponentially weighted covariance to capture recent regime changes.</p>
+                    <div class="highlight">Typical: Re-solve with 252-day rolling window</div>
+                </div>
+            </div>
+
+            <div class="optimization-step">
+                <div class="step-icon">⚡</div>
+                <div>
+                    <h4>Real-Time Risk Management</h4>
+                    <p>Pre-factor Cholesky decomposition of covariance. When positions change, update portfolio risk in O(n) time instead of O(n²).</p>
+                    <div class="highlight">Critical for high-frequency trading systems</div>
+                </div>
+            </div>
+
+            <div class="optimization-step">
+                <div class="step-icon">🎯</div>
+                <div>
+                    <h4>Transaction Cost Aware Optimization</h4>
+                    <p>Add transaction costs to objective: minimize (1/2)w'Σw - λμ'w + κ||w - w₀||₁. Becomes quadratic programming problem.</p>
+                    <div class="highlight">Prevents excessive turnover from noise</div>
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🔄 Black-Litterman Model</h4>
+                    <p>Combine market equilibrium with investor views by solving: μ_BL = [(τΣ)⁻¹ + P'Ω⁻¹P]⁻¹[(τΣ)⁻¹π + P'Ω⁻¹Q]</p>
+                    <div class="highlight">Views matrix P creates linear system</div>
+                </div>
+                <div class="card">
+                    <h4>📈 Risk Parity</h4>
+                    <p>Find weights where each asset contributes equally to risk. Iteratively solve: wᵢ(Σw)ᵢ = σₚ²/n for all i.</p>
+                    <div class="highlight">Non-linear but linearized per iteration</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Portfolio Weights by Risk Aversion</h3>
+                <canvas id="weightsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 8: Common Mistakes -->
+        <section class="content-section">
+            <h2>8. Common Mistakes to Avoid ⚠️</h2>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 1: Explicit Matrix Inversion</h3>
+                <p>Computing A⁻¹ then multiplying is 3x slower and less accurate than solving directly.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Wrong vs Right</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python"># WRONG: Explicit inversion
+x = np.linalg.inv(A) @ b  # Slow and unstable
+
+# RIGHT: Direct solve
+x = np.linalg.solve(A, b)  # Fast and stable
+
+# BETTER for SPD: Cholesky
+L = np.linalg.cholesky(A)
+x = scipy.linalg.cho_solve((L, True), b)  # Even faster</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 2: Ignoring Ill-Conditioning</h3>
+                <p>Sample covariance with n_assets close to n_samples has high condition number. Solutions will be unreliable!</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Always Check Condition Number</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python">kappa = np.linalg.cond(cov_matrix)
+print(f"Condition number: {kappa:.2e}")
+
+if kappa > 1e10:
+    print("WARNING: Matrix is ill-conditioned!")
+    print("Consider: regularization, shrinkage, or more data")
+
+# Fix with regularization
+cov_reg = cov_matrix + 0.01 * np.eye(n) * np.trace(cov_matrix) / n</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 3: Wrong System for Constraints</h3>
+                <p>The KKT system structure depends on constraint type. Mixing equality/inequality constraints incorrectly leads to wrong solutions.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 4: Not Verifying Solution</h3>
+                <p>Always check that Ax ≈ b after solving. Residual ||Ax - b|| / ||b|| should be near machine epsilon (~10⁻¹⁵).</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Verify Your Solution</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python">x = np.linalg.solve(A, b)
+
+# Check residual
+residual = np.linalg.norm(A @ x - b) / np.linalg.norm(b)
+print(f"Relative residual: {residual:.2e}")
+
+if residual > 1e-10:
+    print("WARNING: Solution may be inaccurate!")</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 9: Summary -->
+        <section class="content-section">
+            <h2>9. Summary 📝</h2>
+
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>Never invert matrices</strong> - use np.linalg.solve() or specialized decompositions</li>
+                    <li><strong>Cholesky</strong> for symmetric positive definite systems (covariance) - 2x faster</li>
+                    <li><strong>QR</strong> for overdetermined systems (regression) - numerically stable</li>
+                    <li><strong>Regularization</strong> fixes ill-conditioned systems - add λI to the matrix</li>
+                    <li><strong>Always verify</strong> solutions by checking residual ||Ax - b||</li>
+                </ul>
+            </div>
+
+            <div class="formula-box">
+                <h3>Portfolio Optimization Summary</h3>
+                <table class="solution-table" style="margin: 0;">
+                    <tr>
+                        <td><strong>Unconstrained MVO</strong></td>
+                        <td>Solve KKT linear system directly</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Long-only</strong></td>
+                        <td>Quadratic programming (scipy.optimize)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Factor model</strong></td>
+                        <td>Ridge regression: (X'X + λI)β = X'y</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Large portfolios</strong></td>
+                        <td>Iterative methods (conjugate gradient)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="nav-buttons">
+                <a href="2.3_matrix_decomposition.html" class="nav-btn">← Previous: Matrix Decomposition</a>
+                <a href="../module_3_statistics/3.1_distributions.html" class="nav-btn">Next: Module 3 - Statistics →</a>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section class="content-section">
+            <h2>Test Your Knowledge 🧪</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Question 1: Why should you avoid computing A⁻¹ explicitly when solving Ax = b?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> A⁻¹ doesn't exist for most matrices</label>
+                        <label><input type="radio" name="q1" value="b"> It's slower and less numerically stable</label>
+                        <label><input type="radio" name="q1" value="c"> NumPy doesn't support matrix inversion</label>
+                        <label><input type="radio" name="q1" value="d"> The solution is different</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 2: Which method is fastest for solving systems with symmetric positive definite matrices?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> LU decomposition</label>
+                        <label><input type="radio" name="q2" value="b"> QR decomposition</label>
+                        <label><input type="radio" name="q2" value="c"> Cholesky decomposition</label>
+                        <label><input type="radio" name="q2" value="d"> SVD</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 3: What does a high condition number κ(A) indicate?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> The matrix is singular</label>
+                        <label><input type="radio" name="q3" value="b"> Small input changes cause large solution changes</label>
+                        <label><input type="radio" name="q3" value="c"> The matrix is sparse</label>
+                        <label><input type="radio" name="q3" value="d"> The solution is unique</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 4: In Markowitz optimization, what role does the Lagrange multiplier play?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> It determines the optimal weights directly</label>
+                        <label><input type="radio" name="q4" value="b"> It enforces the budget constraint (weights sum to 1)</label>
+                        <label><input type="radio" name="q4" value="c"> It minimizes transaction costs</label>
+                        <label><input type="radio" name="q4" value="d"> It maximizes diversification</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 5: How can you fix an ill-conditioned covariance matrix?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> Add regularization: Σ + λI</label>
+                        <label><input type="radio" name="q5" value="b"> Transpose the matrix</label>
+                        <label><input type="radio" name="q5" value="c"> Multiply by its inverse</label>
+                        <label><input type="radio" name="q5" value="d"> Use more decimal places</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <button class="calculate-btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let frontierChart, weightsChart;
+
+        // Update slider displays
+        document.getElementById('rho').addEventListener('input', function() {
+            document.getElementById('rhoValue').textContent = this.value;
+            optimizePortfolio();
+        });
+
+        document.getElementById('riskAversion').addEventListener('input', function() {
+            document.getElementById('riskAversionValue').textContent = parseFloat(this.value).toFixed(1);
+            optimizePortfolio();
+        });
+
+        function initializeCharts() {
+            // Efficient frontier chart
+            const frontierCtx = document.getElementById('frontierChart').getContext('2d');
+            frontierChart = new Chart(frontierCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Efficient Frontier',
+                            data: [],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            showLine: true,
+                            tension: 0.4,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Optimal Portfolio',
+                            data: [],
+                            backgroundColor: '#10b981',
+                            pointRadius: 10,
+                            pointStyle: 'star'
+                        },
+                        {
+                            label: 'Asset 1',
+                            data: [],
+                            backgroundColor: '#818cf8',
+                            pointRadius: 8
+                        },
+                        {
+                            label: 'Asset 2',
+                            data: [],
+                            backgroundColor: '#34d399',
+                            pointRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Volatility (%)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Expected Return (%)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Weights chart
+            const weightsCtx = document.getElementById('weightsChart').getContext('2d');
+            weightsChart = new Chart(weightsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['λ=0.5', 'λ=1', 'λ=2', 'λ=5', 'λ=10'],
+                    datasets: [
+                        {
+                            label: 'Asset 1',
+                            data: [],
+                            backgroundColor: 'rgba(99, 102, 241, 0.7)'
+                        },
+                        {
+                            label: 'Asset 2',
+                            data: [],
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        title: {
+                            display: true,
+                            text: 'How Risk Aversion Affects Allocation',
+                            color: '#e2e8f0'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            max: 1,
+                            title: { display: true, text: 'Weight', color: '#94a3b8' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) { return (value * 100) + '%'; }
+                            },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function optimizePortfolio() {
+            // Get inputs
+            const mu1 = parseFloat(document.getElementById('mu1').value) / 100;
+            const mu2 = parseFloat(document.getElementById('mu2').value) / 100;
+            const sigma1 = parseFloat(document.getElementById('sigma1').value) / 100;
+            const sigma2 = parseFloat(document.getElementById('sigma2').value) / 100;
+            const rho = parseFloat(document.getElementById('rho').value);
+            const lambda = parseFloat(document.getElementById('riskAversion').value);
+
+            // Build covariance matrix
+            const cov12 = rho * sigma1 * sigma2;
+            const cov = [
+                [sigma1 * sigma1, cov12],
+                [cov12, sigma2 * sigma2]
+            ];
+
+            // Solve KKT system for optimal weights
+            // [Σ   1] [w]   [λμ]
+            // [1'  0] [ν] = [1 ]
+
+            const KKT = [
+                [cov[0][0], cov[0][1], 1],
+                [cov[1][0], cov[1][1], 1],
+                [1, 1, 0]
+            ];
+
+            const rhs = [lambda * mu1, lambda * mu2, 1];
+
+            // Simple 3x3 solve using Cramer's rule
+            const det = KKT[0][0] * (KKT[1][1] * KKT[2][2] - KKT[1][2] * KKT[2][1])
+                      - KKT[0][1] * (KKT[1][0] * KKT[2][2] - KKT[1][2] * KKT[2][0])
+                      + KKT[0][2] * (KKT[1][0] * KKT[2][1] - KKT[1][1] * KKT[2][0]);
+
+            // Replace columns for Cramer's rule
+            const det1 = rhs[0] * (KKT[1][1] * KKT[2][2] - KKT[1][2] * KKT[2][1])
+                       - KKT[0][1] * (rhs[1] * KKT[2][2] - KKT[1][2] * rhs[2])
+                       + KKT[0][2] * (rhs[1] * KKT[2][1] - KKT[1][1] * rhs[2]);
+
+            const det2 = KKT[0][0] * (rhs[1] * KKT[2][2] - KKT[1][2] * rhs[2])
+                       - rhs[0] * (KKT[1][0] * KKT[2][2] - KKT[1][2] * KKT[2][0])
+                       + KKT[0][2] * (KKT[1][0] * rhs[2] - rhs[1] * KKT[2][0]);
+
+            const w1 = det1 / det;
+            const w2 = det2 / det;
+
+            // Portfolio metrics
+            const portReturn = w1 * mu1 + w2 * mu2;
+            const portVariance = w1 * w1 * cov[0][0] + 2 * w1 * w2 * cov[0][1] + w2 * w2 * cov[1][1];
+            const portVol = Math.sqrt(portVariance);
+            const sharpe = portReturn / portVol;
+
+            // Display results
+            document.getElementById('optResult').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px;">
+                    <div class="matrix-display">
+                        <div style="color: #10b981; margin-bottom: 10px;">Optimal Weights</div>
+                        <strong>Asset 1:</strong> ${(w1 * 100).toFixed(1)}%<br>
+                        <strong>Asset 2:</strong> ${(w2 * 100).toFixed(1)}%
+                    </div>
+                    <div class="vector-display">
+                        <div style="color: #f59e0b; margin-bottom: 10px;">Portfolio Metrics</div>
+                        <strong>Return:</strong> ${(portReturn * 100).toFixed(2)}%<br>
+                        <strong>Volatility:</strong> ${(portVol * 100).toFixed(2)}%<br>
+                        <strong>Sharpe:</strong> ${sharpe.toFixed(3)}
+                    </div>
+                </div>
+                ${w1 < 0 || w2 < 0 ? '<p style="color: #f59e0b; margin-top: 15px;">⚠️ Contains short position - real portfolio may need constraints</p>' : ''}
+            `;
+
+            // Update efficient frontier
+            const frontierPoints = [];
+            for (let w = -0.5; w <= 1.5; w += 0.02) {
+                const w_other = 1 - w;
+                const ret = w * mu1 + w_other * mu2;
+                const variance = w * w * cov[0][0] + 2 * w * w_other * cov[0][1] + w_other * w_other * cov[1][1];
+                const vol = Math.sqrt(variance);
+                frontierPoints.push({ x: vol * 100, y: ret * 100 });
+            }
+
+            frontierChart.data.datasets[0].data = frontierPoints;
+            frontierChart.data.datasets[1].data = [{ x: portVol * 100, y: portReturn * 100 }];
+            frontierChart.data.datasets[2].data = [{ x: sigma1 * 100, y: mu1 * 100 }];
+            frontierChart.data.datasets[3].data = [{ x: sigma2 * 100, y: mu2 * 100 }];
+            frontierChart.update();
+
+            // Update weights chart for different risk aversions
+            const riskAversions = [0.5, 1, 2, 5, 10];
+            const weights1 = [];
+            const weights2 = [];
+
+            for (const ra of riskAversions) {
+                const rhs_ra = [ra * mu1, ra * mu2, 1];
+                const det1_ra = rhs_ra[0] * (KKT[1][1] * KKT[2][2] - KKT[1][2] * KKT[2][1])
+                              - KKT[0][1] * (rhs_ra[1] * KKT[2][2] - KKT[1][2] * rhs_ra[2])
+                              + KKT[0][2] * (rhs_ra[1] * KKT[2][1] - KKT[1][1] * rhs_ra[2]);
+                const w1_ra = det1_ra / det;
+                const w2_ra = 1 - w1_ra;
+
+                // Clamp to [0, 1] for visualization
+                weights1.push(Math.max(0, Math.min(1, w1_ra)));
+                weights2.push(Math.max(0, Math.min(1, w2_ra)));
+            }
+
+            weightsChart.data.datasets[0].data = weights1;
+            weightsChart.data.datasets[1].data = weights2;
+            weightsChart.update();
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'Matrix inversion is O(n³) vs O(n²) for solving one system, and squaring condition number amplifies numerical errors.' },
+                q2: { correct: 'c', explanation: 'Cholesky exploits symmetry and positive definiteness, requiring only n³/6 operations vs n³/3 for LU.' },
+                q3: { correct: 'b', explanation: 'Condition number κ = ||A|| · ||A⁻¹|| measures how much errors in input are amplified in the solution.' },
+                q4: { correct: 'b', explanation: 'The Lagrange multiplier λ is introduced to enforce the equality constraint that portfolio weights sum to 1.' },
+                q5: { correct: 'a', explanation: 'Tikhonov regularization (adding λI) increases smallest eigenvalues, reducing condition number and improving stability.' }
+            };
+
+            let score = 0;
+            const total = Object.keys(answers).length;
+
+            for (const [question, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const feedback = document.getElementById(`feedback${question.slice(1)}`);
+
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #f87171;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+
+            const percentage = (score / total * 100).toFixed(0);
+            let message = '';
+            if (percentage >= 80) message = 'Excellent! You understand linear systems in finance!';
+            else if (percentage >= 60) message = 'Good progress! Review optimization and numerical stability.';
+            else message = 'Keep studying! Focus on why we avoid matrix inversion.';
+
+            document.getElementById('quizScore').innerHTML = `
+                <h3>Score: ${score}/${total} (${percentage}%)</h3>
+                <p>${message}</p>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            optimizePortfolio();
+        });
+    </script>
+</body>
+</html>

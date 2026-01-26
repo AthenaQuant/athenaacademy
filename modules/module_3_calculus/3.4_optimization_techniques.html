@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master optimization techniques for quantitative trading. Learn gradient-based optimization, Lagrange multipliers, and find optimal portfolios using calculus.">
+  <title>3.4 Optimization Techniques | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+
+  <style>
+    .optimization-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .flow-step {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+      border: 2px solid #6366f1;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      min-width: 150px;
+    }
+    .flow-step .number {
+      width: 30px;
+      height: 30px;
+      background: #6366f1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+      font-weight: bold;
+    }
+    .flow-arrow {
+      font-size: 2rem;
+      color: #6366f1;
+    }
+    .critical-point {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 25px 0;
+    }
+    .critical-card {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .critical-card.minimum {
+      border: 2px solid #10b981;
+    }
+    .critical-card.maximum {
+      border: 2px solid #ef4444;
+    }
+    .critical-card.saddle {
+      border: 2px solid #f59e0b;
+    }
+    .critical-card svg {
+      width: 80px;
+      height: 60px;
+      margin-bottom: 10px;
+    }
+    .lagrange-box {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.1));
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 25px;
+      margin: 20px 0;
+    }
+    .lagrange-box h4 {
+      color: #f59e0b;
+      margin-bottom: 15px;
+    }
+    .test-result {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .test-result.min {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+    .test-result.max {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+    .test-result.saddle {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+    }
+    .algorithm-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+    .algorithm-card h4 {
+      color: #10b981;
+      margin-bottom: 10px;
+    }
+    .convergence-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .convergence-indicator .bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .convergence-indicator .fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 3.4</span>
+          <span class="nav-module-title">Optimization Techniques</span>
+        </div>
+        <a href="../module_4_probability/4.1_probability_basics.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 3: Calculus</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>3.4 Optimization Techniques</span>
+        </div>
+        <h1>Optimization Techniques</h1>
+        <p class="module-subtitle">
+          Find optimal portfolios, maximize Sharpe ratios, and solve constrained problems.
+          Master the calculus of finding the best possible solution.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 30 min read</span>
+          <span class="meta-item">📊 4 Visualizations</span>
+          <span class="meta-item">💻 Interactive Optimizer</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">The Portfolio Optimization Problem</div>
+        <p>
+          You want to maximize risk-adjusted returns. This means finding the portfolio weights
+          that maximize the Sharpe ratio: SR = (μₚ - rƒ) / σₚ
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          Subject to: weights sum to 1, no short selling, sector limits, etc.
+          <strong>This is a constrained optimization problem that requires calculus to solve.</strong>
+        </p>
+      </div>
+
+      <h3>Optimization Problems in Trading</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Mean-Variance Optimization</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Minimize portfolio variance for given return target. Classic Markowitz problem solved via Lagrange multipliers.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📈 Maximum Sharpe Ratio</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Find the tangency portfolio - the point where capital market line touches efficient frontier.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">⚖️ Kelly Criterion</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Maximize expected log wealth: f* = argmax E[ln(1 + f·R)]. Optimal bet sizing via calculus.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2: BUILDING INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: Building Intuition</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Finding the Peak of a Mountain</div>
+        <p>
+          Optimization is like finding the highest point on a mountain (or lowest point in a valley).
+          At the peak, the ground is flat in all directions - the gradient is zero.
+          But zero gradient alone isn't enough: you need to check if it's truly a peak (maximum),
+          valley (minimum), or saddle point.
+        </p>
+      </div>
+
+      <div class="optimization-flow">
+        <div class="flow-step">
+          <div class="number">1</div>
+          <div><strong>Find Critical Points</strong></div>
+          <div style="font-size: 0.9rem; color: #94a3b8;">Set ∇f = 0</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="number">2</div>
+          <div><strong>Check Second Derivative</strong></div>
+          <div style="font-size: 0.9rem; color: #94a3b8;">Evaluate Hessian</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="number">3</div>
+          <div><strong>Classify Point</strong></div>
+          <div style="font-size: 0.9rem; color: #94a3b8;">Min, Max, or Saddle</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="number">4</div>
+          <div><strong>Compare Values</strong></div>
+          <div style="font-size: 0.9rem; color: #94a3b8;">Find global optimum</div>
+        </div>
+      </div>
+
+      <div class="critical-point">
+        <div class="critical-card minimum">
+          <svg viewBox="0 0 80 60">
+            <path d="M 10 20 Q 40 55 70 20" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="40" cy="50" r="5" fill="#10b981"/>
+          </svg>
+          <h4 style="color: #10b981;">Local Minimum</h4>
+          <p style="font-size: 0.9rem; color: #94a3b8;">f''(x) > 0 (1D)<br>H positive definite (nD)</p>
+          <span class="test-result min">Valley</span>
+        </div>
+        <div class="critical-card maximum">
+          <svg viewBox="0 0 80 60">
+            <path d="M 10 50 Q 40 15 70 50" fill="none" stroke="#ef4444" stroke-width="3"/>
+            <circle cx="40" cy="20" r="5" fill="#ef4444"/>
+          </svg>
+          <h4 style="color: #ef4444;">Local Maximum</h4>
+          <p style="font-size: 0.9rem; color: #94a3b8;">f''(x) < 0 (1D)<br>H negative definite (nD)</p>
+          <span class="test-result max">Peak</span>
+        </div>
+        <div class="critical-card saddle">
+          <svg viewBox="0 0 80 60">
+            <path d="M 10 30 Q 25 50 40 30 Q 55 10 70 30" fill="none" stroke="#f59e0b" stroke-width="3"/>
+            <circle cx="40" cy="30" r="5" fill="#f59e0b"/>
+          </svg>
+          <h4 style="color: #f59e0b;">Saddle Point</h4>
+          <p style="font-size: 0.9rem; color: #94a3b8;">f''(x) = 0 inconclusive<br>H indefinite (nD)</p>
+          <span class="test-result saddle">Neither</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <div class="formula-box">
+        <h3>First-Order Necessary Condition</h3>
+        <div class="formula">
+          ∇f(x*) = 0
+        </div>
+        <p>At a local optimum, the gradient must be zero (flat in all directions)</p>
+      </div>
+
+      <div class="formula-box">
+        <h3>Second-Order Sufficient Conditions</h3>
+        <div class="formula">
+          f''(x*) > 0 → local minimum | f''(x*) < 0 → local maximum
+        </div>
+        <p>For multivariate: check eigenvalues of Hessian H(x*)</p>
+      </div>
+
+      <div class="lagrange-box">
+        <h4>Lagrange Multipliers (Constrained Optimization)</h4>
+        <p>To optimize f(x) subject to g(x) = 0:</p>
+
+        <div class="formula-box">
+          <div class="formula">
+            L(x, λ) = f(x) - λ·g(x)
+          </div>
+        </div>
+
+        <p>Then solve the system:</p>
+        <div class="formula-box">
+          <div class="formula">
+            ∇ₓL = ∇f - λ∇g = 0<br>
+            g(x) = 0
+          </div>
+        </div>
+
+        <p style="margin-top: 15px;"><strong>Interpretation:</strong> At optimum, ∇f is parallel to ∇g (can't improve f without violating constraint)</p>
+      </div>
+
+      <h3>Portfolio Optimization via Lagrange</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Minimum Variance Portfolio</div>
+        <p><strong>Objective:</strong> min (1/2) w'Σw</p>
+        <p><strong>Constraints:</strong> 1'w = 1 (budget), μ'w = μₜ (target return)</p>
+
+        <div class="formula-box">
+          <div class="formula">
+            L = (1/2)w'Σw - λ₁(1'w - 1) - λ₂(μ'w - μₜ)
+          </div>
+        </div>
+
+        <p><strong>First-order conditions:</strong></p>
+        <div class="formula-box" style="font-size: 1rem;">
+          <div class="formula">
+            ∂L/∂w = Σw - λ₁1 - λ₂μ = 0<br>
+            ∂L/∂λ₁ = 1'w - 1 = 0<br>
+            ∂L/∂λ₂ = μ'w - μₜ = 0
+          </div>
+        </div>
+
+        <p><strong>Solution:</strong> w* = Σ⁻¹(λ₁1 + λ₂μ) with λs determined by constraints</p>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties for Trading</h2>
+
+      <div class="properties-list">
+        <div class="property-item">
+          <span class="property-name">Convex Problems are Easy</span>
+          <span class="property-desc">For convex f with convex constraints, any local minimum is global. Portfolio variance is convex!</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Non-Convex is Hard</span>
+          <span class="property-desc">Sharpe ratio maximization is non-convex - may have multiple local optima</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">Lagrange Multiplier = Shadow Price</span>
+          <span class="property-desc">λ = ∂f*/∂b where b is constraint bound. How much does relaxing constraint improve objective?</span>
+        </div>
+        <div class="property-item">
+          <span class="property-name">KKT for Inequalities</span>
+          <span class="property-desc">For g(x) ≤ 0 constraints, use Karush-Kuhn-Tucker conditions: λ ≥ 0, λ·g(x) = 0</span>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Convex Optimization</h4>
+          <p>Portfolio variance w'Σw is convex. Linear constraints (budget, return target) preserve convexity.</p>
+          <div class="highlight">Unique global minimum exists</div>
+        </div>
+        <div class="card">
+          <h4>Quadratic Programming</h4>
+          <p>Min (1/2)x'Qx + c'x subject to Ax ≤ b. Efficient solvers exist (CVXOPT, OSQP).</p>
+          <div class="highlight">Portfolio optimization is QP</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Finding Critical Points</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize, fsolve
+from typing import Callable, Tuple
+
+def find_critical_points_1d(
+    f: Callable[[float], float],
+    df: Callable[[float], float],
+    d2f: Callable[[float], float],
+    search_range: Tuple[float, float],
+    n_starts: int = 20
+) -> dict:
+    """
+    Find and classify critical points of a 1D function.
+
+    Parameters:
+    -----------
+    f : Callable
+        Function f(x)
+    df : Callable
+        First derivative f'(x)
+    d2f : Callable
+        Second derivative f''(x)
+    search_range : Tuple
+        (x_min, x_max) to search
+    n_starts : int
+        Number of starting points for root finding
+
+    Returns:
+    --------
+    dict : Critical points with classifications
+    """
+    x_min, x_max = search_range
+    critical_points = []
+
+    # Find roots of f'(x) = 0
+    for x0 in np.linspace(x_min, x_max, n_starts):
+        try:
+            x_crit = fsolve(df, x0, full_output=True)
+            if x_crit[2] == 1:  # Converged
+                x_c = x_crit[0][0]
+                if x_min <= x_c <= x_max:
+                    # Check if already found (within tolerance)
+                    is_new = all(abs(x_c - p['x']) > 1e-6 for p in critical_points)
+                    if is_new:
+                        # Classify using second derivative test
+                        f_val = f(x_c)
+                        d2f_val = d2f(x_c)
+
+                        if d2f_val > 1e-6:
+                            classification = 'local_minimum'
+                        elif d2f_val < -1e-6:
+                            classification = 'local_maximum'
+                        else:
+                            classification = 'inconclusive'
+
+                        critical_points.append({
+                            'x': x_c,
+                            'f(x)': f_val,
+                            "f''(x)": d2f_val,
+                            'type': classification
+                        })
+        except:
+            continue
+
+    # Sort by x value
+    critical_points.sort(key=lambda p: p['x'])
+
+    return {
+        'critical_points': critical_points,
+        'global_min': min(critical_points, key=lambda p: p['f(x)']) if critical_points else None,
+        'global_max': max(critical_points, key=lambda p: p['f(x)']) if critical_points else None
+    }
+
+# Example: f(x) = x^4 - 4x^3 + 4x^2 (has multiple critical points)
+f = lambda x: x**4 - 4*x**3 + 4*x**2
+df = lambda x: 4*x**3 - 12*x**2 + 8*x
+d2f = lambda x: 12*x**2 - 24*x + 8
+
+result = find_critical_points_1d(f, df, d2f, (-1, 4))
+
+print("=" * 50)
+print("CRITICAL POINT ANALYSIS")
+print("=" * 50)
+print(f"\nf(x) = x⁴ - 4x³ + 4x²")
+print(f"f'(x) = 4x³ - 12x² + 8x")
+print(f"\nCritical Points:")
+for cp in result['critical_points']:
+    print(f"  x = {cp['x']:.4f}: f(x) = {cp['f(x)']:.4f}, "
+          f"f''(x) = {cp[\"f''(x)\"]:.4f} → {cp['type']}")</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Portfolio Optimization with Lagrange Multipliers</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+
+def minimum_variance_portfolio_lagrange(
+    cov_matrix: np.ndarray,
+    expected_returns: np.ndarray,
+    target_return: float
+) -> dict:
+    """
+    Solve minimum variance portfolio using Lagrange multipliers.
+
+    Minimize: (1/2) w'Σw
+    Subject to: 1'w = 1 (budget)
+                μ'w = μ_target (return constraint)
+
+    The Lagrangian is:
+    L = (1/2)w'Σw - λ₁(1'w - 1) - λ₂(μ'w - μ_target)
+
+    First-order conditions give:
+    [Σ   1   μ] [w ]   [0        ]
+    [1'  0   0] [λ₁] = [1        ]
+    [μ'  0   0] [λ₂]   [μ_target ]
+
+    Parameters:
+    -----------
+    cov_matrix : np.ndarray
+        Asset covariance matrix (n x n)
+    expected_returns : np.ndarray
+        Expected returns (n,)
+    target_return : float
+        Required portfolio return
+
+    Returns:
+    --------
+    dict : Optimal weights, Lagrange multipliers, portfolio stats
+    """
+    n = len(expected_returns)
+    ones = np.ones(n)
+    mu = expected_returns
+
+    # Build KKT system
+    # [Σ   1   μ] [w ]   [0        ]
+    # [1'  0   0] [λ₁] = [1        ]
+    # [μ'  0   0] [λ₂]   [μ_target ]
+
+    KKT = np.zeros((n + 2, n + 2))
+    KKT[:n, :n] = cov_matrix
+    KKT[:n, n] = ones
+    KKT[:n, n+1] = mu
+    KKT[n, :n] = ones
+    KKT[n+1, :n] = mu
+
+    rhs = np.zeros(n + 2)
+    rhs[n] = 1  # Budget constraint
+    rhs[n+1] = target_return  # Return constraint
+
+    # Solve
+    solution = np.linalg.solve(KKT, rhs)
+
+    w = solution[:n]
+    lambda1 = solution[n]  # Shadow price of budget constraint
+    lambda2 = solution[n+1]  # Shadow price of return constraint
+
+    # Portfolio statistics
+    port_return = mu @ w
+    port_variance = w @ cov_matrix @ w
+    port_volatility = np.sqrt(port_variance)
+
+    return {
+        'weights': w,
+        'lambda_budget': lambda1,
+        'lambda_return': lambda2,
+        'expected_return': port_return,
+        'volatility': port_volatility,
+        'variance': port_variance,
+        'sharpe_ratio': port_return / port_volatility if port_volatility > 0 else 0
+    }
+
+# Example: 4-asset portfolio
+expected_returns = np.array([0.08, 0.12, 0.06, 0.10])
+volatilities = np.array([0.15, 0.25, 0.10, 0.20])
+correlations = np.array([
+    [1.0, 0.5, 0.2, 0.4],
+    [0.5, 1.0, 0.3, 0.6],
+    [0.2, 0.3, 1.0, 0.2],
+    [0.4, 0.6, 0.2, 1.0]
+])
+cov_matrix = np.diag(volatilities) @ correlations @ np.diag(volatilities)
+
+# Solve for different target returns
+print("\n" + "=" * 60)
+print("MINIMUM VARIANCE PORTFOLIO (LAGRANGE METHOD)")
+print("=" * 60)
+
+for target in [0.07, 0.08, 0.09, 0.10]:
+    result = minimum_variance_portfolio_lagrange(cov_matrix, expected_returns, target)
+    print(f"\nTarget Return: {target*100:.0f}%")
+    print(f"  Weights: {result['weights'].round(4)}")
+    print(f"  Volatility: {result['volatility']*100:.2f}%")
+    print(f"  λ_return (shadow price): {result['lambda_return']:.4f}")
+    print(f"  Interpretation: 1% more return target costs {abs(result['lambda_return'])*100:.2f}% more variance")</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Maximum Sharpe Ratio Portfolio</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize
+
+def maximum_sharpe_portfolio(
+    cov_matrix: np.ndarray,
+    expected_returns: np.ndarray,
+    risk_free_rate: float = 0.02,
+    allow_short: bool = False
+) -> dict:
+    """
+    Find the portfolio that maximizes Sharpe ratio.
+
+    Maximize: SR = (μ'w - r_f) / sqrt(w'Σw)
+
+    This is non-convex, but can be transformed:
+    Maximize: (μ - r_f·1)'y / sqrt(y'Σy) where y = w/k for some k
+    Equivalent to minimizing y'Σy subject to (μ - r_f)'y = 1
+
+    Parameters:
+    -----------
+    cov_matrix : np.ndarray
+        Covariance matrix
+    expected_returns : np.ndarray
+        Expected returns
+    risk_free_rate : float
+        Risk-free rate
+    allow_short : bool
+        Allow negative weights
+
+    Returns:
+    --------
+    dict : Optimal portfolio
+    """
+    n = len(expected_returns)
+    excess_returns = expected_returns - risk_free_rate
+
+    # Method 1: Analytical (unconstrained)
+    # w* ∝ Σ⁻¹(μ - r_f)
+    Sigma_inv = np.linalg.inv(cov_matrix)
+    w_unnormalized = Sigma_inv @ excess_returns
+    w_analytical = w_unnormalized / np.sum(w_unnormalized)
+
+    # Method 2: Numerical optimization (with constraints)
+    def neg_sharpe(w):
+        port_return = expected_returns @ w
+        port_vol = np.sqrt(w @ cov_matrix @ w)
+        if port_vol < 1e-10:
+            return 1e10
+        return -(port_return - risk_free_rate) / port_vol
+
+    constraints = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
+
+    if allow_short:
+        bounds = [(-1, 1) for _ in range(n)]
+    else:
+        bounds = [(0, 1) for _ in range(n)]
+
+    # Multiple starting points
+    best_result = None
+    best_sharpe = -np.inf
+
+    for _ in range(10):
+        w0 = np.random.dirichlet(np.ones(n))
+        result = minimize(neg_sharpe, w0, method='SLSQP',
+                         bounds=bounds, constraints=constraints)
+        if result.success and -result.fun > best_sharpe:
+            best_sharpe = -result.fun
+            best_result = result
+
+    w_numerical = best_result.x if best_result else w_analytical
+
+    # Calculate stats for both
+    def calc_stats(w):
+        ret = expected_returns @ w
+        vol = np.sqrt(w @ cov_matrix @ w)
+        sr = (ret - risk_free_rate) / vol if vol > 0 else 0
+        return {'return': ret, 'volatility': vol, 'sharpe': sr}
+
+    return {
+        'weights_analytical': w_analytical,
+        'weights_numerical': w_numerical,
+        'stats_analytical': calc_stats(w_analytical),
+        'stats_numerical': calc_stats(w_numerical)
+    }
+
+# Find max Sharpe portfolio
+result = maximum_sharpe_portfolio(cov_matrix, expected_returns,
+                                  risk_free_rate=0.02, allow_short=False)
+
+print("\n" + "=" * 60)
+print("MAXIMUM SHARPE RATIO PORTFOLIO")
+print("=" * 60)
+print(f"\nRisk-free rate: 2%")
+
+print(f"\nAnalytical Solution (may have shorts):")
+print(f"  Weights: {result['weights_analytical'].round(4)}")
+print(f"  Return: {result['stats_analytical']['return']*100:.2f}%")
+print(f"  Volatility: {result['stats_analytical']['volatility']*100:.2f}%")
+print(f"  Sharpe Ratio: {result['stats_analytical']['sharpe']:.4f}")
+
+print(f"\nNumerical Solution (long-only):")
+print(f"  Weights: {result['weights_numerical'].round(4)}")
+print(f"  Return: {result['stats_numerical']['return']*100:.2f}%")
+print(f"  Volatility: {result['stats_numerical']['volatility']*100:.2f}%")
+print(f"  Sharpe Ratio: {result['stats_numerical']['sharpe']:.4f}")</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Kelly Criterion Optimization</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize_scalar, minimize
+
+def kelly_criterion_single(
+    p_win: float,
+    odds: float
+) -> dict:
+    """
+    Calculate optimal Kelly fraction for single bet.
+
+    Maximize: E[ln(1 + f·X)] where X = odds with prob p, -1 with prob 1-p
+
+    Analytical solution: f* = p - (1-p)/odds = (p·odds - (1-p)) / odds
+
+    Parameters:
+    -----------
+    p_win : float
+        Probability of winning
+    odds : float
+        Payout ratio (win amount / bet amount)
+
+    Returns:
+    --------
+    dict : Optimal fraction and expected growth rate
+    """
+    # Analytical Kelly
+    q_lose = 1 - p_win
+    f_kelly = (p_win * odds - q_lose) / odds
+
+    # Expected growth rate at Kelly fraction
+    if f_kelly > 0:
+        g_kelly = p_win * np.log(1 + f_kelly * odds) + q_lose * np.log(1 - f_kelly)
+    else:
+        g_kelly = 0
+        f_kelly = 0
+
+    # Verify numerically
+    def neg_expected_log(f):
+        if f <= 0 or f >= 1:
+            return 1e10
+        return -(p_win * np.log(1 + f * odds) + q_lose * np.log(1 - f))
+
+    result = minimize_scalar(neg_expected_log, bounds=(0.001, 0.999), method='bounded')
+    f_numerical = result.x if result.success else f_kelly
+
+    return {
+        'kelly_fraction': f_kelly,
+        'kelly_fraction_numerical': f_numerical,
+        'expected_growth_rate': g_kelly,
+        'edge': p_win * odds - q_lose,  # Expected value per unit bet
+        'half_kelly': f_kelly / 2  # Conservative approach
+    }
+
+def kelly_criterion_portfolio(
+    expected_returns: np.ndarray,
+    cov_matrix: np.ndarray,
+    risk_free_rate: float = 0.0
+) -> dict:
+    """
+    Calculate Kelly-optimal portfolio weights.
+
+    For normally distributed returns:
+    f* = Σ⁻¹(μ - r_f)
+
+    This maximizes expected log growth: E[ln(wealth)]
+
+    Parameters:
+    -----------
+    expected_returns : np.ndarray
+        Expected returns
+    cov_matrix : np.ndarray
+        Covariance matrix
+    risk_free_rate : float
+        Risk-free rate
+
+    Returns:
+    --------
+    dict : Kelly weights and expected growth
+    """
+    excess_returns = expected_returns - risk_free_rate
+
+    # Kelly weights (can be > 1, indicating leverage)
+    Sigma_inv = np.linalg.inv(cov_matrix)
+    kelly_weights = Sigma_inv @ excess_returns
+
+    # Expected growth rate
+    port_return = expected_returns @ kelly_weights
+    port_variance = kelly_weights @ cov_matrix @ kelly_weights
+    expected_growth = port_return - 0.5 * port_variance
+
+    # Leverage ratio
+    leverage = np.sum(np.abs(kelly_weights))
+
+    return {
+        'kelly_weights': kelly_weights,
+        'leverage': leverage,
+        'expected_return': port_return,
+        'variance': port_variance,
+        'expected_growth': expected_growth,
+        'half_kelly': kelly_weights / 2
+    }
+
+# Example: Single bet
+print("\n" + "=" * 60)
+print("KELLY CRITERION - SINGLE BET")
+print("=" * 60)
+
+for p in [0.55, 0.60, 0.65]:
+    result = kelly_criterion_single(p_win=p, odds=1.0)  # Even money bet
+    print(f"\nP(win) = {p*100:.0f}%, odds = 1:1")
+    print(f"  Kelly fraction: {result['kelly_fraction']*100:.1f}%")
+    print(f"  Expected growth: {result['expected_growth_rate']*100:.2f}% per bet")
+    print(f"  Half-Kelly (safer): {result['half_kelly']*100:.1f}%")
+
+# Example: Portfolio
+print("\n" + "=" * 60)
+print("KELLY CRITERION - PORTFOLIO")
+print("=" * 60)
+
+kelly_result = kelly_criterion_portfolio(expected_returns, cov_matrix, risk_free_rate=0.02)
+print(f"\nKelly-optimal weights: {kelly_result['kelly_weights'].round(4)}")
+print(f"Leverage ratio: {kelly_result['leverage']:.2f}x")
+print(f"Expected growth rate: {kelly_result['expected_growth']*100:.2f}%")
+print(f"\nHalf-Kelly weights: {kelly_result['half_kelly'].round(4)}")</code></pre>
+      </div>
+    </section>
+
+    <!-- PART 6: INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Interactive Optimization Calculator</h2>
+
+      <div class="calculator">
+        <h3>Find Critical Points of f(x) = ax³ + bx² + cx + d</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+          <div class="input-group">
+            <label for="coefA">a (x³):</label>
+            <input type="number" id="coefA" value="1" step="0.5" onchange="findCriticalPoints()">
+          </div>
+          <div class="input-group">
+            <label for="coefB">b (x²):</label>
+            <input type="number" id="coefB" value="-6" step="0.5" onchange="findCriticalPoints()">
+          </div>
+          <div class="input-group">
+            <label for="coefC">c (x):</label>
+            <input type="number" id="coefC" value="9" step="0.5" onchange="findCriticalPoints()">
+          </div>
+          <div class="input-group">
+            <label for="coefD">d:</label>
+            <input type="number" id="coefD" value="0" step="0.5" onchange="findCriticalPoints()">
+          </div>
+        </div>
+
+        <div id="criticalPointsResult" style="margin-top: 20px;">
+          <!-- Results will be populated here -->
+        </div>
+
+        <div style="margin-top: 20px;">
+          <p style="color: #94a3b8;">
+            f'(x) = <span id="derivativeFormula">3x² - 12x + 9</span>
+          </p>
+          <p style="color: #94a3b8;">
+            f''(x) = <span id="secondDerivFormula">6x - 12</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Function with Critical Points</h3>
+        <canvas id="optimizationChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 7: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Trading Applications</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Efficient Frontier</h4>
+          <p>The set of minimum-variance portfolios for each return target. Traced by varying λ in Lagrangian.</p>
+          <div class="highlight">Parametric solution as μ_target varies</div>
+        </div>
+        <div class="card">
+          <h4>Risk Parity</h4>
+          <p>Equalize risk contribution from each asset: wᵢ(Σw)ᵢ = σₚ²/n. Non-linear optimization required.</p>
+          <div class="highlight">∂σₚ/∂wᵢ × wᵢ = equal for all i</div>
+        </div>
+        <div class="card">
+          <h4>Transaction Cost Aware</h4>
+          <p>Add penalty for turnover: min w'Σw + λ||w - w₀||₁. Prevents excessive rebalancing.</p>
+          <div class="highlight">Regularized optimization</div>
+        </div>
+        <div class="card">
+          <h4>Black-Litterman</h4>
+          <p>Combine equilibrium with views: max posterior expected utility. Bayesian optimization framework.</p>
+          <div class="highlight">Prior + Views → Posterior</div>
+        </div>
+      </div>
+
+      <div class="algorithm-card">
+        <h4>Optimization Algorithm Comparison</h4>
+        <div style="margin-top: 15px;">
+          <div style="display: flex; align-items: center; margin: 10px 0;">
+            <span style="width: 150px; color: #e2e8f0;">Gradient Descent</span>
+            <div class="convergence-indicator">
+              <div class="bar"><div class="fill" style="width: 60%; background: #f59e0b;"></div></div>
+              <span style="color: #94a3b8; font-size: 0.9rem;">Slow, simple</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; margin: 10px 0;">
+            <span style="width: 150px; color: #e2e8f0;">Newton's Method</span>
+            <div class="convergence-indicator">
+              <div class="bar"><div class="fill" style="width: 90%; background: #10b981;"></div></div>
+              <span style="color: #94a3b8; font-size: 0.9rem;">Fast, needs Hessian</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; margin: 10px 0;">
+            <span style="width: 150px; color: #e2e8f0;">BFGS (Quasi-Newton)</span>
+            <div class="convergence-indicator">
+              <div class="bar"><div class="fill" style="width: 85%; background: #10b981;"></div></div>
+              <span style="color: #94a3b8; font-size: 0.9rem;">Fast, approximates Hessian</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; margin: 10px 0;">
+            <span style="width: 150px; color: #e2e8f0;">Interior Point</span>
+            <div class="convergence-indicator">
+              <div class="bar"><div class="fill" style="width: 95%; background: #6366f1;"></div></div>
+              <span style="color: #94a3b8; font-size: 0.9rem;">Best for constraints</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Efficient Frontier</h3>
+        <canvas id="frontierChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h3>Convergence of Gradient Descent</h3>
+        <canvas id="convergenceChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 8: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Common Mistakes to Avoid</h2>
+
+      <div class="warning-box">
+        <h3>Mistake 1: Assuming All Critical Points are Optima</h3>
+        <p>∇f = 0 is necessary but not sufficient. Always check second-order conditions (Hessian) to verify min/max.</p>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 2: Ignoring Constraints</h3>
+        <p>Unconstrained optimal weights may be infeasible (negative, >100%, etc.). Always enforce real-world constraints.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span>Adding Constraints</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code class="language-python"># With scipy.optimize
+bounds = [(0, 1) for _ in range(n)]  # Long-only
+constraints = [
+    {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},  # Budget
+    {'type': 'ineq', 'fun': lambda w: 0.3 - np.max(w)}  # Max 30% per asset
+]
+result = minimize(objective, w0, bounds=bounds, constraints=constraints)</code></pre>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 3: Using Full Kelly</h3>
+        <p>Full Kelly is optimal for log wealth but very aggressive. Half-Kelly is safer with only ~3/4 the growth.</p>
+      </div>
+
+      <div class="warning-box">
+        <h3>Mistake 4: Local vs Global Optima</h3>
+        <p>Non-convex problems (like Sharpe maximization) may have multiple local optima. Use multiple starting points or global optimization.</p>
+      </div>
+    </section>
+
+    <!-- SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Summary</h2>
+
+      <div class="key-concept">
+        <h3>Key Takeaways</h3>
+        <ul>
+          <li><strong>First-order condition:</strong> ∇f = 0 at critical points (necessary)</li>
+          <li><strong>Second-order test:</strong> Hessian determines min/max/saddle</li>
+          <li><strong>Lagrange multipliers:</strong> Handle equality constraints; λ is shadow price</li>
+          <li><strong>Convexity:</strong> Portfolio variance is convex → unique global minimum exists</li>
+          <li><strong>Kelly criterion:</strong> f* = Σ⁻¹(μ - r) maximizes expected log growth</li>
+        </ul>
+      </div>
+
+      <div class="nav-buttons">
+        <a href="3.3_multivariate_calculus.html" class="nav-btn">← Previous: Multivariate Calculus</a>
+        <a href="../module_4_probability/4.1_probability_basics.html" class="nav-btn">Next: Probability Basics →</a>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Knowledge</h2>
+
+      <div class="quiz-container" id="quiz">
+        <div class="quiz-question">
+          <h4>Question 1: What is the first-order necessary condition for a local optimum?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q1" value="a"> f(x*) = 0</label>
+            <label><input type="radio" name="q1" value="b"> ∇f(x*) = 0</label>
+            <label><input type="radio" name="q1" value="c"> f''(x*) = 0</label>
+            <label><input type="radio" name="q1" value="d"> H(x*) = 0</label>
+          </div>
+          <div class="quiz-feedback" id="feedback1"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 2: In Lagrange optimization, what does the multiplier λ represent?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q2" value="a"> The optimal value of the objective</label>
+            <label><input type="radio" name="q2" value="b"> The sensitivity of the optimum to constraint relaxation</label>
+            <label><input type="radio" name="q2" value="c"> The number of constraints</label>
+            <label><input type="radio" name="q2" value="d"> The step size in gradient descent</label>
+          </div>
+          <div class="quiz-feedback" id="feedback2"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 3: Why is portfolio variance minimization a "nice" optimization problem?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q3" value="a"> It has no constraints</label>
+            <label><input type="radio" name="q3" value="b"> The objective is convex (quadratic with positive definite Σ)</label>
+            <label><input type="radio" name="q3" value="c"> The solution is always equal weights</label>
+            <label><input type="radio" name="q3" value="d"> It's linear</label>
+          </div>
+          <div class="quiz-feedback" id="feedback3"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 4: For a 60% win rate bet with 1:1 odds, what is the Kelly fraction?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q4" value="a"> 60%</label>
+            <label><input type="radio" name="q4" value="b"> 40%</label>
+            <label><input type="radio" name="q4" value="c"> 20%</label>
+            <label><input type="radio" name="q4" value="d"> 10%</label>
+          </div>
+          <div class="quiz-feedback" id="feedback4"></div>
+        </div>
+
+        <div class="quiz-question">
+          <h4>Question 5: If f''(x*) < 0 at a critical point x*, what type of point is it?</h4>
+          <div class="quiz-options">
+            <label><input type="radio" name="q5" value="a"> Local minimum</label>
+            <label><input type="radio" name="q5" value="b"> Local maximum</label>
+            <label><input type="radio" name="q5" value="c"> Saddle point</label>
+            <label><input type="radio" name="q5" value="d"> Inflection point</label>
+          </div>
+          <div class="quiz-feedback" id="feedback5"></div>
+        </div>
+
+        <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+        <div class="quiz-score" id="quizScore"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    let optimizationChart, frontierChart, convergenceChart;
+
+    function initializeCharts() {
+      // Optimization chart
+      const ctx1 = document.getElementById('optimizationChart').getContext('2d');
+      optimizationChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          datasets: [
+            { label: 'f(x)', data: [], borderColor: '#6366f1', borderWidth: 2, fill: false, pointRadius: 0 },
+            { label: 'Critical Points', data: [], backgroundColor: '#ef4444', borderColor: '#ef4444', pointRadius: 8, showLine: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#e2e8f0' } } },
+          scales: {
+            x: { type: 'linear', title: { display: true, text: 'x', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+            y: { title: { display: true, text: 'f(x)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+          }
+        }
+      });
+
+      // Efficient frontier chart
+      const ctx2 = document.getElementById('frontierChart').getContext('2d');
+      const frontierData = [];
+      for (let vol = 8; vol <= 25; vol += 0.5) {
+        const ret = 4 + (vol - 8) * 0.4 + Math.random() * 0.5;
+        frontierData.push({ x: vol, y: ret });
+      }
+      frontierData.sort((a, b) => a.x - b.x);
+
+      frontierChart = new Chart(ctx2, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Efficient Frontier', data: frontierData, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', showLine: true, fill: false, pointRadius: 2 },
+            { label: 'Max Sharpe', data: [{ x: 15, y: 9 }], backgroundColor: '#10b981', pointRadius: 10, pointStyle: 'star' },
+            { label: 'Min Variance', data: [{ x: 8, y: 5.5 }], backgroundColor: '#f59e0b', pointRadius: 8 }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#e2e8f0' } } },
+          scales: {
+            x: { title: { display: true, text: 'Volatility (%)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+            y: { title: { display: true, text: 'Expected Return (%)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+          }
+        }
+      });
+
+      // Convergence chart
+      const ctx3 = document.getElementById('convergenceChart').getContext('2d');
+      const iterations = Array.from({ length: 50 }, (_, i) => i);
+      const objectiveValues = iterations.map(i => 10 * Math.exp(-0.1 * i) + 1 + Math.random() * 0.2);
+
+      convergenceChart = new Chart(ctx3, {
+        type: 'line',
+        data: {
+          labels: iterations,
+          datasets: [{
+            label: 'Objective Value',
+            data: objectiveValues,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0' } },
+            title: { display: true, text: 'Objective decreases toward optimal', color: '#94a3b8' }
+          },
+          scales: {
+            x: { title: { display: true, text: 'Iteration', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+            y: { title: { display: true, text: 'f(x)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+          }
+        }
+      });
+
+      findCriticalPoints();
+    }
+
+    function findCriticalPoints() {
+      const a = parseFloat(document.getElementById('coefA').value);
+      const b = parseFloat(document.getElementById('coefB').value);
+      const c = parseFloat(document.getElementById('coefC').value);
+      const d = parseFloat(document.getElementById('coefD').value);
+
+      // f(x) = ax³ + bx² + cx + d
+      // f'(x) = 3ax² + 2bx + c
+      // f''(x) = 6ax + 2b
+
+      document.getElementById('derivativeFormula').textContent =
+        `${3*a}x² + ${2*b}x + ${c}`;
+      document.getElementById('secondDerivFormula').textContent =
+        `${6*a}x + ${2*b}`;
+
+      // Find roots of f'(x) = 3ax² + 2bx + c = 0
+      const A = 3 * a, B = 2 * b, C = c;
+      const discriminant = B * B - 4 * A * C;
+
+      let criticalPoints = [];
+      let resultHTML = '';
+
+      if (A === 0) {
+        // Linear derivative: one critical point
+        if (B !== 0) {
+          const x = -C / B;
+          criticalPoints.push(x);
+        }
+      } else if (discriminant >= 0) {
+        const x1 = (-B + Math.sqrt(discriminant)) / (2 * A);
+        const x2 = (-B - Math.sqrt(discriminant)) / (2 * A);
+        criticalPoints.push(x1);
+        if (discriminant > 0) criticalPoints.push(x2);
+      }
+
+      if (criticalPoints.length === 0) {
+        resultHTML = '<p style="color: #f59e0b;">No real critical points (discriminant < 0)</p>';
+      } else {
+        resultHTML = '<div class="critical-point">';
+        criticalPoints.forEach(x => {
+          const fx = a*x**3 + b*x**2 + c*x + d;
+          const f2x = 6*a*x + 2*b;
+          let type, typeClass;
+
+          if (f2x > 0.001) {
+            type = 'Local Minimum';
+            typeClass = 'minimum';
+          } else if (f2x < -0.001) {
+            type = 'Local Maximum';
+            typeClass = 'maximum';
+          } else {
+            type = 'Inflection Point';
+            typeClass = 'saddle';
+          }
+
+          resultHTML += `
+            <div class="critical-card ${typeClass}">
+              <h4 style="color: ${typeClass === 'minimum' ? '#10b981' : typeClass === 'maximum' ? '#ef4444' : '#f59e0b'};">
+                x = ${x.toFixed(3)}
+              </h4>
+              <p>f(x) = ${fx.toFixed(3)}</p>
+              <p>f''(x) = ${f2x.toFixed(3)}</p>
+              <span class="test-result ${typeClass === 'minimum' ? 'min' : typeClass === 'maximum' ? 'max' : 'saddle'}">${type}</span>
+            </div>
+          `;
+        });
+        resultHTML += '</div>';
+      }
+
+      document.getElementById('criticalPointsResult').innerHTML = resultHTML;
+
+      // Update chart
+      const funcData = [];
+      const critData = [];
+      for (let x = -2; x <= 5; x += 0.1) {
+        funcData.push({ x, y: a*x**3 + b*x**2 + c*x + d });
+      }
+      criticalPoints.forEach(x => {
+        critData.push({ x, y: a*x**3 + b*x**2 + c*x + d });
+      });
+
+      optimizationChart.data.datasets[0].data = funcData;
+      optimizationChart.data.datasets[1].data = critData;
+      optimizationChart.update();
+    }
+
+    function checkQuiz() {
+      const answers = {
+        q1: { correct: 'b', explanation: 'At a local optimum, the gradient must be zero (∇f(x*) = 0). This is necessary but not sufficient.' },
+        q2: { correct: 'b', explanation: 'λ is the shadow price: ∂f*/∂b tells how much the optimum improves if constraint is relaxed by small amount.' },
+        q3: { correct: 'b', explanation: 'w\'Σw is a convex quadratic function (Σ is positive definite), guaranteeing a unique global minimum.' },
+        q4: { correct: 'c', explanation: 'Kelly = p - (1-p)/odds = 0.6 - 0.4/1 = 0.2 = 20%' },
+        q5: { correct: 'b', explanation: 'f\'\'(x*) < 0 means the function curves downward (concave), so the critical point is a local maximum.' }
+      };
+
+      let score = 0;
+      const total = Object.keys(answers).length;
+
+      for (const [q, data] of Object.entries(answers)) {
+        const selected = document.querySelector(`input[name="${q}"]:checked`);
+        const feedback = document.getElementById(`feedback${q.slice(1)}`);
+
+        if (selected && selected.value === data.correct) {
+          score++;
+          feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+        } else {
+          feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+        }
+        feedback.style.display = 'block';
+      }
+
+      const pct = (score / total * 100).toFixed(0);
+      document.getElementById('quizScore').innerHTML = `
+        <h3>Score: ${score}/${total} (${pct}%)</h3>
+        <p>${pct >= 80 ? 'Excellent! You\'ve mastered optimization!' : pct >= 60 ? 'Good progress!' : 'Review the material and try again.'}</p>
+      `;
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+  </script>
+</body>
+</html>

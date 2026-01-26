@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master cumulative returns and wealth accumulation for quantitative trading. Learn compounding effects and geometric vs arithmetic returns.">
+  <title>1.2 Cumulative Returns & Wealth Accumulation | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="1.1_simple_vs_log_returns.html" class="nav-home">← Previous Module</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 1.2</span>
+          <span class="nav-module-title">Cumulative Returns & Wealth Accumulation</span>
+        </div>
+        <a href="1.3_price_normalization.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 1: Price Action & Returns</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>1.2 Cumulative Returns & Wealth Accumulation</span>
+        </div>
+        <h1>Cumulative Returns & Wealth Accumulation</h1>
+        <p class="module-subtitle">
+          Understand how compounding works and why a series of small gains can lead to exponential wealth growth.
+          Master the difference between arithmetic and geometric returns.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 4 Visualizations</span>
+          <span class="meta-item">💻 Interactive Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ The Compounding Trap</div>
+        <p>
+          Your trading bot shows an average daily return of +0.5% over 100 days. You think: "That's 50% total return!"
+          <strong>Wrong.</strong> Due to compounding, you actually made 64.7% - a massive 30% difference!
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          Conversely, averaging +10% and -10% doesn't give you 0%. After both periods, you have -1%.
+          <strong>Arithmetic averages lie when it comes to investment returns.</strong>
+        </p>
+      </div>
+
+      <h3>Why Compounding Is Everything</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Wrong Reporting</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Presenting arithmetic mean returns to investors grossly misrepresents actual wealth growth.
+            You could be fired for this mistake.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Strategy Comparison Fails</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Comparing strategies using average returns instead of geometric returns leads to choosing
+            inferior strategies with higher volatility.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Unrealistic Expectations</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Clients expecting arithmetic returns will be disappointed. Understanding cumulative returns
+            sets realistic expectations and prevents lawsuits.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ The Power of Compounding</div>
+        <p style="margin-bottom: 0;">
+          Warren Buffett's wealth comes from compounding at ~20% annually over 60 years. A $10,000 investment
+          in Berkshire Hathaway in 1965 is worth over $300 million today. That's not arithmetic growth—that's
+          the magic of geometric compounding. Understanding this is essential for long-term wealth building.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition (No Math Yet)</h2>
+
+      <h3>Two Types of Returns: Which One Matters?</h3>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Arithmetic (Average) Return 📊</h3>
+          <p>
+            <strong>Think of it as:</strong> "What's the average daily gain?"
+          </p>
+          <p>
+            If you make +10% one day and +20% the next, the arithmetic average is (10% + 20%) / 2 = 15%.
+            Simple to calculate, easy to understand. But it <strong>doesn't tell you actual wealth growth</strong>.
+          </p>
+          <p style="margin-bottom: 0;">
+            <strong>Problem:</strong> Ignores compounding effects and volatility drag.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Geometric (Compounded) Return 📈</h3>
+          <p>
+            <strong>Think of it as:</strong> "What constant rate would give me the same final wealth?"
+          </p>
+          <p>
+            If you make +10% then +20%, your wealth grows by (1.10 × 1.20) = 1.32 or 32% total.
+            The geometric average is (1.32)^(1/2) - 1 = 14.89%. This is your <strong>true growth rate</strong>.
+          </p>
+          <p style="margin-bottom: 0;">
+            <strong>Truth:</strong> Accounts for compounding and gives actual wealth accumulation.
+          </p>
+        </div>
+      </div>
+
+      <h3>The Snowball Effect</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">❄️ Compounding as a Snowball</div>
+        <p>
+          Imagine rolling a snowball down a hill. Each rotation adds more snow, but the amount added depends on
+          how big the snowball already is. A small snowball adds a thin layer. A huge snowball adds massive amounts
+          with each turn.
+        </p>
+        <p style="margin-bottom: 0;">
+          This is compounding: <strong>You earn returns on your returns</strong>. Day 1's gains increase Day 2's base,
+          which increases Day 3's base, and so on. Over time, this creates exponential growth, not linear growth.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <h3>Cumulative Return Formula</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Cumulative Return (Compound All Returns)</div>
+        <div class="formula-content">
+          R<sub>cumulative</sub> = (1 + r<sub>1</sub>) × (1 + r<sub>2</sub>) × ... × (1 + r<sub>n</sub>) - 1
+        </div>
+        <div class="formula-content" style="font-size: 1.2rem; margin-top: 1rem;">
+          = ∏(1 + r<sub>i</sub>) - 1
+        </div>
+        <div class="formula-description">
+          Where r<sub>i</sub> is the return for period i, and ∏ means "product of all terms"
+        </div>
+      </div>
+
+      <h3>Geometric Mean Return</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Geometric Average Return</div>
+        <div class="formula-content">
+          R<sub>geometric</sub> = [(1 + r<sub>1</sub>) × (1 + r<sub>2</sub>) × ... × (1 + r<sub>n</sub>)]<sup>1/n</sup> - 1
+        </div>
+        <div class="formula-content" style="font-size: 1.2rem; margin-top: 1rem;">
+          = [∏(1 + r<sub>i</sub>)]<sup>1/n</sup> - 1
+        </div>
+        <div class="formula-description">
+          This gives the constant per-period return that produces the same cumulative return
+        </div>
+      </div>
+
+      <h3>Numerical Example: Three Days of Trading</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">cumulative_example.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+
+# Daily returns: +10%, -5%, +8%
+daily_returns = [0.10, -0.05, 0.08]
+
+# Method 1: Cumulative return (multiply all growth factors)
+cumulative = np.prod([1 + r for r in daily_returns]) - 1
+print(f"Cumulative Return: {cumulative:.4f} = {cumulative*100:.2f}%")
+# Output: Cumulative Return: 0.1234 = 12.34%
+
+# Method 2: Arithmetic mean (WRONG for wealth calculation!)
+arithmetic_mean = np.mean(daily_returns)
+print(f"Arithmetic Mean: {arithmetic_mean:.4f} = {arithmetic_mean*100:.2f}%")
+# Output: Arithmetic Mean: 0.0433 = 4.33%
+
+# Method 3: Geometric mean (correct average growth rate)
+geometric_mean = np.prod([1 + r for r in daily_returns]) ** (1/len(daily_returns)) - 1
+print(f"Geometric Mean: {geometric_mean:.4f} = {geometric_mean*100:.2f}%")
+# Output: Geometric Mean: 0.0396 = 3.96%
+
+# Verify: geometric mean compounded over 3 periods
+verification = (1 + geometric_mean) ** 3 - 1
+print(f"Verification: {verification:.4f} = {verification*100:.2f}%")
+# Output: Verification: 0.1234 = 12.34% ✓</code></pre>
+        </div>
+      </div>
+
+      <h3>Comparison Table</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Daily Returns</th>
+              <th>Cumulative Return</th>
+              <th>Arithmetic Mean</th>
+              <th>Geometric Mean</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>+10%, +10%, +10%</td>
+              <td style="color: var(--success);">+33.10%</td>
+              <td>+10.00%</td>
+              <td>+10.00%</td>
+            </tr>
+            <tr>
+              <td>+10%, -10%, +10%</td>
+              <td style="color: var(--error);">-1.00%</td>
+              <td>+3.33%</td>
+              <td style="color: var(--error);">-0.33%</td>
+            </tr>
+            <tr>
+              <td>+50%, -50%, +50%</td>
+              <td style="color: var(--error);">-12.50%</td>
+              <td>+16.67%</td>
+              <td style="color: var(--error);">-4.35%</td>
+            </tr>
+            <tr>
+              <td>+5%, +5%, +5%, +5%</td>
+              <td style="color: var(--success);">+21.55%</td>
+              <td>+5.00%</td>
+              <td>+5.00%</td>
+            </tr>
+            <tr>
+              <td>+20%, +0%, -10%, +15%</td>
+              <td style="color: var(--success);">+24.20%</td>
+              <td>+6.25%</td>
+              <td>+5.57%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Critical Observation</div>
+        <p style="margin-bottom: 0;">
+          Notice how arithmetic mean is <strong>always higher</strong> than geometric mean when there's volatility.
+          The gap widens with increased volatility. This "volatility drag" means volatile strategies need higher
+          average returns to achieve the same wealth accumulation as stable strategies.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties of Cumulative Returns</h2>
+
+      <h3>1. The Compounding Effect</h3>
+
+      <svg width="100%" height="350" viewBox="0 0 900 350" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <!-- Title -->
+        <text x="450" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="20" font-weight="600">
+          Linear vs Exponential Growth: $10,000 Investment
+        </text>
+
+        <!-- Axes -->
+        <line x1="80" y1="300" x2="850" y2="300" stroke="var(--text-muted)" stroke-width="2"/>
+        <line x1="80" y1="50" x2="80" y2="300" stroke="var(--text-muted)" stroke-width="2"/>
+
+        <!-- Linear growth line (no compounding) -->
+        <path d="M 80 300 L 200 275 L 320 250 L 440 225 L 560 200 L 680 175 L 800 150"
+              stroke="var(--accent-blue)" stroke-width="3" fill="none" stroke-dasharray="5,5"/>
+
+        <!-- Exponential growth curve (with compounding) -->
+        <path d="M 80 300 Q 200 270, 320 235 T 560 140 T 800 60"
+              stroke="var(--success)" stroke-width="4" fill="none"/>
+
+        <!-- Labels -->
+        <text x="100" y="330" fill="var(--text-secondary)" font-size="14">Year 0</text>
+        <text x="400" y="330" fill="var(--text-secondary)" font-size="14">Year 10</text>
+        <text x="750" y="330" fill="var(--text-secondary)" font-size="14">Year 20</text>
+
+        <text x="30" y="305" fill="var(--text-secondary)" font-size="14">$10k</text>
+        <text x="30" y="180" fill="var(--text-secondary)" font-size="14">$30k</text>
+        <text x="30" y="70" fill="var(--text-secondary)" font-size="14">$70k</text>
+
+        <!-- Legend -->
+        <line x1="650" y1="280" x2="700" y2="280" stroke="var(--accent-blue)" stroke-width="3" stroke-dasharray="5,5"/>
+        <text x="710" y="285" fill="var(--text-secondary)" font-size="14">Linear (10% simple, no compounding)</text>
+
+        <line x1="650" y1="310" x2="700" y2="310" stroke="var(--success)" stroke-width="4"/>
+        <text x="710" y="315" fill="var(--text-secondary)" font-size="14">Exponential (10% compounded)</text>
+
+        <!-- End values -->
+        <circle cx="800" cy="150" r="5" fill="var(--accent-blue)"/>
+        <text x="810" y="150" fill="var(--accent-blue)" font-size="16" font-weight="600">$30,000</text>
+
+        <circle cx="800" cy="60" r="5" fill="var(--success)"/>
+        <text x="810" y="65" fill="var(--success)" font-size="16" font-weight="600">$67,275</text>
+      </svg>
+
+      <h3>2. Volatility Drag</h3>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--accent-blue);">Low Volatility Strategy</h4>
+          <div class="code-block" style="margin-top: 1rem;">
+            <div class="code-content">
+<pre><code class="language-python">returns = [0.05, 0.05, 0.05, 0.05]
+# Steady 5% returns
+
+cumulative = 1.05 ** 4 - 1
+# = 21.55%
+
+arithmetic = 5.00%
+geometric = 5.00%
+# No gap!</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="color: var(--error);">High Volatility Strategy</h4>
+          <div class="code-block" style="margin-top: 1rem;">
+            <div class="code-content">
+<pre><code class="language-python">returns = [0.25, -0.15, 0.30, -0.10]
+# Wild swings, same periods
+
+cumulative = 1.25 * 0.85 * 1.30 * 0.90 - 1
+# = 24.39%
+
+arithmetic = 7.50%
+geometric = 5.60%
+# Large gap due to volatility!</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>3. The Order Doesn't Matter</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">🔄 Multiplication is Commutative</div>
+        <p>
+          Whether you make +10%, then -5%, then +8%, or -5%, +8%, +10%, the cumulative return is identical:
+          1.10 × 0.95 × 1.08 = 1.1234 in any order. This is because multiplication is commutative.
+        </p>
+        <p style="margin-bottom: 0;">
+          This means the <strong>sequence of returns doesn't affect final wealth</strong>, only the individual
+          return magnitudes matter. However, the path matters for psychological and risk management reasons!
+        </p>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Interactive Wealth Calculator</h2>
+
+      <div class="calculator-widget" data-calc-id="cumulative-calc">
+        <h3 class="calculator-title">Cumulative Returns Calculator</h3>
+        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+          Enter daily returns (separated by commas) to see cumulative wealth and both types of averages.
+        </p>
+
+        <div class="calculator-input-group">
+          <label class="calculator-label" for="dailyReturns">Daily Returns (%, comma-separated)</label>
+          <input type="text" id="dailyReturns" class="calculator-input" value="10, -5, 8, 3, -2" placeholder="e.g., 10, -5, 8, 3, -2">
+        </div>
+
+        <div class="calculator-input-group">
+          <label class="calculator-label" for="initialWealth">Initial Investment ($)</label>
+          <input type="number" id="initialWealth" class="calculator-input" value="10000" step="100" min="1">
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculateCumulativeReturns()">
+          Calculate Wealth Growth
+        </button>
+
+        <div class="calculator-result" style="margin-top: 1.5rem; display: none;" id="cumulativeResults">
+          <div class="grid grid-2">
+            <div>
+              <div class="calculator-result-label">Final Wealth</div>
+              <div class="calculator-result-value" id="finalWealth">$11,234.00</div>
+            </div>
+            <div>
+              <div class="calculator-result-label">Cumulative Return</div>
+              <div class="calculator-result-value" id="cumulativeReturn">+12.34%</div>
+            </div>
+          </div>
+
+          <div class="grid grid-2" style="margin-top: 1.5rem;">
+            <div>
+              <div class="calculator-result-label">Arithmetic Mean</div>
+              <div class="calculator-result-value" id="arithmeticMean" style="font-size: 1.3rem;">+4.33%</div>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                ⚠️ Overstates actual growth
+              </p>
+            </div>
+            <div>
+              <div class="calculator-result-label">Geometric Mean</div>
+              <div class="calculator-result-value" id="geometricMean" style="font-size: 1.3rem;">+3.96%</div>
+              <p style="font-size: 0.85rem; color: var(--success); margin-top: 0.5rem;">
+                ✓ True average growth rate
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <h3>Professional Cumulative Returns Calculator</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">cumulative_returns.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+import pandas as pd
+from typing import Union
+
+def calculate_cumulative_return(returns: Union[pd.Series, np.ndarray]) -> float:
+    """
+    Calculate cumulative return from a series of period returns.
+
+    Args:
+        returns: Series of period returns (e.g., daily returns)
+
+    Returns:
+        Cumulative return as a decimal
+    """
+    return np.prod(1 + returns) - 1
+
+
+def calculate_geometric_mean(returns: Union[pd.Series, np.ndarray]) -> float:
+    """
+    Calculate geometric mean return.
+
+    Args:
+        returns: Series of period returns
+
+    Returns:
+        Geometric mean return as a decimal
+    """
+    n = len(returns)
+    cumulative = np.prod(1 + returns)
+    return cumulative ** (1/n) - 1
+
+
+def calculate_wealth_path(initial_wealth: float,
+                         returns: Union[pd.Series, np.ndarray]) -> np.ndarray:
+    """
+    Calculate wealth accumulation over time.
+
+    Args:
+        initial_wealth: Starting portfolio value
+        returns: Series of period returns
+
+    Returns:
+        Array of wealth values over time
+    """
+    wealth = np.zeros(len(returns) + 1)
+    wealth[0] = initial_wealth
+
+    for i, ret in enumerate(returns):
+        wealth[i + 1] = wealth[i] * (1 + ret)
+
+    return wealth
+
+
+# Example: Real trading scenario
+if __name__ == "__main__":
+    # Simulate a year of daily returns
+    np.random.seed(42)
+    daily_returns = np.random.normal(0.001, 0.02, 252)  # Mean 0.1%, std 2%
+
+    # Calculate metrics
+    cumulative = calculate_cumulative_return(daily_returns)
+    arithmetic = np.mean(daily_returns)
+    geometric = calculate_geometric_mean(daily_returns)
+
+    print("="*60)
+    print("ANNUAL PERFORMANCE METRICS")
+    print("="*60)
+    print(f"Cumulative Return:    {cumulative:>8.2%}")
+    print(f"Arithmetic Mean:      {arithmetic*252:>8.2%} (annualized)")
+    print(f"Geometric Mean:       {geometric*252:>8.2%} (annualized)")
+    print(f"Volatility Drag:      {(arithmetic - geometric)*252:>8.2%}")
+    print("="*60)
+
+    # Wealth path
+    wealth_path = calculate_wealth_path(10000, daily_returns)
+    print(f"\nStarting Wealth: ${wealth_path[0]:,.2f}")
+    print(f"Ending Wealth:   ${wealth_path[-1]:,.2f}")
+    print(f"Profit:          ${wealth_path[-1] - wealth_path[0]:,.2f}")
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Comparison: Multiple Strategies</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">strategy_comparison.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+import pandas as pd
+
+def compare_strategies(strategies: dict, initial_wealth: float = 10000):
+    """
+    Compare multiple trading strategies by cumulative returns.
+
+    Args:
+        strategies: Dict of {name: returns_array}
+        initial_wealth: Starting capital
+
+    Returns:
+        DataFrame with comparison metrics
+    """
+    results = []
+
+    for name, returns in strategies.items():
+        cumulative = np.prod(1 + returns) - 1
+        arithmetic = np.mean(returns)
+        geometric = calculate_geometric_mean(returns)
+        volatility = np.std(returns)
+        final_wealth = initial_wealth * (1 + cumulative)
+
+        results.append({
+            'Strategy': name,
+            'Cumulative Return': f"{cumulative:.2%}",
+            'Arithmetic Mean': f"{arithmetic:.2%}",
+            'Geometric Mean': f"{geometric:.2%}",
+            'Volatility': f"{volatility:.2%}",
+            'Final Wealth': f"${final_wealth:,.2f}",
+            'Sharpe Ratio': f"{(geometric - 0.02) / volatility:.2f}"
+        })
+
+    return pd.DataFrame(results)
+
+
+# Example: Three different strategies
+strategies = {
+    'Conservative': np.random.normal(0.0005, 0.005, 252),  # Low risk
+    'Moderate': np.random.normal(0.001, 0.015, 252),       # Medium risk
+    'Aggressive': np.random.normal(0.002, 0.03, 252),      # High risk
+}
+
+comparison = compare_strategies(strategies)
+print(comparison.to_string(index=False))
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Visualizations</h3>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Wealth Accumulation Over Time</h4>
+        <canvas id="wealthPathChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Cumulative Returns: Rolling 30-Day Windows</h4>
+        <canvas id="rollingReturnsChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Arithmetic vs Geometric Mean Comparison</h4>
+        <canvas id="meansComparisonChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Volatility Drag Effect</h4>
+        <canvas id="volatilityDragChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 6: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Trading Applications</h2>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px solid var(--accent-blue);">
+          <h3 style="color: var(--accent-blue);">Use Cumulative Returns For:</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Performance Reporting:</strong> Show actual wealth growth to clients</li>
+            <li><strong>Backtesting:</strong> Calculate total strategy return over test period</li>
+            <li><strong>Compounding Analysis:</strong> Understand long-term wealth accumulation</li>
+            <li><strong>Realistic Projections:</strong> Model future wealth based on historical returns</li>
+            <li><strong>Strategy Selection:</strong> Choose strategies by final wealth, not average return</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); border: 2px solid var(--accent-purple);">
+          <h3 style="color: var(--accent-purple);">Use Geometric Mean For:</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>True Average Return:</strong> Report the constant rate that achieves actual growth</li>
+            <li><strong>Strategy Comparison:</strong> Compare different strategies on equal footing</li>
+            <li><strong>Annualized Returns:</strong> Calculate CAGR (Compound Annual Growth Rate)</li>
+            <li><strong>Risk-Adjusted Metrics:</strong> Better Sharpe ratio using geometric mean</li>
+            <li><strong>Long-Term Planning:</strong> Project sustainable growth rates</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>CAGR: Compound Annual Growth Rate</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">cagr_calculation.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">def calculate_cagr(beginning_value: float,
+                   ending_value: float,
+                   years: float) -> float:
+    """
+    Calculate Compound Annual Growth Rate.
+
+    CAGR = (Ending Value / Beginning Value)^(1/Years) - 1
+
+    Args:
+        beginning_value: Initial portfolio value
+        ending_value: Final portfolio value
+        years: Number of years (can be fractional)
+
+    Returns:
+        CAGR as a decimal
+    """
+    return (ending_value / beginning_value) ** (1 / years) - 1
+
+
+# Example: 5-year investment
+beginning = 10000
+ending = 18000
+years = 5
+
+cagr = calculate_cagr(beginning, ending, years)
+print(f"CAGR: {cagr:.2%}")
+# Output: CAGR: 12.47%
+
+# Verify: Starting with $10k, growing at 12.47% for 5 years
+verification = beginning * (1 + cagr) ** years
+print(f"Verification: ${verification:,.2f}")
+# Output: Verification: $18,000.00 ✓
+
+# Compare to simple average
+simple_return = (ending - beginning) / beginning
+simple_avg = simple_return / years
+print(f"Simple Average: {simple_avg:.2%} (WRONG!)")
+# Output: Simple Average: 16.00% (overstates sustainable growth)
+</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 7: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Common Mistakes (And How to Avoid Them)</h2>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #1: Using Arithmetic Mean for Multi-Period Returns</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># NEVER DO THIS!
+daily_returns = [0.02, -0.01, 0.03, -0.02]
+# Arithmetic average
+avg_return = sum(daily_returns) / len(daily_returns)  # = 0.005 or 0.5%
+
+# Projected annual return
+annual_return = avg_return * 252  # = 126% WRONG!
+# This ignores compounding and volatility drag</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Use geometric mean
+daily_returns = [0.02, -0.01, 0.03, -0.02]
+geometric_daily = calculate_geometric_mean(daily_returns)  # = 0.0049
+
+# Annualize correctly
+annual_return = (1 + geometric_daily) ** 252 - 1  # = 238%
+# OR use CAGR for actual period
+cumulative = np.prod([1 + r for r in daily_returns]) - 1
+print(f"4-day return: {cumulative:.2%}")  # More realistic</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #2: Ignoring Volatility Drag</div>
+        <p><strong>The Problem:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># Two strategies with same arithmetic mean
+strategy_a = [0.10, 0.10, 0.10, 0.10]  # Low vol
+strategy_b = [0.50, -0.30, 0.30, -0.10]  # High vol
+
+# Both have 10% arithmetic mean
+print(f"A arithmetic: {np.mean(strategy_a):.2%}")  # 10%
+print(f"B arithmetic: {np.mean(strategy_b):.2%}")  # 10%
+
+# But VERY different cumulative returns!
+print(f"A cumulative: {np.prod([1+r for r in strategy_a])-1:.2%}")  # 46.41%
+print(f"B cumulative: {np.prod([1+r for r in strategy_b])-1:.2%}")  # 21.77%
+# Strategy A wins by 25% despite same average!</code></pre>
+          </div>
+        </div>
+        <p><strong>Solution:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># ALWAYS compare strategies using geometric mean or cumulative returns
+geo_a = calculate_geometric_mean(strategy_a)  # 10.00%
+geo_b = calculate_geometric_mean(strategy_b)  # 5.03%
+
+print(f"A geometric: {geo_a:.2%}")
+print(f"B geometric: {geo_b:.2%}")
+print(f"Volatility drag on B: {(np.mean(strategy_b) - geo_b):.2%}")
+# Drag: 4.97% - high volatility reduces geometric mean!</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #3: Forgetting to Subtract 1</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># Common copy-paste error
+returns = [0.10, 0.05, 0.08]
+cumulative = np.prod([1 + r for r in returns])  # = 1.2474
+print(f"Cumulative return: {cumulative:.2%}")
+# Output: 124.74% - WRONG! You forgot to subtract 1</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Always subtract 1 for returns
+returns = [0.10, 0.05, 0.08]
+cumulative = np.prod([1 + r for r in returns]) - 1  # Subtract 1!
+print(f"Cumulative return: {cumulative:.2%}")
+# Output: 24.74% ✓</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Understanding</h2>
+
+      <div class="quiz-container" data-quiz-id="cumulative-quiz">
+        <div class="quiz-score" style="text-align: right; font-weight: 600; color: var(--accent-blue); margin-bottom: 1rem;">
+          Score: 0/5
+        </div>
+
+        <!-- Question 1 -->
+        <div class="quiz-question-group" data-question-id="q1">
+          <div class="quiz-question">1. If you make +20% in year 1 and +20% in year 2, what's your cumulative return?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="You can't just add returns! You need to compound them.">
+              40%
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! (1.20 × 1.20) - 1 = 1.44 - 1 = 0.44 or 44%">
+              44%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="This would be if you lost 20% in year 2, not gained.">
+              -4%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="This is too high - compounding doesn't work that way.">
+              48%
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-question-group" data-question-id="q2">
+          <div class="quiz-question">2. Which type of mean return represents actual wealth growth?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Arithmetic mean overstates growth when there's volatility.">
+              Arithmetic mean
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Geometric mean accounts for compounding and gives the true average growth rate.">
+              Geometric mean
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Median doesn't account for compounding effects.">
+              Median
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Mode has nothing to do with average returns.">
+              Mode
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-question-group" data-question-id="q3">
+          <div class="quiz-question">3. What is 'volatility drag'?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="No, it's about the difference between arithmetic and geometric means.">
+              The cost of trading commissions
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Higher volatility creates a larger gap between arithmetic and geometric means, reducing actual wealth growth.">
+              The reduction in geometric return caused by volatility
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That's drawdown, not volatility drag.">
+              The maximum loss from peak to trough
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That's beta, not volatility drag.">
+              The correlation with market returns
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="quiz-question-group" data-question-id="q4">
+          <div class="quiz-question">4. You invest $10,000 and after 3 years have $15,000. What's the CAGR?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="That's the simple average: ($5,000 / $10,000) / 3. It doesn't account for compounding.">
+              16.67%
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! (15000/10000)^(1/3) - 1 = 1.5^(0.333) - 1 ≈ 0.1447 or 14.47%">
+              14.47%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Too low - this doesn't match the growth from $10k to $15k.">
+              12.00%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="This is the total return (50%), not the annual rate.">
+              50.00%
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 5 -->
+        <div class="quiz-question-group" data-question-id="q5">
+          <div class="quiz-question">5. Which statement about cumulative returns is TRUE?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="The order doesn't matter for final wealth, but it matters for the journey (drawdowns, psychology).">
+              The order of returns significantly affects final wealth
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Only when there's zero volatility. Otherwise, geometric < arithmetic.">
+              Geometric mean is always equal to arithmetic mean
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! (1+r₁)×(1+r₂)×...×(1+rₙ) - 1 gives you the total compounded return.">
+              Cumulative return = product of (1 + each return) minus 1
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="You need to subtract 1 to get the return from the growth factor.">
+              You can skip subtracting 1 when calculating cumulative returns
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 8: SUMMARY & CHEAT SHEET -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Summary & Cheat Sheet</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Cumulative returns</strong> show actual wealth accumulation through compounding</li>
+          <li><strong>Geometric mean</strong> gives the true average growth rate; arithmetic mean overstates it</li>
+          <li>Higher volatility creates larger gap between arithmetic and geometric means (volatility drag)</li>
+          <li>CAGR (Compound Annual Growth Rate) is the geometric mean annualized</li>
+          <li>Order of returns doesn't affect final wealth, only the journey</li>
+          <li>Always use geometric returns for long-term performance evaluation</li>
+        </ul>
+      </div>
+
+      <h3>Quick Reference Formulas</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Formula</th>
+              <th>When to Use</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cumulative Return</strong></td>
+              <td>∏(1 + r<sub>i</sub>) - 1</td>
+              <td>Total return over any period</td>
+            </tr>
+            <tr>
+              <td><strong>Geometric Mean</strong></td>
+              <td>[∏(1 + r<sub>i</sub>)]<sup>1/n</sup> - 1</td>
+              <td>True average periodic return</td>
+            </tr>
+            <tr>
+              <td><strong>Arithmetic Mean</strong></td>
+              <td>Σr<sub>i</sub> / n</td>
+              <td>Quick estimate (biased upward)</td>
+            </tr>
+            <tr>
+              <td><strong>CAGR</strong></td>
+              <td>(End / Begin)<sup>1/years</sup> - 1</td>
+              <td>Annualized growth rate</td>
+            </tr>
+            <tr>
+              <td><strong>Wealth Path</strong></td>
+              <td>W<sub>t</sub> = W<sub>0</sub> × ∏(1 + r<sub>i</sub>)</td>
+              <td>Track portfolio value over time</td>
+            </tr>
+            <tr>
+              <td><strong>Volatility Drag</strong></td>
+              <td>Arithmetic Mean - Geometric Mean</td>
+              <td>Quantify compounding penalty</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="formula-box" style="margin-top: 2rem;">
+        <div class="formula-label">The Golden Rule of Compounding</div>
+        <div class="formula-content" style="font-size: 1.3rem;">
+          Final Wealth = Initial × (1 + r<sub>1</sub>) × (1 + r<sub>2</sub>) × ... × (1 + r<sub>n</sub>)
+        </div>
+        <div class="formula-description">
+          Each period multiplies the previous wealth by (1 + return). This is the essence of compounding!
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="1.1_simple_vs_log_returns.html" class="btn btn-secondary">
+        ← Previous: Simple vs Log Returns
+      </a>
+      <a href="1.3_price_normalization.html" class="btn btn-primary">
+        Next: Price Normalization →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Module 1.2: Cumulative Returns & Wealth Accumulation</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of the Quantitative Trading Mastery course
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="1.3_price_normalization.html">1.3 Price Normalization</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    // ============================================
+    // INTERACTIVE CALCULATOR
+    // ============================================
+    function calculateCumulativeReturns() {
+      const input = document.getElementById('dailyReturns').value;
+      const initialWealth = parseFloat(document.getElementById('initialWealth').value) || 10000;
+
+      // Parse returns
+      const returns = input.split(',').map(r => parseFloat(r.trim()) / 100).filter(r => !isNaN(r));
+
+      if (returns.length === 0) {
+        alert('Please enter valid returns');
+        return;
+      }
+
+      // Calculate cumulative return
+      const cumulative = returns.reduce((acc, r) => acc * (1 + r), 1) - 1;
+      const finalWealth = initialWealth * (1 + cumulative);
+
+      // Calculate arithmetic mean
+      const arithmetic = returns.reduce((a, b) => a + b, 0) / returns.length;
+
+      // Calculate geometric mean
+      const product = returns.reduce((acc, r) => acc * (1 + r), 1);
+      const geometric = Math.pow(product, 1 / returns.length) - 1;
+
+      // Display results
+      document.getElementById('cumulativeResults').style.display = 'block';
+      document.getElementById('finalWealth').textContent = `$${finalWealth.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById('cumulativeReturn').textContent = `${cumulative >= 0 ? '+' : ''}${(cumulative * 100).toFixed(2)}%`;
+      document.getElementById('arithmeticMean').textContent = `${arithmetic >= 0 ? '+' : ''}${(arithmetic * 100).toFixed(2)}%`;
+      document.getElementById('geometricMean').textContent = `${geometric >= 0 ? '+' : ''}${(geometric * 100).toFixed(2)}%`;
+
+      // Color code
+      document.getElementById('finalWealth').style.color = cumulative >= 0 ? 'var(--success)' : 'var(--error)';
+      document.getElementById('cumulativeReturn').style.color = cumulative >= 0 ? 'var(--success)' : 'var(--error)';
+    }
+
+    // ============================================
+    // CHART.JS VISUALIZATIONS
+    // ============================================
+
+    // Generate sample data
+    function generateWealthData() {
+      const periods = 252; // Trading days in a year
+      const returns = [];
+      const wealthPath = [10000];
+
+      for (let i = 0; i < periods; i++) {
+        const ret = (Math.random() - 0.47) * 0.03; // Slight upward bias
+        returns.push(ret);
+        wealthPath.push(wealthPath[i] * (1 + ret));
+      }
+
+      return { returns, wealthPath };
+    }
+
+    const data = generateWealthData();
+    const labels = Array.from({length: data.wealthPath.length}, (_, i) => i);
+
+    // Chart 1: Wealth Path
+    const ctx1 = document.getElementById('wealthPathChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Portfolio Value',
+          data: data.wealthPath,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: `Growth from $10,000 to $${data.wealthPath[data.wealthPath.length-1].toFixed(0).toLocaleString()}`,
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Portfolio Value ($)', color: '#a8b2d1' },
+            ticks: {
+              color: '#a8b2d1',
+              callback: function(value) { return '$' + value.toLocaleString(); }
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            title: { display: true, text: 'Trading Days', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 2: Rolling Returns
+    const rollingReturns = [];
+    for (let i = 29; i < data.returns.length; i++) {
+      const window = data.returns.slice(i - 29, i + 1);
+      const cumRet = window.reduce((acc, r) => acc * (1 + r), 1) - 1;
+      rollingReturns.push(cumRet * 100);
+    }
+
+    const ctx2 = document.getElementById('rollingReturnsChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: rollingReturns.length}, (_, i) => i + 30),
+        datasets: [{
+          label: '30-Day Cumulative Return (%)',
+          data: rollingReturns,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Return (%)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 3: Arithmetic vs Geometric Comparison
+    const volLevels = [0.01, 0.02, 0.03, 0.04, 0.05];
+    const arithmeticMeans = [];
+    const geometricMeans = [];
+
+    volLevels.forEach(vol => {
+      const simReturns = Array.from({length: 252}, () => Math.random() * vol * 2 - vol + 0.001);
+      const arith = simReturns.reduce((a, b) => a + b) / simReturns.length * 100;
+      const geom = (Math.pow(simReturns.reduce((acc, r) => acc * (1 + r), 1), 1/252) - 1) * 100;
+      arithmeticMeans.push(arith);
+      geometricMeans.push(geom);
+    });
+
+    const ctx3 = document.getElementById('meansComparisonChart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: volLevels.map(v => `${(v*100).toFixed(0)}% Vol`),
+        datasets: [{
+          label: 'Arithmetic Mean',
+          data: arithmeticMeans,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1
+        }, {
+          label: 'Geometric Mean',
+          data: geometricMeans,
+          backgroundColor: 'rgba(139, 92, 246, 0.7)',
+          borderColor: 'rgb(139, 92, 246)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: 'Volatility Increases the Gap',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Mean Return (%)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 4: Volatility Drag
+    const drag = arithmeticMeans.map((a, i) => a - geometricMeans[i]);
+
+    const ctx4 = document.getElementById('volatilityDragChart').getContext('2d');
+    new Chart(ctx4, {
+      type: 'line',
+      data: {
+        labels: volLevels.map(v => `${(v*100).toFixed(0)}%`),
+        datasets: [{
+          label: 'Volatility Drag (%)',
+          data: drag,
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: 'Higher Volatility = Larger Drag on Returns',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Drag (%)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            title: { display: true, text: 'Volatility', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  </script>
+
+  <style>
+    /* Module-specific styles */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master VWAP analysis for quantitative trading. Learn institutional benchmarks, VWAP bands, and algorithmic execution strategies.">
+    <title>4.2 VWAP Analysis | Quantitative Trading Mastery</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
+    <style>
+        .vwap-visual {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .vwap-formula-display {
+            font-size: 1.8rem;
+            color: #6366f1;
+            margin: 20px 0;
+            font-family: 'Georgia', serif;
+        }
+        .vwap-components {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .vwap-component {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .vwap-component h4 {
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+        .institutional-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .institutional-box h4 {
+            color: #f59e0b;
+            margin-bottom: 15px;
+        }
+        .band-explanation {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .band-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .band-card.upper {
+            border-left: 4px solid #10b981;
+        }
+        .band-card.lower {
+            border-left: 4px solid #ef4444;
+        }
+        .execution-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .exec-step {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.1));
+            border: 2px solid #06b6d4;
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 140px;
+        }
+        .exec-arrow {
+            font-size: 1.5rem;
+            color: #06b6d4;
+        }
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .strategy-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .strategy-card h4 {
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+        .strategy-card.bearish h4 {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 4.2</span>
+                    <span class="nav-module-title">VWAP Analysis</span>
+                </div>
+                <a href="4.3_combined_volume_strategies.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 4: Volume Analysis</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>4.2 VWAP Analysis</span>
+                </div>
+                <h1>VWAP Analysis</h1>
+                <p class="module-subtitle">
+                    Master the institutional benchmark for algorithmic execution.
+                    Learn VWAP bands, anchored VWAP, and professional trading strategies.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 30 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 Interactive Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container content-wrapper">
+
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Institutional Benchmark</div>
+                <p>
+                    VWAP (Volume Weighted Average Price) is the #1 benchmark for institutional order execution.
+                    When a fund needs to buy $100M of stock, their traders are judged by whether they beat VWAP.
+                </p>
+                <p style="margin-top: 1rem; margin-bottom: 0;">
+                    <strong>Understanding VWAP means understanding how the biggest players in the market think and operate.</strong>
+                </p>
+            </div>
+
+            <h3>Why VWAP Dominates Institutional Trading</h3>
+
+            <div class="grid grid-3">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">🏦 Execution Benchmark</h4>
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        Institutional traders are evaluated against VWAP. Beating VWAP = good execution. Missing VWAP = explaining to the PM.
+                    </p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">🤖 Algo Trading Standard</h4>
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        VWAP algorithms slice large orders to minimize market impact while targeting the volume-weighted average price.
+                    </p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Fair Value Indicator</h4>
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        VWAP represents the average price weighted by volume—true "fair value" where most trading actually occurred.
+                    </p>
+                </div>
+            </div>
+
+            <div class="institutional-box">
+                <h4>🏦 The Institutional Reality</h4>
+                <p>Consider a pension fund buying $50M of AAPL:</p>
+                <ul style="margin: 15px 0;">
+                    <li><strong>Problem:</strong> Buying all at once would spike the price (market impact)</li>
+                    <li><strong>Solution:</strong> Use VWAP algo to spread orders throughout the day</li>
+                    <li><strong>Goal:</strong> Match or beat the day's VWAP</li>
+                    <li><strong>Result:</strong> If day's VWAP = $175.50 and they averaged $175.30, they "beat VWAP" by $0.20/share</li>
+                </ul>
+                <p><em>This is why price tends to gravitate toward VWAP—massive order flow targets it.</em></p>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">Think of a Weighted GPA</div>
+                <p>
+                    Regular average: Each class counts equally.
+                    Weighted GPA: Classes with more credits count more.
+                </p>
+                <p style="margin-top: 10px;">
+                    <strong>VWAP is like a weighted GPA for prices</strong>—prices where more volume traded
+                    count more toward the average. A $150 price with 1M shares traded matters more than
+                    $155 with only 10K shares.
+                </p>
+            </div>
+
+            <div class="vwap-visual">
+                <h3>VWAP Formula</h3>
+                <div class="vwap-formula-display">
+                    VWAP = Σ(Price × Volume) / Σ(Volume)
+                </div>
+                <p style="color: #94a3b8;">The cumulative sum of (price × volume) divided by cumulative volume</p>
+
+                <div class="vwap-components">
+                    <div class="vwap-component">
+                        <h4>Numerator</h4>
+                        <p>Σ(P<sub>i</sub> × V<sub>i</sub>)</p>
+                        <p style="font-size: 0.9rem; color: #94a3b8;">Sum of price × volume for each trade</p>
+                    </div>
+                    <div class="vwap-component">
+                        <h4>Denominator</h4>
+                        <p>Σ V<sub>i</sub></p>
+                        <p style="font-size: 0.9rem; color: #94a3b8;">Total cumulative volume</p>
+                    </div>
+                    <div class="vwap-component">
+                        <h4>Result</h4>
+                        <p>VWAP</p>
+                        <p style="font-size: 0.9rem; color: #94a3b8;">Volume-weighted average price</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>VWAP Types</h3>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Intraday VWAP</h4>
+                    <p>Resets at market open each day. Most common for day trading and institutional execution.</p>
+                    <div class="highlight">Standard institutional benchmark</div>
+                </div>
+                <div class="card">
+                    <h4>Anchored VWAP</h4>
+                    <p>Starts from a specific point (earnings, breakout, swing low). Shows average price since that event.</p>
+                    <div class="highlight">Custom reference for swing traders</div>
+                </div>
+                <div class="card">
+                    <h4>Rolling VWAP</h4>
+                    <p>Uses a fixed lookback window (e.g., 20 periods). Similar to moving average but volume-weighted.</p>
+                    <div class="highlight">Trend-following applications</div>
+                </div>
+                <div class="card">
+                    <h4>VWAP Bands</h4>
+                    <p>Standard deviation bands around VWAP. Show overbought/oversold relative to fair value.</p>
+                    <div class="highlight">Mean reversion signals</div>
+                </div>
+            </div>
+
+            <h3>VWAP Band Interpretation</h3>
+
+            <div class="band-explanation">
+                <div class="band-card upper">
+                    <h4 style="color: #10b981;">Above VWAP</h4>
+                    <p><strong>Interpretation:</strong> Buyers paying above average—bullish pressure</p>
+                    <ul>
+                        <li>+1σ band: Moderately extended</li>
+                        <li>+2σ band: Significantly extended, watch for mean reversion</li>
+                        <li>Sustained above: Strong trend, institutions accumulating</li>
+                    </ul>
+                </div>
+                <div class="band-card lower">
+                    <h4 style="color: #ef4444;">Below VWAP</h4>
+                    <p><strong>Interpretation:</strong> Sellers accepting below average—bearish pressure</p>
+                    <ul>
+                        <li>-1σ band: Moderately oversold</li>
+                        <li>-2σ band: Significantly oversold, watch for bounce</li>
+                        <li>Sustained below: Weak trend, institutions distributing</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>VWAP Definition</h3>
+                <div class="formula">
+                    VWAP<sub>t</sub> = Σ<sub>i=1</sub><sup>t</sup>(P<sub>i</sub> × V<sub>i</sub>) / Σ<sub>i=1</sub><sup>t</sup> V<sub>i</sub>
+                </div>
+                <p>At time t, the cumulative price-volume sum divided by cumulative volume</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Typical Price (for OHLC data)</h3>
+                <div class="formula">
+                    P<sub>typical</sub> = (High + Low + Close) / 3
+                </div>
+                <p>When tick data unavailable, use typical price as representative transaction price</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>VWAP Standard Deviation</h3>
+                <div class="formula">
+                    σ<sub>VWAP</sub> = √(Σ V<sub>i</sub>(P<sub>i</sub> - VWAP)<sup>2</sup> / Σ V<sub>i</sub>)
+                </div>
+                <p>Volume-weighted standard deviation of prices from VWAP</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>VWAP Bands</h3>
+                <div class="formula">
+                    Upper Band = VWAP + n × σ<sub>VWAP</sub><br>
+                    Lower Band = VWAP - n × σ<sub>VWAP</sub>
+                </div>
+                <p>Typically n = 1, 2, or 3 standard deviations</p>
+            </div>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">Incremental VWAP Update</div>
+                <p>For efficiency, VWAP can be updated incrementally:</p>
+                <div class="formula-box">
+                    <div class="formula">
+                        VWAP<sub>t</sub> = (VWAP<sub>t-1</sub> × ΣV<sub>t-1</sub> + P<sub>t</sub> × V<sub>t</sub>) / (ΣV<sub>t-1</sub> + V<sub>t</sub>)
+                    </div>
+                </div>
+                <p>No need to recalculate entire sum—just update with new trade.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>VWAP Deviation Score</h3>
+                <div class="formula">
+                    Z<sub>VWAP</sub> = (P<sub>current</sub> - VWAP) / σ<sub>VWAP</sub>
+                </div>
+                <p>How many standard deviations current price is from VWAP. |Z| > 2 = extended.</p>
+            </div>
+        </section>
+
+        <!-- PART 4: KEY PROPERTIES -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Key Properties for Trading</h2>
+
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">VWAP as Support/Resistance</span>
+                    <span class="property-desc">Price tends to respect VWAP as dynamic S/R because institutions target it</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Trend Confirmation</span>
+                    <span class="property-desc">Sustained price above VWAP = uptrend, below = downtrend. Simple but powerful filter</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Mean Reversion at Bands</span>
+                    <span class="property-desc">Price at ±2σ bands tends to revert. Fade extremes, especially in range-bound markets</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">VWAP Cross Signals</span>
+                    <span class="property-desc">Price crossing VWAP can signal intraday trend change—watch volume on the cross</span>
+                </div>
+            </div>
+
+            <h3>VWAP Execution Algorithms</h3>
+
+            <div class="execution-flow">
+                <div class="exec-step">
+                    <strong>1. Forecast</strong>
+                    <p style="font-size: 0.85rem;">Predict volume curve</p>
+                </div>
+                <span class="exec-arrow">→</span>
+                <div class="exec-step">
+                    <strong>2. Slice</strong>
+                    <p style="font-size: 0.85rem;">Break order into pieces</p>
+                </div>
+                <span class="exec-arrow">→</span>
+                <div class="exec-step">
+                    <strong>3. Schedule</strong>
+                    <p style="font-size: 0.85rem;">Time slices to volume</p>
+                </div>
+                <span class="exec-arrow">→</span>
+                <div class="exec-step">
+                    <strong>4. Execute</strong>
+                    <p style="font-size: 0.85rem;">Submit limit orders</p>
+                </div>
+                <span class="exec-arrow">→</span>
+                <div class="exec-step">
+                    <strong>5. Track</strong>
+                    <p style="font-size: 0.85rem;">Compare to VWAP</p>
+                </div>
+            </div>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">Why VWAP Algorithms Work</div>
+                <p>
+                    VWAP algos participate proportionally to market volume. If 10% of daily volume
+                    trades in the first hour, the algo executes 10% of the order then.
+                    This minimizes market impact by trading "with the flow."
+                </p>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Complete VWAP Calculator</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import pandas as pd
+from typing import Tuple, Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class VWAPResult:
+    """Container for VWAP analysis results."""
+    vwap: float
+    vwap_std: float
+    upper_band_1: float
+    lower_band_1: float
+    upper_band_2: float
+    lower_band_2: float
+    z_score: float
+    cumulative_volume: float
+
+
+class VWAPAnalyzer:
+    """
+    Professional VWAP calculator with bands and signals.
+
+    Supports intraday, anchored, and rolling VWAP calculations.
+    """
+
+    def __init__(self, band_multipliers: Tuple[float, ...] = (1.0, 2.0)):
+        """
+        Initialize VWAP analyzer.
+
+        Args:
+            band_multipliers: Standard deviation multipliers for bands
+        """
+        self.band_multipliers = band_multipliers
+
+    def calculate_vwap(
+        self,
+        prices: np.ndarray,
+        volumes: np.ndarray,
+        high: Optional[np.ndarray] = None,
+        low: Optional[np.ndarray] = None
+    ) -> pd.DataFrame:
+        """
+        Calculate VWAP and bands for time series.
+
+        Args:
+            prices: Close prices (or typical prices)
+            volumes: Volume at each period
+            high: High prices (for typical price calculation)
+            low: Low prices (for typical price calculation)
+
+        Returns:
+            DataFrame with VWAP and bands
+        """
+        # Use typical price if OHLC provided
+        if high is not None and low is not None:
+            typical_price = (high + low + prices) / 3
+        else:
+            typical_price = prices
+
+        # Calculate cumulative values
+        pv_cumsum = np.cumsum(typical_price * volumes)
+        v_cumsum = np.cumsum(volumes)
+
+        # VWAP
+        vwap = pv_cumsum / v_cumsum
+
+        # VWAP Standard Deviation (volume-weighted)
+        # σ² = Σ(V * (P - VWAP)²) / ΣV
+        squared_diff = (typical_price - vwap) ** 2
+        weighted_var = np.cumsum(volumes * squared_diff) / v_cumsum
+        vwap_std = np.sqrt(weighted_var)
+
+        # Build DataFrame
+        df = pd.DataFrame({
+            'price': prices,
+            'volume': volumes,
+            'vwap': vwap,
+            'vwap_std': vwap_std
+        })
+
+        # Add bands
+        for mult in self.band_multipliers:
+            df[f'upper_{mult}'] = vwap + mult * vwap_std
+            df[f'lower_{mult}'] = vwap - mult * vwap_std
+
+        # Z-score
+        df['z_score'] = (prices - vwap) / np.where(vwap_std > 0, vwap_std, 1)
+
+        return df
+
+    def calculate_anchored_vwap(
+        self,
+        df: pd.DataFrame,
+        anchor_index: int,
+        price_col: str = 'close',
+        volume_col: str = 'volume'
+    ) -> pd.Series:
+        """
+        Calculate VWAP anchored to specific point.
+
+        Args:
+            df: DataFrame with price and volume
+            anchor_index: Index to start VWAP calculation
+            price_col: Column name for prices
+            volume_col: Column name for volume
+
+        Returns:
+            Series with anchored VWAP values
+        """
+        # Slice from anchor point
+        subset = df.iloc[anchor_index:].copy()
+
+        prices = subset[price_col].values
+        volumes = subset[volume_col].values
+
+        pv_cumsum = np.cumsum(prices * volumes)
+        v_cumsum = np.cumsum(volumes)
+        anchored_vwap = pv_cumsum / v_cumsum
+
+        # Create full series with NaN before anchor
+        result = pd.Series(index=df.index, dtype=float)
+        result.iloc[anchor_index:] = anchored_vwap
+
+        return result
+
+    def calculate_rolling_vwap(
+        self,
+        prices: np.ndarray,
+        volumes: np.ndarray,
+        window: int = 20
+    ) -> np.ndarray:
+        """
+        Calculate rolling VWAP over fixed window.
+
+        Args:
+            prices: Price array
+            volumes: Volume array
+            window: Lookback window
+
+        Returns:
+            Rolling VWAP array
+        """
+        n = len(prices)
+        rolling_vwap = np.full(n, np.nan)
+
+        for i in range(window - 1, n):
+            start = i - window + 1
+            pv_sum = np.sum(prices[start:i+1] * volumes[start:i+1])
+            v_sum = np.sum(volumes[start:i+1])
+            rolling_vwap[i] = pv_sum / v_sum if v_sum > 0 else np.nan
+
+        return rolling_vwap
+
+    def get_current_analysis(
+        self,
+        vwap_df: pd.DataFrame,
+        current_price: float
+    ) -> VWAPResult:
+        """
+        Get current VWAP analysis snapshot.
+
+        Args:
+            vwap_df: DataFrame from calculate_vwap
+            current_price: Current market price
+
+        Returns:
+            VWAPResult with current metrics
+        """
+        last = vwap_df.iloc[-1]
+
+        return VWAPResult(
+            vwap=last['vwap'],
+            vwap_std=last['vwap_std'],
+            upper_band_1=last['upper_1.0'],
+            lower_band_1=last['lower_1.0'],
+            upper_band_2=last['upper_2.0'],
+            lower_band_2=last['lower_2.0'],
+            z_score=(current_price - last['vwap']) / last['vwap_std'] if last['vwap_std'] > 0 else 0,
+            cumulative_volume=vwap_df['volume'].sum()
+        )
+
+
+def generate_vwap_signals(
+    current_price: float,
+    vwap: float,
+    vwap_std: float,
+    prev_price: float,
+    prev_vwap: float
+) -> dict:
+    """
+    Generate trading signals from VWAP analysis.
+
+    Args:
+        current_price: Current price
+        vwap: Current VWAP
+        vwap_std: VWAP standard deviation
+        prev_price: Previous period price
+        prev_vwap: Previous period VWAP
+
+    Returns:
+        Dictionary with trading signals
+    """
+    z_score = (current_price - vwap) / vwap_std if vwap_std > 0 else 0
+
+    signals = {
+        'position': None,
+        'z_score': z_score,
+        'cross_signal': None,
+        'mean_reversion_signal': None,
+        'trend_bias': None
+    }
+
+    # Position relative to VWAP
+    if current_price > vwap:
+        signals['position'] = 'above_vwap'
+        signals['trend_bias'] = 'bullish'
+    else:
+        signals['position'] = 'below_vwap'
+        signals['trend_bias'] = 'bearish'
+
+    # Cross signals
+    if prev_price <= prev_vwap and current_price > vwap:
+        signals['cross_signal'] = 'bullish_cross'
+    elif prev_price >= prev_vwap and current_price < vwap:
+        signals['cross_signal'] = 'bearish_cross'
+
+    # Mean reversion signals
+    if z_score > 2:
+        signals['mean_reversion_signal'] = 'overbought_fade_short'
+    elif z_score < -2:
+        signals['mean_reversion_signal'] = 'oversold_fade_long'
+    elif abs(z_score) < 0.5:
+        signals['mean_reversion_signal'] = 'near_fair_value'
+
+    return signals
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Simulate intraday data (390 minutes)
+    n = 390
+    base_price = 150
+
+    # Price with intraday pattern
+    trend = np.linspace(0, 3, n)  # Slight upward drift
+    noise = np.cumsum(np.random.randn(n) * 0.1)
+    prices = base_price + trend + noise
+
+    # Volume with U-shape pattern (high open/close, low midday)
+    time = np.linspace(0, 1, n)
+    volume_pattern = 1 + 0.5 * (4 * (time - 0.5) ** 2)
+    volumes = (100000 * volume_pattern * (0.8 + 0.4 * np.random.rand(n))).astype(int)
+
+    # Calculate VWAP
+    analyzer = VWAPAnalyzer()
+    vwap_df = analyzer.calculate_vwap(prices, volumes)
+
+    print("=" * 50)
+    print("VWAP ANALYSIS")
+    print("=" * 50)
+
+    # Current snapshot
+    result = analyzer.get_current_analysis(vwap_df, prices[-1])
+
+    print(f"\nCurrent Price: ${prices[-1]:.2f}")
+    print(f"VWAP: ${result.vwap:.2f}")
+    print(f"Z-Score: {result.z_score:.2f}")
+    print(f"\nBands:")
+    print(f"  +2σ: ${result.upper_band_2:.2f}")
+    print(f"  +1σ: ${result.upper_band_1:.2f}")
+    print(f"  VWAP: ${result.vwap:.2f}")
+    print(f"  -1σ: ${result.lower_band_1:.2f}")
+    print(f"  -2σ: ${result.lower_band_2:.2f}")
+
+    # Generate signals
+    signals = generate_vwap_signals(
+        prices[-1], result.vwap, result.vwap_std,
+        prices[-2], vwap_df.iloc[-2]['vwap']
+    )
+    print(f"\nSignals:")
+    print(f"  Position: {signals['position']}")
+    print(f"  Trend Bias: {signals['trend_bias']}")
+    print(f"  Mean Reversion: {signals['mean_reversion_signal']}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>VWAP Execution Algorithm Simulator</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from typing import List, Tuple
+
+
+class VWAPExecutionAlgo:
+    """
+    Simulates institutional VWAP execution algorithm.
+
+    Slices orders proportional to expected volume to minimize market impact.
+    """
+
+    def __init__(
+        self,
+        total_shares: int,
+        expected_volume_curve: np.ndarray
+    ):
+        """
+        Initialize VWAP execution algorithm.
+
+        Args:
+            total_shares: Total shares to execute
+            expected_volume_curve: Expected volume at each time slice (normalized)
+        """
+        self.total_shares = total_shares
+        self.volume_curve = expected_volume_curve / expected_volume_curve.sum()
+        self.executed_shares = 0
+        self.execution_prices: List[float] = []
+        self.execution_volumes: List[int] = []
+
+    def get_target_shares(self, time_idx: int) -> int:
+        """Get target shares to execute at this time slice."""
+        cumulative_target = int(
+            self.total_shares * self.volume_curve[:time_idx + 1].sum()
+        )
+        target_this_period = cumulative_target - self.executed_shares
+        return max(0, target_this_period)
+
+    def execute(
+        self,
+        time_idx: int,
+        market_price: float,
+        available_liquidity: int
+    ) -> Tuple[int, float]:
+        """
+        Execute shares at current time slice.
+
+        Args:
+            time_idx: Current time index
+            market_price: Current market price
+            available_liquidity: Max shares that can be filled
+
+        Returns:
+            Tuple of (shares_executed, execution_price)
+        """
+        target = self.get_target_shares(time_idx)
+        executed = min(target, available_liquidity)
+
+        if executed > 0:
+            # Simulate small market impact
+            impact = 0.0001 * executed / 1000  # 1bp per 1000 shares
+            exec_price = market_price * (1 + impact)
+
+            self.executed_shares += executed
+            self.execution_prices.append(exec_price)
+            self.execution_volumes.append(executed)
+
+            return executed, exec_price
+
+        return 0, market_price
+
+    def get_execution_vwap(self) -> float:
+        """Calculate VWAP of executed trades."""
+        if not self.execution_prices:
+            return 0
+
+        prices = np.array(self.execution_prices)
+        volumes = np.array(self.execution_volumes)
+
+        return np.sum(prices * volumes) / np.sum(volumes)
+
+    def get_performance_vs_benchmark(
+        self,
+        benchmark_vwap: float
+    ) -> dict:
+        """
+        Compare execution to benchmark VWAP.
+
+        Args:
+            benchmark_vwap: Market VWAP for the period
+
+        Returns:
+            Performance metrics
+        """
+        exec_vwap = self.get_execution_vwap()
+        slippage = exec_vwap - benchmark_vwap
+        slippage_bps = slippage / benchmark_vwap * 10000
+
+        return {
+            'execution_vwap': exec_vwap,
+            'benchmark_vwap': benchmark_vwap,
+            'slippage': slippage,
+            'slippage_bps': slippage_bps,
+            'beat_vwap': slippage < 0,  # For buy orders, lower is better
+            'total_executed': self.executed_shares,
+            'fill_rate': self.executed_shares / self.total_shares
+        }
+
+
+# Example: Simulate VWAP algo execution
+if __name__ == "__main__":
+    # Expected volume curve (U-shaped intraday pattern)
+    n_periods = 78  # 5-minute bars for 6.5 hour day
+    time = np.linspace(0, 1, n_periods)
+    volume_curve = 1 + 0.5 * (4 * (time - 0.5) ** 2)
+
+    # Initialize algo to buy 100,000 shares
+    algo = VWAPExecutionAlgo(
+        total_shares=100000,
+        expected_volume_curve=volume_curve
+    )
+
+    # Simulate market
+    np.random.seed(42)
+    base_price = 150
+    market_prices = base_price + np.cumsum(np.random.randn(n_periods) * 0.1)
+    market_volumes = (volume_curve * 500000 * (0.8 + 0.4 * np.random.rand(n_periods))).astype(int)
+
+    # Execute throughout the day
+    for i in range(n_periods):
+        algo.execute(i, market_prices[i], market_volumes[i] // 10)
+
+    # Calculate benchmark VWAP
+    benchmark_vwap = np.sum(market_prices * market_volumes) / np.sum(market_volumes)
+
+    # Performance
+    perf = algo.get_performance_vs_benchmark(benchmark_vwap)
+
+    print("\n" + "=" * 50)
+    print("VWAP EXECUTION PERFORMANCE")
+    print("=" * 50)
+    print(f"\nExecution VWAP: ${perf['execution_vwap']:.4f}")
+    print(f"Benchmark VWAP: ${perf['benchmark_vwap']:.4f}")
+    print(f"Slippage: ${perf['slippage']:.4f} ({perf['slippage_bps']:.2f} bps)")
+    print(f"Beat VWAP: {'Yes ✓' if perf['beat_vwap'] else 'No ✗'}")
+    print(f"Fill Rate: {perf['fill_rate']*100:.1f}%")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive VWAP Calculator</h2>
+
+            <div class="calculator">
+                <h3>Calculate VWAP and Bands</h3>
+                <p style="color: #94a3b8; margin-bottom: 20px;">
+                    Enter price and volume data to calculate VWAP with standard deviation bands.
+                </p>
+
+                <div class="input-group">
+                    <label for="vwapPrices">Prices (comma-separated):</label>
+                    <input type="text" id="vwapPrices" value="150.00, 150.50, 151.00, 150.75, 151.25, 151.50, 151.00, 150.80, 151.20, 151.80"
+                           placeholder="e.g., 150.00, 150.50, 151.00, ...">
+                </div>
+
+                <div class="input-group">
+                    <label for="vwapVolumes">Volumes (comma-separated):</label>
+                    <input type="text" id="vwapVolumes" value="50000, 30000, 45000, 25000, 60000, 40000, 35000, 55000, 45000, 70000"
+                           placeholder="e.g., 50000, 30000, 45000, ...">
+                </div>
+
+                <div class="input-group">
+                    <label for="currentPriceVWAP">Current Price ($):</label>
+                    <input type="number" id="currentPriceVWAP" value="151.50" step="0.01">
+                </div>
+
+                <button class="btn" onclick="calculateVWAP()">Calculate VWAP</button>
+
+                <div id="vwapResults" style="margin-top: 20px;">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Price with VWAP and Bands</h3>
+                <canvas id="vwapChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Trading Applications</h2>
+
+            <div class="strategy-grid">
+                <div class="strategy-card">
+                    <h4>VWAP Pullback Long</h4>
+                    <p><strong>Setup:</strong> Price trending above VWAP, pulls back to touch VWAP</p>
+                    <p><strong>Entry:</strong> Long on VWAP touch with bullish candle</p>
+                    <p><strong>Stop:</strong> Below VWAP by 1 ATR</p>
+                    <p><strong>Target:</strong> Previous high or +2σ band</p>
+                </div>
+                <div class="strategy-card bearish">
+                    <h4>VWAP Rejection Short</h4>
+                    <p><strong>Setup:</strong> Price trending below VWAP, rallies to test VWAP</p>
+                    <p><strong>Entry:</strong> Short on VWAP rejection with bearish candle</p>
+                    <p><strong>Stop:</strong> Above VWAP by 1 ATR</p>
+                    <p><strong>Target:</strong> Previous low or -2σ band</p>
+                </div>
+                <div class="strategy-card">
+                    <h4>Band Mean Reversion</h4>
+                    <p><strong>Setup:</strong> Price reaches ±2σ band</p>
+                    <p><strong>Entry:</strong> Fade at band with reversal confirmation</p>
+                    <p><strong>Stop:</strong> Beyond ±3σ</p>
+                    <p><strong>Target:</strong> VWAP (fair value)</p>
+                </div>
+                <div class="strategy-card">
+                    <h4>VWAP Cross Momentum</h4>
+                    <p><strong>Setup:</strong> Price crosses VWAP with high volume</p>
+                    <p><strong>Entry:</strong> Trade direction of cross</p>
+                    <p><strong>Stop:</strong> Opposite side of VWAP</p>
+                    <p><strong>Target:</strong> ±1σ band in trade direction</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>VWAP Trading Scenarios</h3>
+                <canvas id="vwapTradingChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Volume Distribution Throughout Day</h3>
+                <canvas id="volumeDistChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 8: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Common Mistakes to Avoid</h2>
+
+            <div class="warning-box">
+                <h3>Mistake 1: Using VWAP for Swing Trading</h3>
+                <p>Intraday VWAP resets daily. For swing trades, use anchored VWAP from significant levels or multi-day VWAP.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 2: Ignoring Time of Day</h3>
+                <p>VWAP is most reliable mid-session. Early morning VWAP is noisy (few data points). Late day VWAP is stable but may not predict next day.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 3: Blind Mean Reversion</h3>
+                <p>Fading ±2σ bands in strong trends is dangerous. Trends can stay extended. Always confirm with momentum/trend analysis.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 4: Not Accounting for Gaps</h3>
+                <p>Large gaps make VWAP start far from previous close. The first touch of VWAP after a gap is often a strong trade setup.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 5: Static Band Interpretation</h3>
+                <p>VWAP bands widen throughout the day as more data accumulates. A touch of +2σ early means less than late in the session.</p>
+            </div>
+        </section>
+
+        <!-- SUMMARY -->
+        <section class="content-section fade-in">
+            <h2>Summary</h2>
+
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>VWAP:</strong> Σ(Price × Volume) / Σ(Volume) — volume-weighted fair value</li>
+                    <li><strong>Institutional benchmark:</strong> Traders judged by execution vs VWAP</li>
+                    <li><strong>Above VWAP:</strong> Bullish pressure, buyers paying premium</li>
+                    <li><strong>Below VWAP:</strong> Bearish pressure, sellers accepting discount</li>
+                    <li><strong>Bands (±σ):</strong> Mean reversion zones at ±2σ</li>
+                </ul>
+            </div>
+
+            <div class="nav-buttons">
+                <a href="4.1_volume_profile_analysis.html" class="nav-btn">← Previous: Volume Profile</a>
+                <a href="4.3_combined_volume_strategies.html" class="nav-btn">Next: Combined Volume Strategies →</a>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Test Your Knowledge</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Question 1: What does VWAP stand for and what does it measure?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> Volume Weighted Average Price—the average price weighted by volume</label>
+                        <label><input type="radio" name="q1" value="b"> Very Wide Average Price—the range of trading</label>
+                        <label><input type="radio" name="q1" value="c"> Value Weighted Asset Price—asset valuation metric</label>
+                        <label><input type="radio" name="q1" value="d"> Variance Weighted Average Price—volatility measure</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 2: Why is VWAP the primary benchmark for institutional execution?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> It's the highest price of the day</label>
+                        <label><input type="radio" name="q2" value="b"> It represents the average price where most volume actually traded</label>
+                        <label><input type="radio" name="q2" value="c"> It's the opening price</label>
+                        <label><input type="radio" name="q2" value="d"> It predicts future prices</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 3: What does price trading consistently above VWAP indicate?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> Bearish sentiment—sellers in control</label>
+                        <label><input type="radio" name="q3" value="b"> Bullish sentiment—buyers paying above average</label>
+                        <label><input type="radio" name="q3" value="c"> Neutral market—no direction</label>
+                        <label><input type="radio" name="q3" value="d"> Low volatility</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 4: What is anchored VWAP used for?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> Calculating intraday execution quality</label>
+                        <label><input type="radio" name="q4" value="b"> Measuring VWAP from a specific reference point (earnings, swing low, etc.)</label>
+                        <label><input type="radio" name="q4" value="c"> Predicting tomorrow's opening price</label>
+                        <label><input type="radio" name="q4" value="d"> Calculating trading fees</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 5: What is a common mean reversion signal using VWAP bands?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> Buy when price crosses above VWAP</label>
+                        <label><input type="radio" name="q5" value="b"> Sell when price touches VWAP</label>
+                        <label><input type="radio" name="q5" value="c"> Fade price when it reaches ±2 standard deviation bands</label>
+                        <label><input type="radio" name="q5" value="d"> Buy at market open regardless of VWAP</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let vwapChart, vwapTradingChart, volumeDistChart;
+
+        function initializeCharts() {
+            // Main VWAP Chart
+            const ctx1 = document.getElementById('vwapChart').getContext('2d');
+            vwapChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Price', data: [], borderColor: '#6366f1', borderWidth: 2, fill: false, pointRadius: 3 },
+                        { label: 'VWAP', data: [], borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 0 },
+                        { label: '+1σ', data: [], borderColor: 'rgba(168, 85, 247, 0.5)', borderWidth: 1, fill: false, pointRadius: 0 },
+                        { label: '-1σ', data: [], borderColor: 'rgba(168, 85, 247, 0.5)', borderWidth: 1, fill: false, pointRadius: 0 },
+                        { label: '+2σ', data: [], borderColor: 'rgba(239, 68, 68, 0.5)', borderWidth: 1, fill: false, pointRadius: 0 },
+                        { label: '-2σ', data: [], borderColor: 'rgba(239, 68, 68, 0.5)', borderWidth: 1, fill: false, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+
+            // VWAP Trading Scenarios
+            const ctx2 = document.getElementById('vwapTradingChart').getContext('2d');
+            const tradingLabels = Array.from({length: 50}, (_, i) => i + 1);
+            const basePrice = 150;
+            let price = basePrice;
+            const tradingPrices = tradingLabels.map(() => {
+                price += (Math.random() - 0.48) * 0.5;
+                return price;
+            });
+
+            // Calculate VWAP for trading chart
+            const tradingVolumes = tradingLabels.map(() => 10000 + Math.random() * 5000);
+            let pvSum = 0, vSum = 0;
+            const tradingVWAP = tradingPrices.map((p, i) => {
+                pvSum += p * tradingVolumes[i];
+                vSum += tradingVolumes[i];
+                return pvSum / vSum;
+            });
+
+            vwapTradingChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: tradingLabels,
+                    datasets: [
+                        { label: 'Price', data: tradingPrices, borderColor: '#6366f1', borderWidth: 2, fill: false },
+                        { label: 'VWAP', data: tradingVWAP, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        title: { display: true, text: 'Price Trending Above VWAP (Bullish)', color: '#94a3b8' }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Time Period', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { title: { display: true, text: 'Price ($)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+
+            // Volume Distribution Chart
+            const ctx3 = document.getElementById('volumeDistChart').getContext('2d');
+            const hours = ['9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00'];
+            // U-shaped volume pattern
+            const volumeDist = [15, 12, 9, 7, 5, 4, 4, 5, 6, 7, 9, 12, 14, 18];
+
+            volumeDistChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: hours,
+                    datasets: [{
+                        label: 'Volume %',
+                        data: volumeDist,
+                        backgroundColor: volumeDist.map((v, i) =>
+                            i < 2 || i > 11 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(99, 102, 241, 0.5)'
+                        )
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Typical U-Shaped Intraday Volume (High at Open/Close)', color: '#94a3b8' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { title: { display: true, text: '% of Daily Volume', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+
+            // Initial VWAP calculation
+            calculateVWAP();
+        }
+
+        function calculateVWAP() {
+            const pricesStr = document.getElementById('vwapPrices').value;
+            const volumesStr = document.getElementById('vwapVolumes').value;
+            const currentPrice = parseFloat(document.getElementById('currentPriceVWAP').value);
+
+            const prices = pricesStr.split(',').map(p => parseFloat(p.trim()));
+            const volumes = volumesStr.split(',').map(v => parseFloat(v.trim()));
+
+            if (prices.length !== volumes.length) {
+                alert('Price and volume arrays must have the same length');
+                return;
+            }
+
+            // Calculate VWAP incrementally
+            let pvSum = 0, vSum = 0;
+            const vwapValues = [];
+            const vwapStd = [];
+
+            prices.forEach((p, i) => {
+                pvSum += p * volumes[i];
+                vSum += volumes[i];
+                const vwap = pvSum / vSum;
+                vwapValues.push(vwap);
+
+                // Calculate std
+                let weightedVariance = 0;
+                for (let j = 0; j <= i; j++) {
+                    weightedVariance += volumes[j] * Math.pow(prices[j] - vwap, 2);
+                }
+                const std = Math.sqrt(weightedVariance / vSum);
+                vwapStd.push(std);
+            });
+
+            const finalVWAP = vwapValues[vwapValues.length - 1];
+            const finalStd = vwapStd[vwapStd.length - 1];
+            const zScore = (currentPrice - finalVWAP) / finalStd;
+
+            // Bands
+            const upper1 = vwapValues.map((v, i) => v + vwapStd[i]);
+            const lower1 = vwapValues.map((v, i) => v - vwapStd[i]);
+            const upper2 = vwapValues.map((v, i) => v + 2 * vwapStd[i]);
+            const lower2 = vwapValues.map((v, i) => v - 2 * vwapStd[i]);
+
+            // Position analysis
+            let position = 'At VWAP';
+            let signal = 'Neutral';
+            if (currentPrice > finalVWAP + 2 * finalStd) {
+                position = 'Above +2σ';
+                signal = 'Overbought - Consider fade short';
+            } else if (currentPrice > finalVWAP + finalStd) {
+                position = 'Above +1σ';
+                signal = 'Extended bullish';
+            } else if (currentPrice > finalVWAP) {
+                position = 'Above VWAP';
+                signal = 'Bullish bias';
+            } else if (currentPrice < finalVWAP - 2 * finalStd) {
+                position = 'Below -2σ';
+                signal = 'Oversold - Consider fade long';
+            } else if (currentPrice < finalVWAP - finalStd) {
+                position = 'Below -1σ';
+                signal = 'Extended bearish';
+            } else if (currentPrice < finalVWAP) {
+                position = 'Below VWAP';
+                signal = 'Bearish bias';
+            }
+
+            // Update results
+            document.getElementById('vwapResults').innerHTML = `
+                <div class="grid grid-2" style="gap: 15px;">
+                    <div class="card" style="text-align: center;">
+                        <h4 style="color: #10b981;">VWAP</h4>
+                        <p style="font-size: 1.5rem; font-weight: bold;">$${finalVWAP.toFixed(2)}</p>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">σ = $${finalStd.toFixed(3)}</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <h4 style="color: #6366f1;">Z-Score</h4>
+                        <p style="font-size: 1.5rem; font-weight: bold; color: ${Math.abs(zScore) > 2 ? '#ef4444' : '#10b981'};">${zScore.toFixed(2)}</p>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">${position}</p>
+                    </div>
+                </div>
+                <div class="info-box info-box-info" style="margin-top: 15px;">
+                    <p><strong>Current Price:</strong> $${currentPrice.toFixed(2)}</p>
+                    <p><strong>Trading Signal:</strong> ${signal}</p>
+                    <p><strong>Bands:</strong> +2σ: $${(finalVWAP + 2*finalStd).toFixed(2)} | +1σ: $${(finalVWAP + finalStd).toFixed(2)} | -1σ: $${(finalVWAP - finalStd).toFixed(2)} | -2σ: $${(finalVWAP - 2*finalStd).toFixed(2)}</p>
+                </div>
+            `;
+
+            // Update chart
+            const labels = prices.map((_, i) => `T${i + 1}`);
+            vwapChart.data.labels = labels;
+            vwapChart.data.datasets[0].data = prices;
+            vwapChart.data.datasets[1].data = vwapValues;
+            vwapChart.data.datasets[2].data = upper1;
+            vwapChart.data.datasets[3].data = lower1;
+            vwapChart.data.datasets[4].data = upper2;
+            vwapChart.data.datasets[5].data = lower2;
+            vwapChart.update();
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'a', explanation: 'VWAP = Volume Weighted Average Price. It calculates the average price weighted by volume traded at each price level.' },
+                q2: { correct: 'b', explanation: 'VWAP represents fair value where most trading actually occurred. Institutions use it as a benchmark because beating VWAP means better-than-average execution.' },
+                q3: { correct: 'b', explanation: 'Price above VWAP means buyers are paying more than the average—bullish pressure. Institutions are willing to pay a premium to accumulate.' },
+                q4: { correct: 'b', explanation: 'Anchored VWAP starts from a specific reference point (earnings, swing low, breakout) to measure average cost basis from that event.' },
+                q5: { correct: 'c', explanation: 'Price at ±2σ bands represents extended conditions. Fading (trading against) these extremes is a common mean reversion strategy.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+
+            const pct = (score / 5 * 100).toFixed(0);
+            document.getElementById('quizScore').innerHTML = `
+                <h3>Score: ${score}/5 (${pct}%)</h3>
+                <p>${pct >= 80 ? 'Excellent! You understand VWAP analysis.' : pct >= 60 ? 'Good progress! Review the concepts.' : 'Keep studying the material.'}</p>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCharts);
+    </script>
+</body>
+</html>

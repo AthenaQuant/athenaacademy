@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Monte Carlo simulation for quantitative trading. Learn GBM, VaR/CVaR estimation, and option pricing via simulation.">
+    <title>5.7 Monte Carlo Simulation | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .data-table { width: 100%; margin: 1rem 0; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .result-value.positive { color: var(--success); }
+        .result-value.negative { color: var(--error); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; }
+        .score-container h3 { color: white; margin: 0; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.7</span>
+                    <span class="nav-module-title">Monte Carlo Simulation</span>
+                </div>
+                <a href="5.8_bayesian_statistics.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.7 Monte Carlo Simulation</span>
+                </div>
+                <h1>Monte Carlo Simulation</h1>
+                <p class="module-subtitle">
+                    Harness random sampling to price derivatives, estimate risk, and stress-test portfolios.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 60 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Interactive Lab</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Section 1: Introduction -->
+        <section class="content-section fade-in">
+            <h2>1. Introduction to Monte Carlo Methods</h2>
+
+            <p>Monte Carlo simulation is one of the most powerful tools in quantitative finance. Named after the famous casino, it uses <strong>random sampling</strong> to solve problems that would be analytically intractable. Instead of deriving closed-form solutions, we simulate thousands of possible futures and analyze the distribution of outcomes.</p>
+
+            <div class="key-concept">
+                <h3>Why Monte Carlo in Finance?</h3>
+                <ul>
+                    <li><strong>Option Pricing:</strong> Price exotic options with path-dependent payoffs</li>
+                    <li><strong>Risk Measurement:</strong> Estimate VaR and CVaR for complex portfolios</li>
+                    <li><strong>Portfolio Optimization:</strong> Stress-test allocations under different scenarios</li>
+                    <li><strong>Strategy Backtesting:</strong> Simulate trading performance with randomized market conditions</li>
+                    <li><strong>Scenario Analysis:</strong> Explore "what-if" scenarios for risk management</li>
+                </ul>
+            </div>
+
+            <div class="important-note">
+                <h3>The Law of Large Numbers</h3>
+                <p>Monte Carlo relies on the Law of Large Numbers: as the number of simulations increases, the sample mean converges to the true expected value. The accuracy improves proportionally to \(\sqrt{N}\), so 10,000 simulations is ~100x more accurate than 1 simulation.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Conceptual Foundation -->
+        <section class="content-section fade-in">
+            <h2>2. Geometric Brownian Motion (GBM)</h2>
+
+            <h3>The Foundation of Stock Price Modeling</h3>
+            <p>Geometric Brownian Motion is the standard model for stock prices in quantitative finance. It assumes prices follow a random walk with drift.</p>
+
+            <div class="formula-box">
+                <h4>GBM Stochastic Differential Equation</h4>
+                <p>\[dS_t = \mu S_t \, dt + \sigma S_t \, dW_t\]</p>
+                <p>Where:</p>
+                <ul>
+                    <li>\(S_t\) = Stock price at time t</li>
+                    <li>\(\mu\) = Drift (expected return)</li>
+                    <li>\(\sigma\) = Volatility</li>
+                    <li>\(dW_t\) = Wiener process (Brownian motion)</li>
+                </ul>
+            </div>
+
+            <h3>Discrete Simulation Formula</h3>
+            <p>To simulate GBM, we discretize the continuous process:</p>
+
+            <div class="formula-box">
+                <h4>Exact Solution for GBM</h4>
+                <p>\[S_{t+\Delta t} = S_t \exp\left[\left(\mu - \frac{\sigma^2}{2}\right)\Delta t + \sigma \sqrt{\Delta t} \, Z\right]\]</p>
+                <p>Where \(Z \sim N(0,1)\) is a standard normal random variable.</p>
+                <p><strong>Key Insight:</strong> The \(-\frac{\sigma^2}{2}\) term (Ito correction) ensures the expected return equals \(\mu\).</p>
+            </div>
+
+            <h3>Multi-Asset Correlation</h3>
+            <p>For portfolio simulation, we need correlated asset returns:</p>
+
+            <div class="formula-box">
+                <h4>Cholesky Decomposition Method</h4>
+                <p>Given correlation matrix \(\Sigma\), decompose: \(\Sigma = LL^T\)</p>
+                <p>Generate correlated returns: \(\mathbf{r} = L \cdot \mathbf{z}\)</p>
+                <p>Where \(\mathbf{z}\) is a vector of independent standard normal variables.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Risk Measurement -->
+        <section class="content-section fade-in">
+            <h2>3. Value at Risk (VaR) and CVaR Simulation</h2>
+
+            <h3>Value at Risk (VaR)</h3>
+            <p>VaR answers: "What is the maximum loss at a given confidence level over a specified time horizon?"</p>
+
+            <div class="formula-box">
+                <h4>VaR Definition</h4>
+                <p>\[P(\text{Loss} > \text{VaR}_\alpha) = 1 - \alpha\]</p>
+                <p><strong>Example:</strong> 95% VaR of $1M means there's a 5% chance of losing more than $1M.</p>
+                <p><strong>Monte Carlo VaR:</strong> Sort simulated P&L, VaR is the \((1-\alpha)\) percentile.</p>
+            </div>
+
+            <h3>Conditional VaR (CVaR / Expected Shortfall)</h3>
+            <p>CVaR addresses VaR's limitation by answering: "If we exceed VaR, what's the expected loss?"</p>
+
+            <div class="formula-box">
+                <h4>CVaR Formula</h4>
+                <p>\[\text{CVaR}_\alpha = E[\text{Loss} \,|\, \text{Loss} > \text{VaR}_\alpha]\]</p>
+                <p><strong>Monte Carlo CVaR:</strong> Average of all losses exceeding VaR.</p>
+                <p><strong>Advantage:</strong> CVaR is a coherent risk measure; VaR is not.</p>
+            </div>
+
+            <div class="key-concept">
+                <h3>VaR vs CVaR Comparison</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>VaR</th>
+                            <th>CVaR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Interpretation</td>
+                            <td>Maximum loss at confidence level</td>
+                            <td>Expected loss in tail</td>
+                        </tr>
+                        <tr>
+                            <td>Tail Risk</td>
+                            <td>Ignores severity beyond threshold</td>
+                            <td>Captures full tail distribution</td>
+                        </tr>
+                        <tr>
+                            <td>Subadditivity</td>
+                            <td>Not guaranteed (can penalize diversification)</td>
+                            <td>Always subadditive</td>
+                        </tr>
+                        <tr>
+                            <td>Regulatory Use</td>
+                            <td>Basel II (being replaced)</td>
+                            <td>Basel III (preferred)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 4: Option Pricing -->
+        <section class="content-section fade-in">
+            <h2>4. Monte Carlo Option Pricing</h2>
+
+            <h3>European Option Pricing</h3>
+            <p>For a European call option, the price is the discounted expected payoff under the risk-neutral measure:</p>
+
+            <div class="formula-box">
+                <h4>Risk-Neutral Pricing</h4>
+                <p>\[C_0 = e^{-rT} \cdot E^Q[\max(S_T - K, 0)]\]</p>
+                <p><strong>Monte Carlo Approach:</strong></p>
+                <ol>
+                    <li>Simulate N paths of \(S_T\) using risk-neutral drift \(r\) (not \(\mu\))</li>
+                    <li>Calculate payoff for each path: \(\max(S_T - K, 0)\)</li>
+                    <li>Average payoffs and discount by \(e^{-rT}\)</li>
+                </ol>
+            </div>
+
+            <h3>Path-Dependent Options</h3>
+            <p>Monte Carlo excels for exotic options where Black-Scholes doesn't apply:</p>
+
+            <div class="formula-box">
+                <h4>Asian Option (Average Price)</h4>
+                <p>\[\text{Payoff} = \max\left(\frac{1}{N}\sum_{i=1}^{N} S_{t_i} - K, 0\right)\]</p>
+                <p>The strike is compared against the <strong>average</strong> price over the option's life.</p>
+
+                <h4>Barrier Option (Knock-Out)</h4>
+                <p>\[\text{Payoff} = \max(S_T - K, 0) \cdot \mathbf{1}_{\{S_t < B \, \forall t\}}\]</p>
+                <p>Option becomes worthless if price touches barrier B at any point.</p>
+            </div>
+
+            <h3>Variance Reduction Techniques</h3>
+            <div class="key-concept">
+                <h3>Improving Monte Carlo Efficiency</h3>
+                <ul>
+                    <li><strong>Antithetic Variates:</strong> For each random draw Z, also use -Z. Reduces variance by half.</li>
+                    <li><strong>Control Variates:</strong> Use a known analytical solution to correct estimates.</li>
+                    <li><strong>Importance Sampling:</strong> Sample more from important regions of the distribution.</li>
+                    <li><strong>Stratified Sampling:</strong> Divide distribution into strata, sample from each.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>5. Python Implementation</h2>
+
+            <div class="code-block">
+                <h3>Complete Monte Carlo Simulation Framework</h3>
+                <pre><code class="language-python">"""
+Monte Carlo Simulation for Quantitative Finance
+Covers: GBM, VaR/CVaR, Option Pricing, Portfolio Risk
+"""
+
+import numpy as np
+from dataclasses import dataclass
+from typing import Tuple, Optional, List, Dict
+from scipy import stats
+
+
+@dataclass
+class VaRResult:
+    """Results from VaR/CVaR calculation."""
+    var_95: float
+    var_99: float
+    cvar_95: float
+    cvar_99: float
+    mean_return: float
+    std_return: float
+    n_simulations: int
+
+    def __str__(self) -> str:
+        return (f"VaR(95%): {self.var_95:.2%}, VaR(99%): {self.var_99:.2%}\n"
+                f"CVaR(95%): {self.cvar_95:.2%}, CVaR(99%): {self.cvar_99:.2%}")
+
+
+@dataclass
+class OptionPriceResult:
+    """Results from Monte Carlo option pricing."""
+    price: float
+    std_error: float
+    delta: Optional[float]
+    gamma: Optional[float]
+    confidence_interval: Tuple[float, float]
+
+
+def simulate_gbm(S0: float, mu: float, sigma: float,
+                 T: float, n_steps: int, n_paths: int,
+                 seed: Optional[int] = None) -> np.ndarray:
+    """
+    Simulate Geometric Brownian Motion paths.
+
+    Args:
+        S0: Initial stock price
+        mu: Drift (expected return, annualized)
+        sigma: Volatility (annualized)
+        T: Time horizon in years
+        n_steps: Number of time steps
+        n_paths: Number of simulation paths
+
+    Returns:
+        Array of shape (n_paths, n_steps + 1) with price paths
+    """
+    if seed is not None:
+        np.random.seed(seed)
+
+    dt = T / n_steps
+
+    # Generate random shocks
+    Z = np.random.standard_normal((n_paths, n_steps))
+
+    # Calculate returns using exact GBM solution
+    drift = (mu - 0.5 * sigma ** 2) * dt
+    diffusion = sigma * np.sqrt(dt) * Z
+
+    # Cumulative returns
+    log_returns = drift + diffusion
+    cumulative_returns = np.cumsum(log_returns, axis=1)
+
+    # Build price paths
+    paths = np.zeros((n_paths, n_steps + 1))
+    paths[:, 0] = S0
+    paths[:, 1:] = S0 * np.exp(cumulative_returns)
+
+    return paths
+
+
+def simulate_gbm_antithetic(S0: float, mu: float, sigma: float,
+                            T: float, n_steps: int, n_paths: int) -> np.ndarray:
+    """
+    Simulate GBM with antithetic variates for variance reduction.
+
+    For each random draw Z, we also use -Z, effectively doubling
+    our paths while reducing variance.
+    """
+    # Must be even number of paths
+    n_pairs = n_paths // 2
+
+    dt = T / n_steps
+    Z = np.random.standard_normal((n_pairs, n_steps))
+
+    drift = (mu - 0.5 * sigma ** 2) * dt
+
+    # Regular paths
+    log_returns_pos = drift + sigma * np.sqrt(dt) * Z
+    cum_returns_pos = np.cumsum(log_returns_pos, axis=1)
+
+    # Antithetic paths (using -Z)
+    log_returns_neg = drift + sigma * np.sqrt(dt) * (-Z)
+    cum_returns_neg = np.cumsum(log_returns_neg, axis=1)
+
+    # Combine paths
+    paths = np.zeros((n_paths, n_steps + 1))
+    paths[:n_pairs, 0] = S0
+    paths[n_pairs:, 0] = S0
+    paths[:n_pairs, 1:] = S0 * np.exp(cum_returns_pos)
+    paths[n_pairs:, 1:] = S0 * np.exp(cum_returns_neg)
+
+    return paths
+
+
+def simulate_correlated_assets(S0: np.ndarray, mu: np.ndarray,
+                               sigma: np.ndarray, corr_matrix: np.ndarray,
+                               T: float, n_steps: int, n_paths: int) -> np.ndarray:
+    """
+    Simulate multiple correlated assets using Cholesky decomposition.
+
+    Args:
+        S0: Initial prices for each asset (n_assets,)
+        mu: Drift for each asset (n_assets,)
+        sigma: Volatility for each asset (n_assets,)
+        corr_matrix: Correlation matrix (n_assets, n_assets)
+        T: Time horizon
+        n_steps: Number of time steps
+        n_paths: Number of paths
+
+    Returns:
+        Array of shape (n_paths, n_steps + 1, n_assets)
+    """
+    n_assets = len(S0)
+    dt = T / n_steps
+
+    # Cholesky decomposition for correlation
+    L = np.linalg.cholesky(corr_matrix)
+
+    # Generate independent random shocks
+    Z = np.random.standard_normal((n_paths, n_steps, n_assets))
+
+    # Apply correlation via Cholesky
+    Z_correlated = np.einsum('ij,...j->...i', L, Z)
+
+    # Initialize paths
+    paths = np.zeros((n_paths, n_steps + 1, n_assets))
+    paths[:, 0, :] = S0
+
+    # Simulate each time step
+    for t in range(n_steps):
+        drift = (mu - 0.5 * sigma ** 2) * dt
+        diffusion = sigma * np.sqrt(dt) * Z_correlated[:, t, :]
+        paths[:, t + 1, :] = paths[:, t, :] * np.exp(drift + diffusion)
+
+    return paths
+
+
+def calculate_var_cvar(returns: np.ndarray,
+                       confidence_levels: List[float] = [0.95, 0.99]) -> VaRResult:
+    """
+    Calculate VaR and CVaR from simulated returns.
+
+    Args:
+        returns: Array of simulated returns
+        confidence_levels: Confidence levels for VaR
+
+    Returns:
+        VaRResult with VaR and CVaR at specified levels
+    """
+    returns = np.asarray(returns).flatten()
+
+    # Sort returns (losses are negative returns)
+    sorted_returns = np.sort(returns)
+
+    # VaR is the percentile loss
+    var_95_idx = int((1 - 0.95) * len(sorted_returns))
+    var_99_idx = int((1 - 0.99) * len(sorted_returns))
+
+    var_95 = -sorted_returns[var_95_idx]  # Convert to positive loss
+    var_99 = -sorted_returns[var_99_idx]
+
+    # CVaR is the average of losses beyond VaR
+    cvar_95 = -np.mean(sorted_returns[:var_95_idx + 1])
+    cvar_99 = -np.mean(sorted_returns[:var_99_idx + 1])
+
+    return VaRResult(
+        var_95=var_95,
+        var_99=var_99,
+        cvar_95=cvar_95,
+        cvar_99=cvar_99,
+        mean_return=np.mean(returns),
+        std_return=np.std(returns),
+        n_simulations=len(returns)
+    )
+
+
+def price_european_option(S0: float, K: float, r: float, sigma: float,
+                          T: float, n_paths: int = 100000,
+                          option_type: str = 'call',
+                          use_antithetic: bool = True) -> OptionPriceResult:
+    """
+    Price European option using Monte Carlo simulation.
+
+    Args:
+        S0: Current stock price
+        K: Strike price
+        r: Risk-free rate
+        sigma: Volatility
+        T: Time to expiration (years)
+        n_paths: Number of simulation paths
+        option_type: 'call' or 'put'
+        use_antithetic: Use antithetic variates
+
+    Returns:
+        OptionPriceResult with price and standard error
+    """
+    # Generate terminal stock prices under risk-neutral measure
+    Z = np.random.standard_normal(n_paths // 2 if use_antithetic else n_paths)
+
+    drift = (r - 0.5 * sigma ** 2) * T
+    diffusion = sigma * np.sqrt(T)
+
+    if use_antithetic:
+        ST_pos = S0 * np.exp(drift + diffusion * Z)
+        ST_neg = S0 * np.exp(drift + diffusion * (-Z))
+        ST = np.concatenate([ST_pos, ST_neg])
+    else:
+        ST = S0 * np.exp(drift + diffusion * Z)
+
+    # Calculate payoffs
+    if option_type == 'call':
+        payoffs = np.maximum(ST - K, 0)
+    else:
+        payoffs = np.maximum(K - ST, 0)
+
+    # Discount to present value
+    discount = np.exp(-r * T)
+    discounted_payoffs = discount * payoffs
+
+    # Statistics
+    price = np.mean(discounted_payoffs)
+    std_error = np.std(discounted_payoffs) / np.sqrt(len(discounted_payoffs))
+
+    # 95% confidence interval
+    ci = (price - 1.96 * std_error, price + 1.96 * std_error)
+
+    # Estimate delta using finite difference
+    dS = S0 * 0.01
+    Z_delta = np.random.standard_normal(n_paths // 10)
+
+    ST_up = (S0 + dS) * np.exp(drift + diffusion * Z_delta)
+    ST_down = (S0 - dS) * np.exp(drift + diffusion * Z_delta)
+
+    if option_type == 'call':
+        payoff_up = np.maximum(ST_up - K, 0)
+        payoff_down = np.maximum(ST_down - K, 0)
+    else:
+        payoff_up = np.maximum(K - ST_up, 0)
+        payoff_down = np.maximum(K - ST_down, 0)
+
+    delta = discount * np.mean(payoff_up - payoff_down) / (2 * dS)
+
+    return OptionPriceResult(
+        price=price,
+        std_error=std_error,
+        delta=delta,
+        gamma=None,
+        confidence_interval=ci
+    )
+
+
+def price_asian_option(S0: float, K: float, r: float, sigma: float,
+                       T: float, n_steps: int = 252,
+                       n_paths: int = 50000,
+                       option_type: str = 'call') -> OptionPriceResult:
+    """
+    Price Asian option (arithmetic average) using Monte Carlo.
+
+    Args:
+        S0: Current stock price
+        K: Strike price
+        r: Risk-free rate
+        sigma: Volatility
+        T: Time to expiration
+        n_steps: Number of averaging points
+        n_paths: Number of paths
+        option_type: 'call' or 'put'
+
+    Returns:
+        OptionPriceResult with price and standard error
+    """
+    # Simulate full paths
+    paths = simulate_gbm(S0, r, sigma, T, n_steps, n_paths)
+
+    # Calculate average price over path
+    avg_price = np.mean(paths[:, 1:], axis=1)
+
+    # Calculate payoffs
+    if option_type == 'call':
+        payoffs = np.maximum(avg_price - K, 0)
+    else:
+        payoffs = np.maximum(K - avg_price, 0)
+
+    # Discount
+    discount = np.exp(-r * T)
+    discounted_payoffs = discount * payoffs
+
+    price = np.mean(discounted_payoffs)
+    std_error = np.std(discounted_payoffs) / np.sqrt(n_paths)
+
+    return OptionPriceResult(
+        price=price,
+        std_error=std_error,
+        delta=None,
+        gamma=None,
+        confidence_interval=(price - 1.96 * std_error, price + 1.96 * std_error)
+    )
+
+
+def price_barrier_option(S0: float, K: float, B: float, r: float,
+                         sigma: float, T: float, n_steps: int = 252,
+                         n_paths: int = 50000,
+                         option_type: str = 'call',
+                         barrier_type: str = 'down-and-out') -> OptionPriceResult:
+    """
+    Price barrier option using Monte Carlo.
+
+    Args:
+        S0: Current stock price
+        K: Strike price
+        B: Barrier level
+        r: Risk-free rate
+        sigma: Volatility
+        T: Time to expiration
+        n_steps: Number of time steps
+        n_paths: Number of paths
+        option_type: 'call' or 'put'
+        barrier_type: 'down-and-out', 'up-and-out', etc.
+
+    Returns:
+        OptionPriceResult
+    """
+    # Simulate paths
+    paths = simulate_gbm(S0, r, sigma, T, n_steps, n_paths)
+
+    # Check barrier condition
+    if barrier_type == 'down-and-out':
+        knocked_out = np.any(paths < B, axis=1)
+    elif barrier_type == 'up-and-out':
+        knocked_out = np.any(paths > B, axis=1)
+    elif barrier_type == 'down-and-in':
+        knocked_out = ~np.any(paths < B, axis=1)
+    elif barrier_type == 'up-and-in':
+        knocked_out = ~np.any(paths > B, axis=1)
+    else:
+        raise ValueError(f"Unknown barrier type: {barrier_type}")
+
+    # Terminal prices
+    ST = paths[:, -1]
+
+    # Calculate payoffs (zero if knocked out)
+    if option_type == 'call':
+        payoffs = np.maximum(ST - K, 0)
+    else:
+        payoffs = np.maximum(K - ST, 0)
+
+    payoffs[knocked_out] = 0
+
+    # Discount
+    discount = np.exp(-r * T)
+    discounted_payoffs = discount * payoffs
+
+    price = np.mean(discounted_payoffs)
+    std_error = np.std(discounted_payoffs) / np.sqrt(n_paths)
+
+    return OptionPriceResult(
+        price=price,
+        std_error=std_error,
+        delta=None,
+        gamma=None,
+        confidence_interval=(price - 1.96 * std_error, price + 1.96 * std_error)
+    )
+
+
+def portfolio_var_simulation(weights: np.ndarray, returns: np.ndarray,
+                             cov_matrix: np.ndarray,
+                             portfolio_value: float,
+                             n_simulations: int = 100000,
+                             horizon_days: int = 1) -> Dict:
+    """
+    Simulate portfolio VaR using parametric Monte Carlo.
+
+    Args:
+        weights: Portfolio weights
+        returns: Expected returns per asset
+        cov_matrix: Covariance matrix
+        portfolio_value: Total portfolio value
+        n_simulations: Number of simulations
+        horizon_days: Risk horizon in days
+
+    Returns:
+        Dictionary with VaR, CVaR, and distribution statistics
+    """
+    # Portfolio expected return and volatility
+    port_return = np.dot(weights, returns) * horizon_days / 252
+    port_vol = np.sqrt(np.dot(weights, np.dot(cov_matrix, weights))) * np.sqrt(horizon_days / 252)
+
+    # Simulate portfolio returns
+    sim_returns = np.random.normal(port_return, port_vol, n_simulations)
+
+    # Convert to P&L
+    pnl = portfolio_value * sim_returns
+
+    # Calculate VaR/CVaR
+    var_result = calculate_var_cvar(sim_returns)
+
+    return {
+        'var_95_pct': var_result.var_95,
+        'var_99_pct': var_result.var_99,
+        'cvar_95_pct': var_result.cvar_95,
+        'cvar_99_pct': var_result.cvar_99,
+        'var_95_dollar': var_result.var_95 * portfolio_value,
+        'var_99_dollar': var_result.var_99 * portfolio_value,
+        'cvar_95_dollar': var_result.cvar_95 * portfolio_value,
+        'cvar_99_dollar': var_result.cvar_99 * portfolio_value,
+        'simulated_pnl': pnl,
+        'expected_return': port_return,
+        'volatility': port_vol
+    }
+
+
+# Black-Scholes for comparison
+def black_scholes(S: float, K: float, r: float, sigma: float,
+                  T: float, option_type: str = 'call') -> float:
+    """Analytical Black-Scholes price for comparison."""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    if option_type == 'call':
+        price = S * stats.norm.cdf(d1) - K * np.exp(-r * T) * stats.norm.cdf(d2)
+    else:
+        price = K * np.exp(-r * T) * stats.norm.cdf(-d2) - S * stats.norm.cdf(-d1)
+
+    return price
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("GEOMETRIC BROWNIAN MOTION SIMULATION")
+    print("=" * 60)
+
+    paths = simulate_gbm(S0=100, mu=0.08, sigma=0.20, T=1.0,
+                         n_steps=252, n_paths=5)
+
+    print(f"\nInitial Price: $100")
+    print(f"Final Prices after 1 year:")
+    for i, p in enumerate(paths[:, -1]):
+        print(f"  Path {i+1}: ${p:.2f}")
+
+    print("\n" + "=" * 60)
+    print("VAR AND CVAR CALCULATION")
+    print("=" * 60)
+
+    # Simulate 1-day returns
+    paths_var = simulate_gbm(S0=100, mu=0.08, sigma=0.20,
+                             T=1/252, n_steps=1, n_paths=100000)
+    returns = (paths_var[:, -1] - paths_var[:, 0]) / paths_var[:, 0]
+
+    var_result = calculate_var_cvar(returns)
+    print(f"\n{var_result}")
+    print(f"Mean Daily Return: {var_result.mean_return:.4%}")
+    print(f"Daily Volatility: {var_result.std_return:.4%}")
+
+    print("\n" + "=" * 60)
+    print("EUROPEAN OPTION PRICING")
+    print("=" * 60)
+
+    # Option parameters
+    S0, K, r, sigma, T = 100, 100, 0.05, 0.20, 0.5
+
+    mc_result = price_european_option(S0, K, r, sigma, T, n_paths=100000)
+    bs_price = black_scholes(S0, K, r, sigma, T)
+
+    print(f"\nCall Option (S={S0}, K={K}, r={r}, σ={sigma}, T={T})")
+    print(f"Monte Carlo Price: ${mc_result.price:.4f} (±{mc_result.std_error:.4f})")
+    print(f"Black-Scholes Price: ${bs_price:.4f}")
+    print(f"95% CI: (${mc_result.confidence_interval[0]:.4f}, ${mc_result.confidence_interval[1]:.4f})")
+    print(f"Delta (MC estimate): {mc_result.delta:.4f}")
+
+    print("\n" + "=" * 60)
+    print("EXOTIC OPTION PRICING")
+    print("=" * 60)
+
+    asian_result = price_asian_option(S0, K, r, sigma, T, n_paths=50000)
+    print(f"\nAsian Call Option: ${asian_result.price:.4f} (±{asian_result.std_error:.4f})")
+
+    barrier_result = price_barrier_option(S0, K, B=90, r=r, sigma=sigma, T=T,
+                                          barrier_type='down-and-out', n_paths=50000)
+    print(f"Down-and-Out Barrier Call (B=90): ${barrier_result.price:.4f} (±{barrier_result.std_error:.4f})")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>6. Interactive Monte Carlo Lab</h2>
+
+            <div class="calculator-container">
+                <h3>GBM Simulation & VaR Calculator</h3>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="initialPrice">Initial Price ($):</label>
+                        <input type="number" id="initialPrice" value="100" min="1" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="annualReturn">Annual Return (%):</label>
+                        <input type="number" id="annualReturn" value="8" min="-50" max="100" step="1">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="volatility">Annual Volatility (%):</label>
+                        <input type="number" id="volatility" value="20" min="5" max="100" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="timeHorizon">Time Horizon (years):</label>
+                        <input type="number" id="timeHorizon" value="1" min="0.1" max="5" step="0.1">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="numPaths">Number of Paths:</label>
+                        <input type="number" id="numPaths" value="1000" min="100" max="10000" step="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="numSteps">Time Steps:</label>
+                        <input type="number" id="numSteps" value="252" min="10" max="500">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="runMonteCarloSimulation()">Run Simulation</button>
+
+                <div class="results-container" id="mcResults">
+                    <h4>Simulation Results</h4>
+                    <div id="mcOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="pathsChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="varChart"></canvas>
+                </div>
+            </div>
+
+            <div class="calculator-container" style="margin-top: 30px;">
+                <h3>Option Pricing Calculator</h3>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="optSpot">Spot Price ($):</label>
+                        <input type="number" id="optSpot" value="100" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="optStrike">Strike Price ($):</label>
+                        <input type="number" id="optStrike" value="100" min="1">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="optRate">Risk-Free Rate (%):</label>
+                        <input type="number" id="optRate" value="5" min="0" max="20" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="optVol">Volatility (%):</label>
+                        <input type="number" id="optVol" value="20" min="5" max="100" step="1">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="optExpiry">Time to Expiry (years):</label>
+                        <input type="number" id="optExpiry" value="0.5" min="0.01" max="3" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="optType">Option Type:</label>
+                        <select id="optType">
+                            <option value="call">Call</option>
+                            <option value="put">Put</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="optPaths">Monte Carlo Paths:</label>
+                    <input type="number" id="optPaths" value="50000" min="1000" max="100000" step="1000">
+                </div>
+
+                <button class="calculate-btn" onclick="priceOption()">Price Option</button>
+
+                <div class="results-container" id="optionResults">
+                    <h4>Option Pricing Results</h4>
+                    <div id="optionOutput"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Practical Application -->
+        <section class="content-section fade-in">
+            <h2>7. Practical Application: Portfolio Risk Analysis</h2>
+
+            <div class="code-block">
+                <h3>Multi-Asset Portfolio VaR System</h3>
+                <pre><code class="language-python">"""
+Portfolio Risk Analysis using Monte Carlo Simulation
+"""
+
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Tuple
+
+
+class PortfolioRiskSimulator:
+    """
+    Monte Carlo simulator for portfolio risk analysis.
+    """
+
+    def __init__(self, portfolio_value: float = 1_000_000):
+        self.portfolio_value = portfolio_value
+        self.assets = {}
+        self.weights = None
+        self.cov_matrix = None
+
+    def add_asset(self, ticker: str, weight: float,
+                  annual_return: float, annual_vol: float) -> None:
+        """Add an asset to the portfolio."""
+        self.assets[ticker] = {
+            'weight': weight,
+            'return': annual_return,
+            'volatility': annual_vol
+        }
+
+    def set_correlations(self, corr_matrix: np.ndarray) -> None:
+        """Set correlation matrix between assets."""
+        n = len(self.assets)
+        if corr_matrix.shape != (n, n):
+            raise ValueError(f"Correlation matrix must be {n}x{n}")
+        self.corr_matrix = corr_matrix
+
+    def _build_matrices(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Build weight, return, and covariance matrices."""
+        tickers = list(self.assets.keys())
+        n = len(tickers)
+
+        weights = np.array([self.assets[t]['weight'] for t in tickers])
+        returns = np.array([self.assets[t]['return'] for t in tickers])
+        vols = np.array([self.assets[t]['volatility'] for t in tickers])
+
+        # Build covariance matrix from correlations and volatilities
+        if self.corr_matrix is None:
+            self.corr_matrix = np.eye(n)
+
+        cov_matrix = np.outer(vols, vols) * self.corr_matrix
+
+        return weights, returns, cov_matrix
+
+    def simulate_returns(self, n_simulations: int = 100000,
+                        horizon_days: int = 1) -> np.ndarray:
+        """
+        Simulate portfolio returns using multivariate normal.
+
+        Args:
+            n_simulations: Number of simulations
+            horizon_days: Investment horizon in days
+
+        Returns:
+            Array of simulated portfolio returns
+        """
+        weights, returns, cov_matrix = self._build_matrices()
+
+        # Scale to horizon
+        horizon_scale = horizon_days / 252
+        scaled_returns = returns * horizon_scale
+        scaled_cov = cov_matrix * horizon_scale
+
+        # Simulate correlated asset returns
+        asset_returns = np.random.multivariate_normal(
+            scaled_returns, scaled_cov, n_simulations
+        )
+
+        # Portfolio returns
+        portfolio_returns = np.dot(asset_returns, weights)
+
+        return portfolio_returns
+
+    def calculate_risk_metrics(self, n_simulations: int = 100000,
+                               horizon_days: int = 1) -> Dict:
+        """
+        Calculate comprehensive risk metrics.
+        """
+        returns = self.simulate_returns(n_simulations, horizon_days)
+        pnl = returns * self.portfolio_value
+
+        # Sort returns for VaR calculation
+        sorted_returns = np.sort(returns)
+
+        # VaR at different confidence levels
+        var_90 = -np.percentile(sorted_returns, 10)
+        var_95 = -np.percentile(sorted_returns, 5)
+        var_99 = -np.percentile(sorted_returns, 1)
+
+        # CVaR (Expected Shortfall)
+        cvar_95 = -np.mean(sorted_returns[sorted_returns < np.percentile(sorted_returns, 5)])
+        cvar_99 = -np.mean(sorted_returns[sorted_returns < np.percentile(sorted_returns, 1)])
+
+        # Probability of loss
+        prob_loss = np.mean(returns < 0)
+
+        # Expected return
+        expected_return = np.mean(returns)
+
+        # Maximum simulated loss
+        max_loss = -np.min(returns)
+
+        return {
+            'horizon_days': horizon_days,
+            'n_simulations': n_simulations,
+            'expected_return_pct': expected_return,
+            'expected_return_dollar': expected_return * self.portfolio_value,
+            'var_90_pct': var_90,
+            'var_95_pct': var_95,
+            'var_99_pct': var_99,
+            'var_90_dollar': var_90 * self.portfolio_value,
+            'var_95_dollar': var_95 * self.portfolio_value,
+            'var_99_dollar': var_99 * self.portfolio_value,
+            'cvar_95_pct': cvar_95,
+            'cvar_99_pct': cvar_99,
+            'cvar_95_dollar': cvar_95 * self.portfolio_value,
+            'cvar_99_dollar': cvar_99 * self.portfolio_value,
+            'probability_of_loss': prob_loss,
+            'max_simulated_loss_pct': max_loss,
+            'max_simulated_loss_dollar': max_loss * self.portfolio_value,
+            'simulated_pnl': pnl
+        }
+
+    def stress_test(self, scenarios: Dict[str, Dict[str, float]],
+                    n_simulations: int = 10000) -> pd.DataFrame:
+        """
+        Run stress tests under different market scenarios.
+
+        Args:
+            scenarios: Dict of scenario names to parameter adjustments
+                      {'crash': {'vol_mult': 2.0, 'return_shift': -0.20}}
+            n_simulations: Simulations per scenario
+
+        Returns:
+            DataFrame with results for each scenario
+        """
+        results = []
+        weights, base_returns, base_cov = self._build_matrices()
+
+        for scenario_name, params in scenarios.items():
+            vol_mult = params.get('vol_mult', 1.0)
+            return_shift = params.get('return_shift', 0.0)
+
+            # Adjust parameters
+            adjusted_returns = base_returns + return_shift
+            adjusted_cov = base_cov * (vol_mult ** 2)
+
+            # Simulate
+            horizon_scale = 1 / 252  # 1-day horizon
+            asset_returns = np.random.multivariate_normal(
+                adjusted_returns * horizon_scale,
+                adjusted_cov * horizon_scale,
+                n_simulations
+            )
+            portfolio_returns = np.dot(asset_returns, weights)
+
+            var_95 = -np.percentile(portfolio_returns, 5)
+            cvar_95 = -np.mean(portfolio_returns[portfolio_returns < np.percentile(portfolio_returns, 5)])
+
+            results.append({
+                'scenario': scenario_name,
+                'var_95_pct': var_95,
+                'var_95_dollar': var_95 * self.portfolio_value,
+                'cvar_95_pct': cvar_95,
+                'cvar_95_dollar': cvar_95 * self.portfolio_value,
+                'prob_loss': np.mean(portfolio_returns < 0)
+            })
+
+        return pd.DataFrame(results)
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("PORTFOLIO RISK ANALYSIS")
+    print("=" * 60)
+
+    # Create portfolio
+    simulator = PortfolioRiskSimulator(portfolio_value=1_000_000)
+
+    # Add assets
+    simulator.add_asset('SPY', weight=0.40, annual_return=0.10, annual_vol=0.18)
+    simulator.add_asset('AGG', weight=0.30, annual_return=0.04, annual_vol=0.05)
+    simulator.add_asset('GLD', weight=0.15, annual_return=0.06, annual_vol=0.15)
+    simulator.add_asset('QQQ', weight=0.15, annual_return=0.12, annual_vol=0.25)
+
+    # Set correlations
+    corr_matrix = np.array([
+        [1.00, 0.10, 0.05, 0.85],  # SPY
+        [0.10, 1.00, 0.20, 0.05],  # AGG
+        [0.05, 0.20, 1.00, 0.10],  # GLD
+        [0.85, 0.05, 0.10, 1.00]   # QQQ
+    ])
+    simulator.set_correlations(corr_matrix)
+
+    # Calculate risk metrics
+    metrics = simulator.calculate_risk_metrics(n_simulations=100000, horizon_days=1)
+
+    print(f"\nPortfolio Value: ${simulator.portfolio_value:,.0f}")
+    print(f"\n1-Day Risk Metrics:")
+    print(f"  Expected Return: {metrics['expected_return_pct']:.4%} (${metrics['expected_return_dollar']:,.0f})")
+    print(f"  VaR (95%): {metrics['var_95_pct']:.4%} (${metrics['var_95_dollar']:,.0f})")
+    print(f"  VaR (99%): {metrics['var_99_pct']:.4%} (${metrics['var_99_dollar']:,.0f})")
+    print(f"  CVaR (95%): {metrics['cvar_95_pct']:.4%} (${metrics['cvar_95_dollar']:,.0f})")
+    print(f"  Probability of Loss: {metrics['probability_of_loss']:.2%}")
+
+    # Stress testing
+    print(f"\n{'='*60}")
+    print("STRESS TEST RESULTS")
+    print(f"{'='*60}")
+
+    scenarios = {
+        'Normal': {'vol_mult': 1.0, 'return_shift': 0.0},
+        'High Volatility': {'vol_mult': 2.0, 'return_shift': 0.0},
+        'Market Stress': {'vol_mult': 2.5, 'return_shift': -0.30},
+        'Black Swan': {'vol_mult': 4.0, 'return_shift': -0.50}
+    }
+
+    stress_results = simulator.stress_test(scenarios)
+    print(f"\n{stress_results.to_string(index=False)}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 8: Quiz -->
+        <section class="content-section fade-in">
+            <h2>8. Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>Question 1: In the GBM formula, what does the term -σ²/2 correct for?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'A')">A) Transaction costs</button>
+                        <button onclick="checkAnswer(1, 'B')">B) Ito's lemma correction (ensures E[S_T] = S_0 * e^(μT))</button>
+                        <button onclick="checkAnswer(1, 'C')">C) Dividend adjustments</button>
+                        <button onclick="checkAnswer(1, 'D')">D) Interest rate effects</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>Question 2: What is the key difference between VaR and CVaR?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'A')">A) VaR is always larger than CVaR</button>
+                        <button onclick="checkAnswer(2, 'B')">B) CVaR captures the expected loss beyond VaR (tail risk)</button>
+                        <button onclick="checkAnswer(2, 'C')">C) VaR is used for options, CVaR for stocks</button>
+                        <button onclick="checkAnswer(2, 'D')">D) They are mathematically equivalent</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>Question 3: Why do we use the risk-free rate (r) instead of expected return (μ) when pricing options with Monte Carlo?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'A')">A) The risk-free rate is easier to estimate</button>
+                        <button onclick="checkAnswer(3, 'B')">B) Risk-neutral pricing removes risk preferences from the valuation</button>
+                        <button onclick="checkAnswer(3, 'C')">C) Options always have zero expected return</button>
+                        <button onclick="checkAnswer(3, 'D')">D) It reduces computational complexity</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>Question 4: What is the purpose of antithetic variates in Monte Carlo?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'A')">A) To speed up computation</button>
+                        <button onclick="checkAnswer(4, 'B')">B) To reduce variance of estimates</button>
+                        <button onclick="checkAnswer(4, 'C')">C) To model negative returns</button>
+                        <button onclick="checkAnswer(4, 'D')">D) To handle correlation</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>Question 5: The Monte Carlo estimate error decreases proportionally to:</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'A')">A) N (number of simulations)</button>
+                        <button onclick="checkAnswer(5, 'B')">B) √N (square root of simulations)</button>
+                        <button onclick="checkAnswer(5, 'C')">C) N² (simulations squared)</button>
+                        <button onclick="checkAnswer(5, 'D')">D) log(N)</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+            </div>
+
+            <div class="score-container" id="scoreContainer" style="display:none;">
+                <h3>Your Score: <span id="finalScore"></span>/5</h3>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script>
+        let pathsChart, distributionChart, varChart;
+        let quizAnswers = {};
+        const correctAnswers = {
+            1: 'B',
+            2: 'B',
+            3: 'B',
+            4: 'B',
+            5: 'B'
+        };
+
+        const explanations = {
+            1: {
+                'A': 'Incorrect. Transaction costs are not part of the GBM model.',
+                'B': 'Correct! The -σ²/2 term is the Ito correction. Without it, the expected terminal price would be exp(μT + σ²T/2), not exp(μT).',
+                'C': 'Incorrect. Dividends would be modeled separately if needed.',
+                'D': 'Incorrect. Interest rates are separate from this correction term.'
+            },
+            2: {
+                'A': 'Incorrect. CVaR is always >= VaR because it averages losses beyond VaR.',
+                'B': 'Correct! CVaR (Expected Shortfall) is the expected loss given that we exceed VaR. It captures the severity of tail losses, not just the threshold.',
+                'C': 'Incorrect. Both can be applied to any asset class.',
+                'D': 'Incorrect. They measure different aspects of risk.'
+            },
+            3: {
+                'A': 'Incorrect. While true, this isn\'t the theoretical justification.',
+                'B': 'Correct! Risk-neutral pricing uses the risk-free rate because we can replicate the option payoff through hedging, eliminating risk. The price must be the same regardless of investor risk preferences.',
+                'C': 'Incorrect. Options can have positive or negative expected returns.',
+                'D': 'Incorrect. The rate choice doesn\'t affect computation complexity significantly.'
+            },
+            4: {
+                'A': 'Incorrect. It doesn\'t necessarily speed up computation.',
+                'B': 'Correct! Antithetic variates pair each random draw Z with -Z. The negative correlation between paired estimates reduces variance, giving more accurate results with the same number of simulations.',
+                'C': 'Incorrect. Negative returns can be modeled without antithetic variates.',
+                'D': 'Incorrect. Cholesky decomposition handles correlation.'
+            },
+            5: {
+                'A': 'Incorrect. The error doesn\'t decrease linearly with N.',
+                'B': 'Correct! By the Central Limit Theorem, the standard error is σ/√N. To halve the error, you need 4x the simulations. 10,000 simulations has 10x lower error than 100.',
+                'C': 'Incorrect. The error decreases much slower than N².',
+                'D': 'Incorrect. Logarithmic improvement would be too slow.'
+            }
+        };
+
+        function simulateGBM(S0, mu, sigma, T, nSteps, nPaths) {
+            const dt = T / nSteps;
+            const paths = [];
+
+            for (let p = 0; p < nPaths; p++) {
+                const path = [S0];
+                let S = S0;
+                for (let t = 0; t < nSteps; t++) {
+                    const Z = randn();
+                    const drift = (mu - 0.5 * sigma * sigma) * dt;
+                    const diffusion = sigma * Math.sqrt(dt) * Z;
+                    S = S * Math.exp(drift + diffusion);
+                    path.push(S);
+                }
+                paths.push(path);
+            }
+            return paths;
+        }
+
+        function randn() {
+            // Box-Muller transform
+            const u1 = Math.random();
+            const u2 = Math.random();
+            return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        function calculateVaRCVaR(returns) {
+            const sorted = [...returns].sort((a, b) => a - b);
+            const n = sorted.length;
+
+            const var95Idx = Math.floor(0.05 * n);
+            const var99Idx = Math.floor(0.01 * n);
+
+            const var95 = -sorted[var95Idx];
+            const var99 = -sorted[var99Idx];
+
+            const cvar95 = -sorted.slice(0, var95Idx + 1).reduce((a, b) => a + b, 0) / (var95Idx + 1);
+            const cvar99 = -sorted.slice(0, var99Idx + 1).reduce((a, b) => a + b, 0) / (var99Idx + 1);
+
+            return { var95, var99, cvar95, cvar99 };
+        }
+
+        function runMonteCarloSimulation() {
+            const S0 = parseFloat(document.getElementById('initialPrice').value);
+            const mu = parseFloat(document.getElementById('annualReturn').value) / 100;
+            const sigma = parseFloat(document.getElementById('volatility').value) / 100;
+            const T = parseFloat(document.getElementById('timeHorizon').value);
+            const nPaths = parseInt(document.getElementById('numPaths').value);
+            const nSteps = parseInt(document.getElementById('numSteps').value);
+
+            // Simulate paths
+            const paths = simulateGBM(S0, mu, sigma, T, nSteps, nPaths);
+
+            // Get terminal values
+            const terminalPrices = paths.map(p => p[p.length - 1]);
+            const returns = terminalPrices.map(p => (p - S0) / S0);
+
+            // Calculate statistics
+            const meanPrice = terminalPrices.reduce((a, b) => a + b, 0) / nPaths;
+            const stdPrice = Math.sqrt(terminalPrices.reduce((sum, p) => sum + (p - meanPrice) ** 2, 0) / nPaths);
+            const meanReturn = returns.reduce((a, b) => a + b, 0) / nPaths;
+            const stdReturn = Math.sqrt(returns.reduce((sum, r) => sum + (r - meanReturn) ** 2, 0) / nPaths);
+
+            // VaR/CVaR
+            const risk = calculateVaRCVaR(returns);
+
+            // Display results
+            let html = '<div class="result-grid">';
+            html += `<div class="result-item"><span class="result-label">Mean Terminal Price:</span><span class="result-value">$${meanPrice.toFixed(2)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Std Dev of Price:</span><span class="result-value">$${stdPrice.toFixed(2)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Mean Return:</span><span class="result-value">${(meanReturn * 100).toFixed(2)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Volatility (realized):</span><span class="result-value">${(stdReturn * 100).toFixed(2)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">VaR (95%):</span><span class="result-value negative">${(risk.var95 * 100).toFixed(2)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">VaR (99%):</span><span class="result-value negative">${(risk.var99 * 100).toFixed(2)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">CVaR (95%):</span><span class="result-value negative">${(risk.cvar95 * 100).toFixed(2)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">CVaR (99%):</span><span class="result-value negative">${(risk.cvar99 * 100).toFixed(2)}%</span></div>`;
+            html += '</div>';
+            document.getElementById('mcOutput').innerHTML = html;
+
+            // Update charts
+            updatePathsChart(paths, nSteps, T);
+            updateDistributionChart(terminalPrices, meanPrice, stdPrice);
+            updateVaRChart(returns, risk);
+        }
+
+        function updatePathsChart(paths, nSteps, T) {
+            const ctx = document.getElementById('pathsChart').getContext('2d');
+            if (pathsChart) pathsChart.destroy();
+
+            const labels = Array.from({ length: nSteps + 1 }, (_, i) => (i * T / nSteps).toFixed(2));
+            const displayPaths = paths.slice(0, Math.min(50, paths.length));
+
+            const datasets = displayPaths.map((path, i) => ({
+                label: `Path ${i + 1}`,
+                data: path,
+                borderColor: `hsla(${(i * 360 / displayPaths.length)}, 70%, 50%, 0.5)`,
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: false
+            }));
+
+            pathsChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Simulated Price Paths (First 50)', color: '#e0e0e0' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time (Years)', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Price ($)', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDistributionChart(prices, mean, std) {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            if (distributionChart) distributionChart.destroy();
+
+            // Create histogram
+            const nBins = 50;
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+            const binWidth = (maxPrice - minPrice) / nBins;
+            const bins = Array(nBins).fill(0);
+            const binCenters = [];
+
+            for (let i = 0; i < nBins; i++) {
+                binCenters.push((minPrice + (i + 0.5) * binWidth).toFixed(1));
+            }
+
+            prices.forEach(p => {
+                const binIdx = Math.min(Math.floor((p - minPrice) / binWidth), nBins - 1);
+                bins[binIdx]++;
+            });
+
+            // Normalize
+            const maxCount = Math.max(...bins);
+            const normalizedBins = bins.map(b => b / prices.length);
+
+            distributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binCenters,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: normalizedBins,
+                        backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                        borderColor: 'rgba(76, 175, 80, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Terminal Price Distribution', color: '#e0e0e0' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Terminal Price ($)', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Probability', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVaRChart(returns, risk) {
+            const ctx = document.getElementById('varChart').getContext('2d');
+            if (varChart) varChart.destroy();
+
+            const sortedReturns = [...returns].sort((a, b) => a - b);
+            const n = sortedReturns.length;
+
+            // Create histogram for returns
+            const nBins = 50;
+            const minRet = Math.min(...sortedReturns);
+            const maxRet = Math.max(...sortedReturns);
+            const binWidth = (maxRet - minRet) / nBins;
+            const bins = Array(nBins).fill(0);
+            const binCenters = [];
+
+            for (let i = 0; i < nBins; i++) {
+                binCenters.push(((minRet + (i + 0.5) * binWidth) * 100).toFixed(1) + '%');
+            }
+
+            sortedReturns.forEach(r => {
+                const binIdx = Math.min(Math.floor((r - minRet) / binWidth), nBins - 1);
+                bins[binIdx]++;
+            });
+
+            const normalizedBins = bins.map(b => b / n);
+
+            // Color bins based on VaR
+            const varThreshold = -risk.var95;
+            const colors = binCenters.map((_, i) => {
+                const binMin = minRet + i * binWidth;
+                return binMin < varThreshold ? 'rgba(244, 67, 54, 0.8)' : 'rgba(33, 150, 243, 0.7)';
+            });
+
+            varChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binCenters,
+                    datasets: [{
+                        label: 'Return Distribution',
+                        data: normalizedBins,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Return Distribution with VaR (Red = Tail Loss)', color: '#e0e0e0' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Return', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Probability', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function priceOption() {
+            const S = parseFloat(document.getElementById('optSpot').value);
+            const K = parseFloat(document.getElementById('optStrike').value);
+            const r = parseFloat(document.getElementById('optRate').value) / 100;
+            const sigma = parseFloat(document.getElementById('optVol').value) / 100;
+            const T = parseFloat(document.getElementById('optExpiry').value);
+            const optType = document.getElementById('optType').value;
+            const nPaths = parseInt(document.getElementById('optPaths').value);
+
+            // Monte Carlo pricing
+            const halfPaths = Math.floor(nPaths / 2);
+            const payoffs = [];
+
+            for (let i = 0; i < halfPaths; i++) {
+                const Z = randn();
+                const drift = (r - 0.5 * sigma * sigma) * T;
+                const diffusion = sigma * Math.sqrt(T);
+
+                // Regular path
+                const ST_pos = S * Math.exp(drift + diffusion * Z);
+                // Antithetic path
+                const ST_neg = S * Math.exp(drift + diffusion * (-Z));
+
+                if (optType === 'call') {
+                    payoffs.push(Math.max(ST_pos - K, 0));
+                    payoffs.push(Math.max(ST_neg - K, 0));
+                } else {
+                    payoffs.push(Math.max(K - ST_pos, 0));
+                    payoffs.push(Math.max(K - ST_neg, 0));
+                }
+            }
+
+            const discount = Math.exp(-r * T);
+            const discountedPayoffs = payoffs.map(p => p * discount);
+            const mcPrice = discountedPayoffs.reduce((a, b) => a + b, 0) / discountedPayoffs.length;
+            const stdError = Math.sqrt(discountedPayoffs.reduce((sum, p) => sum + (p - mcPrice) ** 2, 0) / discountedPayoffs.length) / Math.sqrt(discountedPayoffs.length);
+
+            // Black-Scholes for comparison
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+
+            function normCDF(x) {
+                const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+                const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+                const sign = x < 0 ? -1 : 1;
+                x = Math.abs(x) / Math.sqrt(2);
+                const t = 1.0 / (1.0 + p * x);
+                const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+                return 0.5 * (1.0 + sign * y);
+            }
+
+            let bsPrice;
+            if (optType === 'call') {
+                bsPrice = S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
+            } else {
+                bsPrice = K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1);
+            }
+
+            // Display results
+            let html = '<div class="result-grid">';
+            html += `<div class="result-item"><span class="result-label">Monte Carlo Price:</span><span class="result-value">$${mcPrice.toFixed(4)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Standard Error:</span><span class="result-value">$${stdError.toFixed(4)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">95% CI:</span><span class="result-value">($${(mcPrice - 1.96 * stdError).toFixed(4)}, $${(mcPrice + 1.96 * stdError).toFixed(4)})</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Black-Scholes Price:</span><span class="result-value">$${bsPrice.toFixed(4)}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">MC Error:</span><span class="result-value">${((mcPrice - bsPrice) / bsPrice * 100).toFixed(3)}%</span></div>`;
+            html += '</div>';
+            document.getElementById('optionOutput').innerHTML = html;
+        }
+
+        function checkAnswer(questionNum, answer) {
+            const feedback = document.getElementById(`feedback${questionNum}`);
+            const isCorrect = answer === correctAnswers[questionNum];
+
+            quizAnswers[questionNum] = answer;
+
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[questionNum][answer]}
+            </div>`;
+            feedback.style.display = 'block';
+
+            const buttons = document.querySelectorAll(`#q${questionNum} button`);
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (Object.keys(quizAnswers).length === 5) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const score = Object.keys(quizAnswers).reduce((sum, q) =>
+                sum + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('scoreContainer').style.display = 'block';
+        }
+
+        window.onload = function() {
+            runMonteCarloSimulation();
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

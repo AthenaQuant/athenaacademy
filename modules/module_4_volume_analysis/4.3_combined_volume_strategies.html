@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master combined volume strategies for quantitative trading. Learn OBV, VROC, Wyckoff patterns, and integrated volume analysis systems.">
+    <title>4.3 Combined Volume Strategies | Quantitative Trading Mastery</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+
+    <style>
+        .integration-diagram {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .integration-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .flow-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #6366f1;
+            border-radius: 10px;
+            padding: 15px 20px;
+            min-width: 120px;
+        }
+        .flow-box.vp {
+            border-color: #10b981;
+        }
+        .flow-box.vwap {
+            border-color: #f59e0b;
+        }
+        .flow-box.obv {
+            border-color: #06b6d4;
+        }
+        .flow-box.signal {
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.2);
+        }
+        .flow-arrow {
+            font-size: 1.3rem;
+            color: #94a3b8;
+        }
+        .wyckoff-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .wyckoff-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+        }
+        .wyckoff-card.accumulation {
+            border: 2px solid #10b981;
+        }
+        .wyckoff-card.distribution {
+            border: 2px solid #ef4444;
+        }
+        .wyckoff-card h4 {
+            margin-bottom: 15px;
+        }
+        .wyckoff-card.accumulation h4 {
+            color: #10b981;
+        }
+        .wyckoff-card.distribution h4 {
+            color: #ef4444;
+        }
+        .phase-list {
+            list-style: none;
+            padding: 0;
+        }
+        .phase-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phase-list li:last-child {
+            border-bottom: none;
+        }
+        .phase-letter {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .accumulation .phase-letter {
+            background: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+        .distribution .phase-letter {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        .indicator-comparison {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .indicator-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .indicator-card h4 {
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+        .indicator-card .formula {
+            font-family: 'Georgia', serif;
+            color: #a855f7;
+            margin: 15px 0;
+            font-size: 0.95rem;
+        }
+        .divergence-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .divergence-box h4 {
+            color: #f59e0b;
+            margin-bottom: 15px;
+        }
+        .signal-strength {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .strength-bar {
+            flex: 1;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .strength-fill {
+            height: 100%;
+            border-radius: 6px;
+        }
+        .strength-fill.strong {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+        .strength-fill.medium {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        .strength-fill.weak {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        .confluence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .confluence-table th, .confluence-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .confluence-table th {
+            background: rgba(99, 102, 241, 0.2);
+            color: #e2e8f0;
+        }
+        .confluence-table tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .bullish-cell {
+            color: #10b981;
+        }
+        .bearish-cell {
+            color: #ef4444;
+        }
+        .neutral-cell {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 4.3</span>
+                    <span class="nav-module-title">Combined Volume Strategies</span>
+                </div>
+                <a href="../module_5_probability/5.1_probability_basics.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 4: Volume Analysis</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>4.3 Combined Volume Strategies</span>
+                </div>
+                <h1>Combined Volume Strategies</h1>
+                <p class="module-subtitle">
+                    Integrate Volume Profile, VWAP, OBV, and Wyckoff analysis into
+                    a comprehensive volume-based trading system.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 40 min read</span>
+                    <span class="meta-item">📊 5 Visualizations</span>
+                    <span class="meta-item">💻 Multi-Indicator Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container content-wrapper">
+
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Power of Confluence</div>
+                <p>
+                    No single volume indicator tells the complete story. Volume Profile shows where trading occurred,
+                    VWAP shows the average price, OBV shows cumulative buying/selling pressure. Together, they reveal
+                    the full picture of market structure and institutional activity.
+                </p>
+                <p style="margin-top: 1rem; margin-bottom: 0;">
+                    <strong>The highest-probability trades occur when multiple volume indicators align—confluence increases conviction and reduces false signals.</strong>
+                </p>
+            </div>
+
+            <h3>Why Combine Volume Indicators?</h3>
+
+            <div class="grid grid-3">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">🎯 Confirmation</h4>
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        Each indicator has blind spots. OBV can diverge while VWAP holds. Multiple confirmations reduce false signals.
+                    </p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Different Perspectives</h4>
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        Volume Profile = spatial (where). VWAP = average (what). OBV = cumulative (momentum). VROC = rate of change (how fast).
+                    </p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">🏦 Institutional Detection</h4>
+                    <p style="margin: 0; font-size: 0.95rem;">
+                        Big money leaves footprints across multiple indicators. Spotting accumulation/distribution requires holistic analysis.
+                    </p>
+                </div>
+            </div>
+
+            <div class="integration-diagram">
+                <h3>Volume Analysis Integration Framework</h3>
+                <div class="integration-flow">
+                    <div class="flow-box vp">
+                        <strong>Volume Profile</strong>
+                        <p style="font-size: 0.85rem; margin: 5px 0 0;">POC, VA, HVN/LVN</p>
+                    </div>
+                    <span class="flow-arrow">+</span>
+                    <div class="flow-box vwap">
+                        <strong>VWAP</strong>
+                        <p style="font-size: 0.85rem; margin: 5px 0 0;">Bands, Z-score</p>
+                    </div>
+                    <span class="flow-arrow">+</span>
+                    <div class="flow-box obv">
+                        <strong>OBV/VROC</strong>
+                        <p style="font-size: 0.85rem; margin: 5px 0 0;">Momentum, Divergence</p>
+                    </div>
+                    <span class="flow-arrow">=</span>
+                    <div class="flow-box signal">
+                        <strong>High-Conviction Signal</strong>
+                        <p style="font-size: 0.85rem; margin: 5px 0 0;">Confluence-based entry</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <h3>Volume Indicators Overview</h3>
+
+            <div class="indicator-comparison">
+                <div class="indicator-card">
+                    <h4>On-Balance Volume (OBV)</h4>
+                    <div class="formula">OBV<sub>t</sub> = OBV<sub>t-1</sub> ± Volume</div>
+                    <p style="font-size: 0.9rem; color: #94a3b8;">
+                        Cumulative volume flow. Add volume on up days, subtract on down days.
+                        Rising OBV = accumulation. Falling OBV = distribution.
+                    </p>
+                </div>
+                <div class="indicator-card">
+                    <h4>Volume Rate of Change (VROC)</h4>
+                    <div class="formula">VROC = (V - V<sub>n</sub>) / V<sub>n</sub> × 100</div>
+                    <p style="font-size: 0.9rem; color: #94a3b8;">
+                        How fast volume is changing vs n periods ago.
+                        High VROC = unusual activity, potential breakout.
+                    </p>
+                </div>
+                <div class="indicator-card">
+                    <h4>Accumulation/Distribution (A/D)</h4>
+                    <div class="formula">A/D = CLV × Volume</div>
+                    <p style="font-size: 0.9rem; color: #94a3b8;">
+                        Money Flow Volume considers where price closed in the day's range.
+                        More nuanced than OBV.
+                    </p>
+                </div>
+            </div>
+
+            <h3>Wyckoff Market Cycle</h3>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">Richard Wyckoff's Framework</div>
+                <p>
+                    Wyckoff identified patterns of accumulation (smart money buying) and distribution
+                    (smart money selling) that precede major price moves. Volume is the key to identifying these phases.
+                </p>
+            </div>
+
+            <div class="wyckoff-grid">
+                <div class="wyckoff-card accumulation">
+                    <h4>Accumulation (Bullish Setup)</h4>
+                    <ul class="phase-list">
+                        <li>
+                            <span class="phase-letter">PS</span>
+                            <span><strong>Preliminary Support:</strong> First buying after downtrend</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">SC</span>
+                            <span><strong>Selling Climax:</strong> High volume panic selling</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">AR</span>
+                            <span><strong>Automatic Rally:</strong> Short covering bounce</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">ST</span>
+                            <span><strong>Secondary Test:</strong> Retest lows on lower volume</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">SOS</span>
+                            <span><strong>Sign of Strength:</strong> Breakout with volume</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="wyckoff-card distribution">
+                    <h4>Distribution (Bearish Setup)</h4>
+                    <ul class="phase-list">
+                        <li>
+                            <span class="phase-letter">PSY</span>
+                            <span><strong>Preliminary Supply:</strong> First selling after uptrend</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">BC</span>
+                            <span><strong>Buying Climax:</strong> High volume euphoric buying</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">AR</span>
+                            <span><strong>Automatic Reaction:</strong> Profit-taking pullback</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">ST</span>
+                            <span><strong>Secondary Test:</strong> Retest highs on lower volume</span>
+                        </li>
+                        <li>
+                            <span class="phase-letter">SOW</span>
+                            <span><strong>Sign of Weakness:</strong> Breakdown with volume</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="divergence-box">
+                <h4>Volume Divergence — The Warning Signal</h4>
+                <p>When price and volume disagree, trust volume:</p>
+                <ul style="margin: 15px 0;">
+                    <li><strong>Bearish Divergence:</strong> Price making new highs, but OBV/volume declining → Uptrend weakening</li>
+                    <li><strong>Bullish Divergence:</strong> Price making new lows, but OBV/volume rising → Downtrend weakening</li>
+                </ul>
+                <p><em>"Volume precedes price" — Divergence often signals reversals before they happen.</em></p>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>On-Balance Volume (OBV)</h3>
+                <div class="formula">
+                    OBV<sub>t</sub> = OBV<sub>t-1</sub> + Volume × sign(Close<sub>t</sub> - Close<sub>t-1</sub>)
+                </div>
+                <p>If close > prev close: add volume. If close < prev close: subtract volume.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Volume Rate of Change (VROC)</h3>
+                <div class="formula">
+                    VROC<sub>n</sub> = (V<sub>t</sub> - V<sub>t-n</sub>) / V<sub>t-n</sub> × 100
+                </div>
+                <p>Percentage change in volume over n periods. Typical n = 14 or 25.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Accumulation/Distribution Line</h3>
+                <div class="formula">
+                    CLV = [(Close - Low) - (High - Close)] / (High - Low)<br>
+                    A/D = A/D<sub>prev</sub> + CLV × Volume
+                </div>
+                <p>Close Location Value (CLV) ranges from -1 to +1 based on where close is in the range.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Money Flow Index (MFI)</h3>
+                <div class="formula">
+                    MFI = 100 - 100 / (1 + Money Flow Ratio)<br>
+                    Money Flow Ratio = Positive MF / Negative MF
+                </div>
+                <p>Like RSI but volume-weighted. Overbought > 80, Oversold < 20.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Confluence Score</h3>
+                <div class="formula">
+                    Score = w₁·VP + w₂·VWAP + w₃·OBV + w₄·VROC
+                </div>
+                <p>Weighted combination of normalized indicator signals. Higher score = stronger conviction.</p>
+            </div>
+        </section>
+
+        <!-- PART 4: KEY PROPERTIES -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Key Properties for Trading</h2>
+
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Volume Confirms Trend</span>
+                    <span class="property-desc">Rising price + rising volume = healthy trend. Rising price + falling volume = weak trend.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Divergence Precedes Reversal</span>
+                    <span class="property-desc">Volume divergence is a leading indicator. Price-volume disagreement warns of trend change.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Breakouts Need Volume</span>
+                    <span class="property-desc">Valid breakouts accompanied by above-average volume. Low-volume breakouts often fail.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Confluence Amplifies Edge</span>
+                    <span class="property-desc">Multiple aligned signals > single signal. 3+ confirmations = high-probability setup.</span>
+                </div>
+            </div>
+
+            <h3>Signal Confluence Matrix</h3>
+
+            <table class="confluence-table">
+                <thead>
+                    <tr>
+                        <th>Signal</th>
+                        <th>Volume Profile</th>
+                        <th>VWAP</th>
+                        <th>OBV</th>
+                        <th>Confluence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Strong Buy</strong></td>
+                        <td class="bullish-cell">At HVN support</td>
+                        <td class="bullish-cell">Above VWAP</td>
+                        <td class="bullish-cell">Rising OBV</td>
+                        <td class="bullish-cell">⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Moderate Buy</strong></td>
+                        <td class="bullish-cell">Near POC</td>
+                        <td class="neutral-cell">At VWAP</td>
+                        <td class="bullish-cell">Rising OBV</td>
+                        <td class="bullish-cell">⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Weak/No Signal</strong></td>
+                        <td class="neutral-cell">In LVN</td>
+                        <td class="bearish-cell">Below VWAP</td>
+                        <td class="bullish-cell">Rising OBV</td>
+                        <td class="neutral-cell">⭐</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Moderate Sell</strong></td>
+                        <td class="bearish-cell">At HVN resistance</td>
+                        <td class="bearish-cell">Below VWAP</td>
+                        <td class="neutral-cell">Flat OBV</td>
+                        <td class="bearish-cell">⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Strong Sell</strong></td>
+                        <td class="bearish-cell">At HVN resistance</td>
+                        <td class="bearish-cell">Below VWAP</td>
+                        <td class="bearish-cell">Falling OBV</td>
+                        <td class="bearish-cell">⭐⭐⭐</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="signal-strength">
+                <span style="width: 100px;">Strong</span>
+                <div class="strength-bar"><div class="strength-fill strong" style="width: 100%;"></div></div>
+                <span>3 aligned indicators</span>
+            </div>
+            <div class="signal-strength">
+                <span style="width: 100px;">Medium</span>
+                <div class="strength-bar"><div class="strength-fill medium" style="width: 66%;"></div></div>
+                <span>2 aligned indicators</span>
+            </div>
+            <div class="signal-strength">
+                <span style="width: 100px;">Weak</span>
+                <div class="strength-bar"><div class="strength-fill weak" style="width: 33%;"></div></div>
+                <span>1 or conflicting indicators</span>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Complete Volume Indicator Suite</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import pandas as pd
+from typing import Dict, Tuple, List
+from dataclasses import dataclass
+from enum import Enum
+
+
+class SignalStrength(Enum):
+    STRONG_BUY = 3
+    MODERATE_BUY = 2
+    WEAK_BUY = 1
+    NEUTRAL = 0
+    WEAK_SELL = -1
+    MODERATE_SELL = -2
+    STRONG_SELL = -3
+
+
+@dataclass
+class VolumeSignals:
+    """Container for all volume indicator signals."""
+    obv: float
+    obv_trend: str
+    vroc: float
+    vroc_signal: str
+    ad_line: float
+    mfi: float
+    mfi_signal: str
+    confluence_score: float
+    overall_signal: SignalStrength
+
+
+class VolumeIndicatorSuite:
+    """
+    Comprehensive volume indicator calculator.
+
+    Implements OBV, VROC, A/D Line, MFI, and confluence scoring.
+    """
+
+    def __init__(
+        self,
+        vroc_period: int = 14,
+        mfi_period: int = 14,
+        obv_ma_period: int = 20
+    ):
+        """
+        Initialize volume indicator suite.
+
+        Args:
+            vroc_period: Lookback for VROC calculation
+            mfi_period: Period for MFI calculation
+            obv_ma_period: Moving average period for OBV trend
+        """
+        self.vroc_period = vroc_period
+        self.mfi_period = mfi_period
+        self.obv_ma_period = obv_ma_period
+
+    def calculate_obv(
+        self,
+        close: np.ndarray,
+        volume: np.ndarray
+    ) -> np.ndarray:
+        """
+        Calculate On-Balance Volume.
+
+        OBV = cumulative sum of signed volume based on price direction.
+        """
+        direction = np.sign(np.diff(close, prepend=close[0]))
+        signed_volume = volume * direction
+        obv = np.cumsum(signed_volume)
+        return obv
+
+    def calculate_vroc(
+        self,
+        volume: np.ndarray,
+        period: int = None
+    ) -> np.ndarray:
+        """
+        Calculate Volume Rate of Change.
+
+        VROC = (V - V_n) / V_n * 100
+        """
+        period = period or self.vroc_period
+        vroc = np.full(len(volume), np.nan)
+
+        for i in range(period, len(volume)):
+            if volume[i - period] != 0:
+                vroc[i] = (volume[i] - volume[i - period]) / volume[i - period] * 100
+
+        return vroc
+
+    def calculate_ad_line(
+        self,
+        high: np.ndarray,
+        low: np.ndarray,
+        close: np.ndarray,
+        volume: np.ndarray
+    ) -> np.ndarray:
+        """
+        Calculate Accumulation/Distribution Line.
+
+        CLV = [(Close - Low) - (High - Close)] / (High - Low)
+        A/D = cumsum(CLV * Volume)
+        """
+        # Close Location Value
+        range_hl = high - low
+        range_hl = np.where(range_hl == 0, 1, range_hl)  # Avoid div by zero
+        clv = ((close - low) - (high - close)) / range_hl
+
+        # A/D Line
+        ad = np.cumsum(clv * volume)
+        return ad
+
+    def calculate_mfi(
+        self,
+        high: np.ndarray,
+        low: np.ndarray,
+        close: np.ndarray,
+        volume: np.ndarray,
+        period: int = None
+    ) -> np.ndarray:
+        """
+        Calculate Money Flow Index.
+
+        MFI = 100 - 100 / (1 + Money Flow Ratio)
+        """
+        period = period or self.mfi_period
+
+        # Typical Price
+        typical_price = (high + low + close) / 3
+
+        # Raw Money Flow
+        raw_mf = typical_price * volume
+
+        # Positive/Negative Money Flow
+        positive_mf = np.zeros(len(close))
+        negative_mf = np.zeros(len(close))
+
+        for i in range(1, len(close)):
+            if typical_price[i] > typical_price[i - 1]:
+                positive_mf[i] = raw_mf[i]
+            elif typical_price[i] < typical_price[i - 1]:
+                negative_mf[i] = raw_mf[i]
+
+        # Rolling sums
+        mfi = np.full(len(close), np.nan)
+        for i in range(period, len(close)):
+            pos_sum = positive_mf[i - period + 1:i + 1].sum()
+            neg_sum = negative_mf[i - period + 1:i + 1].sum()
+
+            if neg_sum == 0:
+                mfi[i] = 100
+            else:
+                mf_ratio = pos_sum / neg_sum
+                mfi[i] = 100 - 100 / (1 + mf_ratio)
+
+        return mfi
+
+    def analyze(
+        self,
+        df: pd.DataFrame,
+        vwap: float = None,
+        current_price: float = None
+    ) -> VolumeSignals:
+        """
+        Perform comprehensive volume analysis.
+
+        Args:
+            df: DataFrame with OHLCV data
+            vwap: Current VWAP value (optional)
+            current_price: Current price (optional)
+
+        Returns:
+            VolumeSignals with all indicator values and signals
+        """
+        high = df['high'].values
+        low = df['low'].values
+        close = df['close'].values
+        volume = df['volume'].values
+
+        # Calculate indicators
+        obv = self.calculate_obv(close, volume)
+        vroc = self.calculate_vroc(volume)
+        ad_line = self.calculate_ad_line(high, low, close, volume)
+        mfi = self.calculate_mfi(high, low, close, volume)
+
+        # Latest values
+        current_obv = obv[-1]
+        current_vroc = vroc[-1] if not np.isnan(vroc[-1]) else 0
+        current_ad = ad_line[-1]
+        current_mfi = mfi[-1] if not np.isnan(mfi[-1]) else 50
+
+        # OBV Trend
+        obv_ma = np.mean(obv[-self.obv_ma_period:])
+        if current_obv > obv_ma * 1.02:
+            obv_trend = 'rising'
+            obv_signal = 1
+        elif current_obv < obv_ma * 0.98:
+            obv_trend = 'falling'
+            obv_signal = -1
+        else:
+            obv_trend = 'flat'
+            obv_signal = 0
+
+        # VROC Signal
+        if current_vroc > 50:
+            vroc_signal_str = 'high_activity'
+            vroc_signal = 1
+        elif current_vroc < -30:
+            vroc_signal_str = 'low_activity'
+            vroc_signal = -1
+        else:
+            vroc_signal_str = 'normal'
+            vroc_signal = 0
+
+        # MFI Signal
+        if current_mfi > 80:
+            mfi_signal_str = 'overbought'
+            mfi_signal = -1
+        elif current_mfi < 20:
+            mfi_signal_str = 'oversold'
+            mfi_signal = 1
+        else:
+            mfi_signal_str = 'neutral'
+            mfi_signal = 0
+
+        # VWAP Signal (if provided)
+        vwap_signal = 0
+        if vwap and current_price:
+            if current_price > vwap * 1.01:
+                vwap_signal = 1
+            elif current_price < vwap * 0.99:
+                vwap_signal = -1
+
+        # Confluence Score (-3 to +3)
+        confluence = obv_signal + vroc_signal + vwap_signal
+
+        # Overall Signal
+        if confluence >= 2:
+            overall = SignalStrength.STRONG_BUY
+        elif confluence == 1:
+            overall = SignalStrength.MODERATE_BUY
+        elif confluence == 0:
+            overall = SignalStrength.NEUTRAL
+        elif confluence == -1:
+            overall = SignalStrength.MODERATE_SELL
+        else:
+            overall = SignalStrength.STRONG_SELL
+
+        return VolumeSignals(
+            obv=current_obv,
+            obv_trend=obv_trend,
+            vroc=current_vroc,
+            vroc_signal=vroc_signal_str,
+            ad_line=current_ad,
+            mfi=current_mfi,
+            mfi_signal=mfi_signal_str,
+            confluence_score=confluence,
+            overall_signal=overall
+        )
+
+
+def detect_volume_divergence(
+    prices: np.ndarray,
+    obv: np.ndarray,
+    lookback: int = 20
+) -> Dict:
+    """
+    Detect price-volume divergence.
+
+    Args:
+        prices: Price array
+        obv: OBV array
+        lookback: Periods to analyze
+
+    Returns:
+        Divergence analysis
+    """
+    recent_prices = prices[-lookback:]
+    recent_obv = obv[-lookback:]
+
+    # Price trend
+    price_slope = np.polyfit(range(lookback), recent_prices, 1)[0]
+    obv_slope = np.polyfit(range(lookback), recent_obv, 1)[0]
+
+    result = {
+        'price_trend': 'up' if price_slope > 0 else 'down',
+        'obv_trend': 'up' if obv_slope > 0 else 'down',
+        'divergence': None,
+        'signal': None
+    }
+
+    # Bearish divergence: price up, OBV down
+    if price_slope > 0 and obv_slope < 0:
+        result['divergence'] = 'bearish'
+        result['signal'] = 'Potential top—price rising but volume declining'
+
+    # Bullish divergence: price down, OBV up
+    elif price_slope < 0 and obv_slope > 0:
+        result['divergence'] = 'bullish'
+        result['signal'] = 'Potential bottom—price falling but accumulation occurring'
+
+    else:
+        result['divergence'] = 'none'
+        result['signal'] = 'Price and volume aligned—trend healthy'
+
+    return result
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    # Generate sample OHLCV data
+    n = 100
+    close = 150 + np.cumsum(np.random.randn(n) * 0.5)
+    high = close + np.abs(np.random.randn(n)) * 0.5
+    low = close - np.abs(np.random.randn(n)) * 0.5
+    volume = 100000 + np.random.randint(-20000, 50000, n)
+
+    df = pd.DataFrame({
+        'high': high,
+        'low': low,
+        'close': close,
+        'volume': volume
+    })
+
+    # Analyze
+    suite = VolumeIndicatorSuite()
+    signals = suite.analyze(df, vwap=150.5, current_price=close[-1])
+
+    print("=" * 50)
+    print("VOLUME INDICATOR ANALYSIS")
+    print("=" * 50)
+    print(f"\nOBV: {signals.obv:,.0f} ({signals.obv_trend})")
+    print(f"VROC: {signals.vroc:.1f}% ({signals.vroc_signal})")
+    print(f"A/D Line: {signals.ad_line:,.0f}")
+    print(f"MFI: {signals.mfi:.1f} ({signals.mfi_signal})")
+    print(f"\nConfluence Score: {signals.confluence_score}")
+    print(f"Overall Signal: {signals.overall_signal.name}")
+
+    # Check for divergence
+    obv = suite.calculate_obv(close, volume)
+    div = detect_volume_divergence(close, obv)
+    print(f"\nDivergence: {div['divergence']}")
+    print(f"Signal: {div['signal']}")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Combined Volume Trading Strategy</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import pandas as pd
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class TradeSignal:
+    """Trade signal from combined volume analysis."""
+    direction: str  # 'long', 'short', 'neutral'
+    strength: int  # 1-5
+    entry: float
+    stop: float
+    target: float
+    rationale: List[str]
+    confluence_factors: Dict[str, str]
+
+
+class CombinedVolumeStrategy:
+    """
+    Trading strategy combining Volume Profile, VWAP, and OBV.
+    """
+
+    def __init__(
+        self,
+        risk_reward_ratio: float = 2.0,
+        min_confluence: int = 2
+    ):
+        """
+        Initialize strategy.
+
+        Args:
+            risk_reward_ratio: Target R:R ratio
+            min_confluence: Minimum aligned indicators for signal
+        """
+        self.rr_ratio = risk_reward_ratio
+        self.min_confluence = min_confluence
+
+    def generate_signal(
+        self,
+        current_price: float,
+        poc: float,
+        vah: float,
+        val: float,
+        vwap: float,
+        vwap_std: float,
+        obv_trend: str,
+        volume_today: float,
+        avg_volume: float
+    ) -> Optional[TradeSignal]:
+        """
+        Generate trading signal from combined analysis.
+
+        Args:
+            current_price: Current market price
+            poc: Point of Control
+            vah: Value Area High
+            val: Value Area Low
+            vwap: Current VWAP
+            vwap_std: VWAP standard deviation
+            obv_trend: 'rising', 'falling', or 'flat'
+            volume_today: Today's volume so far
+            avg_volume: Average daily volume
+
+        Returns:
+            TradeSignal if confluence met, else None
+        """
+        factors = {}
+        bullish_count = 0
+        bearish_count = 0
+        rationale = []
+
+        # 1. Volume Profile Analysis
+        if current_price <= val:
+            factors['volume_profile'] = 'bullish'
+            bullish_count += 1
+            rationale.append(f'Price at VAL support (${val:.2f})')
+        elif current_price >= vah:
+            factors['volume_profile'] = 'bearish'
+            bearish_count += 1
+            rationale.append(f'Price at VAH resistance (${vah:.2f})')
+        elif abs(current_price - poc) < (vah - val) * 0.1:
+            factors['volume_profile'] = 'neutral'
+            rationale.append(f'Price near POC fair value (${poc:.2f})')
+        else:
+            factors['volume_profile'] = 'neutral'
+
+        # 2. VWAP Analysis
+        z_score = (current_price - vwap) / vwap_std if vwap_std > 0 else 0
+
+        if z_score < -2:
+            factors['vwap'] = 'bullish'
+            bullish_count += 1
+            rationale.append(f'Oversold at VWAP -2σ (z={z_score:.1f})')
+        elif z_score > 2:
+            factors['vwap'] = 'bearish'
+            bearish_count += 1
+            rationale.append(f'Overbought at VWAP +2σ (z={z_score:.1f})')
+        elif current_price > vwap:
+            factors['vwap'] = 'bullish'
+            bullish_count += 1
+            rationale.append('Price above VWAP (bullish bias)')
+        else:
+            factors['vwap'] = 'bearish'
+            bearish_count += 1
+            rationale.append('Price below VWAP (bearish bias)')
+
+        # 3. OBV Trend
+        if obv_trend == 'rising':
+            factors['obv'] = 'bullish'
+            bullish_count += 1
+            rationale.append('OBV rising (accumulation)')
+        elif obv_trend == 'falling':
+            factors['obv'] = 'bearish'
+            bearish_count += 1
+            rationale.append('OBV falling (distribution)')
+        else:
+            factors['obv'] = 'neutral'
+
+        # 4. Volume Confirmation
+        relative_volume = volume_today / avg_volume if avg_volume > 0 else 1
+
+        if relative_volume > 1.5:
+            rationale.append(f'High volume confirmation ({relative_volume:.1f}x avg)')
+
+        # Determine signal
+        if bullish_count >= self.min_confluence and bullish_count > bearish_count:
+            direction = 'long'
+            strength = min(bullish_count, 5)
+            stop = val - (vah - val) * 0.1  # Below VAL
+            target = current_price + (current_price - stop) * self.rr_ratio
+
+        elif bearish_count >= self.min_confluence and bearish_count > bullish_count:
+            direction = 'short'
+            strength = min(bearish_count, 5)
+            stop = vah + (vah - val) * 0.1  # Above VAH
+            target = current_price - (stop - current_price) * self.rr_ratio
+
+        else:
+            return None  # No signal
+
+        return TradeSignal(
+            direction=direction,
+            strength=strength,
+            entry=current_price,
+            stop=stop,
+            target=target,
+            rationale=rationale,
+            confluence_factors=factors
+        )
+
+
+# Example
+if __name__ == "__main__":
+    strategy = CombinedVolumeStrategy(risk_reward_ratio=2.0, min_confluence=2)
+
+    signal = strategy.generate_signal(
+        current_price=148.50,
+        poc=150.00,
+        vah=153.00,
+        val=147.00,
+        vwap=149.50,
+        vwap_std=1.50,
+        obv_trend='rising',
+        volume_today=2500000,
+        avg_volume=2000000
+    )
+
+    if signal:
+        print("\n" + "=" * 50)
+        print("COMBINED VOLUME STRATEGY SIGNAL")
+        print("=" * 50)
+        print(f"\nDirection: {signal.direction.upper()}")
+        print(f"Strength: {signal.strength}/5")
+        print(f"Entry: ${signal.entry:.2f}")
+        print(f"Stop: ${signal.stop:.2f}")
+        print(f"Target: ${signal.target:.2f}")
+        print(f"\nRationale:")
+        for r in signal.rationale:
+            print(f"  • {r}")
+        print(f"\nConfluence Factors: {signal.confluence_factors}")
+    else:
+        print("No signal - insufficient confluence")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive Multi-Indicator Calculator</h2>
+
+            <div class="calculator">
+                <h3>Volume Indicator Analysis</h3>
+                <p style="color: #94a3b8; margin-bottom: 20px;">
+                    Enter price, volume, and key levels to analyze confluence.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="input-group">
+                        <label for="currentPriceMV">Current Price ($):</label>
+                        <input type="number" id="currentPriceMV" value="151.00" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="pocMV">POC ($):</label>
+                        <input type="number" id="pocMV" value="150.00" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="vwapMV">VWAP ($):</label>
+                        <input type="number" id="vwapMV" value="150.50" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="vahMV">VAH ($):</label>
+                        <input type="number" id="vahMV" value="154.00" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="valMV">VAL ($):</label>
+                        <input type="number" id="valMV" value="146.00" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="vwapStdMV">VWAP Std ($):</label>
+                        <input type="number" id="vwapStdMV" value="1.50" step="0.1">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px;">
+                    <div class="input-group">
+                        <label for="obvTrendMV">OBV Trend:</label>
+                        <select id="obvTrendMV">
+                            <option value="rising">Rising (Accumulation)</option>
+                            <option value="flat">Flat (Neutral)</option>
+                            <option value="falling">Falling (Distribution)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="volumeTodayMV">Today's Volume:</label>
+                        <input type="number" id="volumeTodayMV" value="2500000" step="100000">
+                    </div>
+                    <div class="input-group">
+                        <label for="avgVolumeMV">Avg Volume:</label>
+                        <input type="number" id="avgVolumeMV" value="2000000" step="100000">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="analyzeConfluence()">Analyze Confluence</button>
+
+                <div id="confluenceResults" style="margin-top: 20px;">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Indicator Dashboard</h3>
+                <canvas id="dashboardChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Trading Applications</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Breakout Confirmation</h4>
+                    <p>Price breaks key level + volume spike + OBV confirmation = valid breakout. Missing any = likely false breakout.</p>
+                    <div class="highlight">All 3 must align</div>
+                </div>
+                <div class="card">
+                    <h4>Wyckoff Spring Trade</h4>
+                    <p>Price breaks below support (spring), but OBV doesn't confirm. Quick reversal back into range. Classic accumulation pattern.</p>
+                    <div class="highlight">Volume divergence at extreme</div>
+                </div>
+                <div class="card">
+                    <h4>VWAP + POC Confluence</h4>
+                    <p>When VWAP and POC converge at the same level, that price becomes extremely significant. Strong support/resistance.</p>
+                    <div class="highlight">Double institutional level</div>
+                </div>
+                <div class="card">
+                    <h4>Distribution Detection</h4>
+                    <p>Price making highs but OBV flat/falling + price struggling at VAH + volume declining = smart money selling into strength.</p>
+                    <div class="highlight">Exit longs, prepare short</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Price with Volume Indicators</h3>
+                <canvas id="combinedChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>OBV Divergence Detection</h3>
+                <canvas id="divergenceChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 8: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Common Mistakes to Avoid</h2>
+
+            <div class="warning-box">
+                <h3>Mistake 1: Overweighting Single Indicator</h3>
+                <p>Relying solely on OBV or VWAP ignores valuable context. Each indicator has blind spots—use confluence to fill gaps.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 2: Ignoring Timeframe Alignment</h3>
+                <p>Using daily Volume Profile with 5-min VWAP creates conflicting signals. Keep all indicators on the same timeframe.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 3: Forcing Confluence</h3>
+                <p>Seeing confirmation that isn't there. If indicators genuinely conflict, stay out. No trade is better than a forced trade.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 4: Neglecting Context</h3>
+                <p>Volume indicators behave differently in trends vs ranges. OBV divergence in a strong trend is less reliable than at extremes.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>Mistake 5: Static Thresholds</h3>
+                <p>Using fixed levels (OBV > X = bullish) ignores market conditions. Use relative comparisons and slopes instead of absolute values.</p>
+            </div>
+        </section>
+
+        <!-- SUMMARY -->
+        <section class="content-section fade-in">
+            <h2>Summary</h2>
+
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>OBV:</strong> Cumulative buying/selling pressure—trend confirmation</li>
+                    <li><strong>VROC:</strong> Volume momentum—detect unusual activity</li>
+                    <li><strong>Divergence:</strong> Price-volume disagreement precedes reversals</li>
+                    <li><strong>Wyckoff:</strong> Accumulation/distribution phases reveal institutional intent</li>
+                    <li><strong>Confluence:</strong> Multiple aligned indicators = high-probability trade</li>
+                </ul>
+            </div>
+
+            <div class="nav-buttons">
+                <a href="4.2_vwap_analysis.html" class="nav-btn">← Previous: VWAP Analysis</a>
+                <a href="../module_5_probability/5.1_probability_basics.html" class="nav-btn">Next: Probability Basics →</a>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Test Your Knowledge</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Question 1: What does On-Balance Volume (OBV) measure?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> The average volume over time</label>
+                        <label><input type="radio" name="q1" value="b"> Cumulative buying/selling pressure based on price direction</label>
+                        <label><input type="radio" name="q1" value="c"> The ratio of up volume to down volume</label>
+                        <label><input type="radio" name="q1" value="d"> Volume relative to the 20-day average</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 2: What does bearish volume divergence indicate?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> Strong uptrend continuation</label>
+                        <label><input type="radio" name="q2" value="b"> Price making highs but volume/OBV declining—potential top</label>
+                        <label><input type="radio" name="q2" value="c"> Price and volume both increasing</label>
+                        <label><input type="radio" name="q2" value="d"> Low volatility consolidation</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 3: In Wyckoff's accumulation phase, what is a "Spring"?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> A breakout above resistance</label>
+                        <label><input type="radio" name="q3" value="b"> A false breakdown below support that quickly reverses</label>
+                        <label><input type="radio" name="q3" value="c"> The initial selling after an uptrend</label>
+                        <label><input type="radio" name="q3" value="d"> High volume buying climax</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 4: Why is confluence important in volume analysis?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> It makes charts look prettier</label>
+                        <label><input type="radio" name="q4" value="b"> Multiple aligned indicators reduce false signals and increase conviction</label>
+                        <label><input type="radio" name="q4" value="c"> It's required by regulations</label>
+                        <label><input type="radio" name="q4" value="d"> It guarantees profitable trades</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 5: What does VROC (Volume Rate of Change) help identify?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> The direction of price movement</label>
+                        <label><input type="radio" name="q5" value="b"> Unusual volume activity and potential breakouts</label>
+                        <label><input type="radio" name="q5" value="c"> Support and resistance levels</label>
+                        <label><input type="radio" name="q5" value="d"> The average price weighted by volume</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let dashboardChart, combinedChart, divergenceChart;
+
+        function initializeCharts() {
+            // Dashboard Chart
+            const ctx1 = document.getElementById('dashboardChart').getContext('2d');
+            dashboardChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Volume Profile', 'VWAP', 'OBV', 'VROC', 'Overall'],
+                    datasets: [{
+                        label: 'Signal Strength',
+                        data: [1, 1, 1, 0, 2],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(148, 163, 184, 0.5)',
+                            'rgba(99, 102, 241, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Indicator Signals (-1 Bearish, 0 Neutral, +1 Bullish)', color: '#94a3b8' }
+                    },
+                    scales: {
+                        x: {
+                            min: -2,
+                            max: 3,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // Combined Price Chart
+            const ctx2 = document.getElementById('combinedChart').getContext('2d');
+            const n = 50;
+            const labels = Array.from({length: n}, (_, i) => i + 1);
+
+            let price = 150;
+            const prices = labels.map(() => {
+                price += (Math.random() - 0.48) * 1;
+                return price;
+            });
+
+            // Calculate OBV
+            const volumes = labels.map(() => 100000 + Math.random() * 50000);
+            let obv = 0;
+            const obvValues = prices.map((p, i) => {
+                if (i > 0) {
+                    obv += prices[i] > prices[i-1] ? volumes[i] : -volumes[i];
+                }
+                return obv / 10000; // Scale for display
+            });
+
+            // Calculate VWAP
+            let pvSum = 0, vSum = 0;
+            const vwap = prices.map((p, i) => {
+                pvSum += p * volumes[i];
+                vSum += volumes[i];
+                return pvSum / vSum;
+            });
+
+            combinedChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Price', data: prices, borderColor: '#6366f1', borderWidth: 2, yAxisID: 'y', fill: false },
+                        { label: 'VWAP', data: vwap, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], yAxisID: 'y', fill: false },
+                        { label: 'OBV (scaled)', data: obvValues, borderColor: '#f59e0b', borderWidth: 1, yAxisID: 'y1', fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { position: 'left', ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y1: { position: 'right', ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // Divergence Chart
+            const ctx3 = document.getElementById('divergenceChart').getContext('2d');
+
+            // Create divergence scenario
+            const divPrices = [100, 102, 101, 104, 103, 106, 105, 108, 109, 110, 111, 112, 113, 114, 115];
+            const divOBV = [0, 100, 50, 200, 150, 250, 200, 230, 220, 210, 200, 195, 190, 185, 180];
+
+            divergenceChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: divPrices.map((_, i) => `T${i+1}`),
+                    datasets: [
+                        { label: 'Price (Rising)', data: divPrices, borderColor: '#6366f1', borderWidth: 2, yAxisID: 'y', fill: false },
+                        { label: 'OBV (Falling)', data: divOBV, borderColor: '#ef4444', borderWidth: 2, yAxisID: 'y1', fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } },
+                        title: { display: true, text: 'Bearish Divergence: Price Up, OBV Down → Potential Top', color: '#f59e0b' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { position: 'left', title: { display: true, text: 'Price', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y1: { position: 'right', title: { display: true, text: 'OBV', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // Initial analysis
+            analyzeConfluence();
+        }
+
+        function analyzeConfluence() {
+            const currentPrice = parseFloat(document.getElementById('currentPriceMV').value);
+            const poc = parseFloat(document.getElementById('pocMV').value);
+            const vwap = parseFloat(document.getElementById('vwapMV').value);
+            const vah = parseFloat(document.getElementById('vahMV').value);
+            const val = parseFloat(document.getElementById('valMV').value);
+            const vwapStd = parseFloat(document.getElementById('vwapStdMV').value);
+            const obvTrend = document.getElementById('obvTrendMV').value;
+            const volumeToday = parseFloat(document.getElementById('volumeTodayMV').value);
+            const avgVolume = parseFloat(document.getElementById('avgVolumeMV').value);
+
+            // Analyze each indicator
+            const signals = {
+                volumeProfile: { signal: 0, label: 'Neutral', color: '#94a3b8' },
+                vwap: { signal: 0, label: 'Neutral', color: '#94a3b8' },
+                obv: { signal: 0, label: 'Neutral', color: '#94a3b8' },
+                vroc: { signal: 0, label: 'Neutral', color: '#94a3b8' }
+            };
+
+            const rationale = [];
+
+            // Volume Profile
+            if (currentPrice <= val) {
+                signals.volumeProfile = { signal: 1, label: 'Bullish', color: '#10b981' };
+                rationale.push(`Price at VAL support ($${val.toFixed(2)})`);
+            } else if (currentPrice >= vah) {
+                signals.volumeProfile = { signal: -1, label: 'Bearish', color: '#ef4444' };
+                rationale.push(`Price at VAH resistance ($${vah.toFixed(2)})`);
+            } else if (Math.abs(currentPrice - poc) < (vah - val) * 0.15) {
+                rationale.push(`Price near POC fair value ($${poc.toFixed(2)})`);
+            }
+
+            // VWAP
+            const zScore = (currentPrice - vwap) / vwapStd;
+            if (zScore < -2) {
+                signals.vwap = { signal: 1, label: 'Bullish', color: '#10b981' };
+                rationale.push(`Oversold at VWAP -2σ (z=${zScore.toFixed(1)})`);
+            } else if (zScore > 2) {
+                signals.vwap = { signal: -1, label: 'Bearish', color: '#ef4444' };
+                rationale.push(`Overbought at VWAP +2σ (z=${zScore.toFixed(1)})`);
+            } else if (currentPrice > vwap) {
+                signals.vwap = { signal: 1, label: 'Bullish', color: '#10b981' };
+                rationale.push('Price above VWAP');
+            } else {
+                signals.vwap = { signal: -1, label: 'Bearish', color: '#ef4444' };
+                rationale.push('Price below VWAP');
+            }
+
+            // OBV
+            if (obvTrend === 'rising') {
+                signals.obv = { signal: 1, label: 'Bullish', color: '#10b981' };
+                rationale.push('OBV rising (accumulation)');
+            } else if (obvTrend === 'falling') {
+                signals.obv = { signal: -1, label: 'Bearish', color: '#ef4444' };
+                rationale.push('OBV falling (distribution)');
+            }
+
+            // VROC (relative volume)
+            const relVol = volumeToday / avgVolume;
+            if (relVol > 1.5) {
+                signals.vroc = { signal: 1, label: 'High Activity', color: '#f59e0b' };
+                rationale.push(`High volume (${relVol.toFixed(1)}x average)`);
+            } else if (relVol < 0.7) {
+                signals.vroc = { signal: -1, label: 'Low Activity', color: '#ef4444' };
+                rationale.push(`Low volume (${relVol.toFixed(1)}x average)`);
+            }
+
+            // Confluence
+            const totalSignal = signals.volumeProfile.signal + signals.vwap.signal + signals.obv.signal;
+            let overallDirection = 'NEUTRAL';
+            let overallColor = '#94a3b8';
+            let overallStrength = Math.abs(totalSignal);
+
+            if (totalSignal >= 2) {
+                overallDirection = 'BULLISH';
+                overallColor = '#10b981';
+            } else if (totalSignal <= -2) {
+                overallDirection = 'BEARISH';
+                overallColor = '#ef4444';
+            } else if (totalSignal > 0) {
+                overallDirection = 'LEAN BULLISH';
+                overallColor = '#10b981';
+            } else if (totalSignal < 0) {
+                overallDirection = 'LEAN BEARISH';
+                overallColor = '#ef4444';
+            }
+
+            // Update dashboard chart
+            dashboardChart.data.datasets[0].data = [
+                signals.volumeProfile.signal,
+                signals.vwap.signal,
+                signals.obv.signal,
+                signals.vroc.signal,
+                totalSignal
+            ];
+            dashboardChart.data.datasets[0].backgroundColor = [
+                signals.volumeProfile.color,
+                signals.vwap.color,
+                signals.obv.color,
+                signals.vroc.color,
+                overallColor
+            ].map(c => c.replace(')', ', 0.7)').replace('rgb', 'rgba'));
+            dashboardChart.update();
+
+            // Update results
+            document.getElementById('confluenceResults').innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3 style="color: ${overallColor}; font-size: 1.5rem;">${overallDirection}</h3>
+                    <p style="color: #94a3b8;">Confluence Score: ${totalSignal} / 3</p>
+                </div>
+
+                <div class="grid grid-2" style="gap: 10px; margin-bottom: 15px;">
+                    <div class="card" style="text-align: center; padding: 15px;">
+                        <span style="color: ${signals.volumeProfile.color};">Volume Profile</span>
+                        <p style="margin: 5px 0; font-weight: bold;">${signals.volumeProfile.label}</p>
+                    </div>
+                    <div class="card" style="text-align: center; padding: 15px;">
+                        <span style="color: ${signals.vwap.color};">VWAP</span>
+                        <p style="margin: 5px 0; font-weight: bold;">${signals.vwap.label}</p>
+                    </div>
+                    <div class="card" style="text-align: center; padding: 15px;">
+                        <span style="color: ${signals.obv.color};">OBV Trend</span>
+                        <p style="margin: 5px 0; font-weight: bold;">${signals.obv.label}</p>
+                    </div>
+                    <div class="card" style="text-align: center; padding: 15px;">
+                        <span style="color: ${signals.vroc.color};">Volume Activity</span>
+                        <p style="margin: 5px 0; font-weight: bold;">${signals.vroc.label}</p>
+                    </div>
+                </div>
+
+                <div class="info-box info-box-info">
+                    <strong>Analysis:</strong>
+                    <ul style="margin: 10px 0;">
+                        ${rationale.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                    ${overallStrength >= 2 ?
+                        `<p style="color: ${overallColor}; font-weight: bold;">Strong ${overallDirection.toLowerCase()} confluence - high-probability setup</p>` :
+                        `<p style="color: #94a3b8;">Weak confluence - wait for more confirmation</p>`
+                    }
+                </div>
+            `;
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'OBV adds volume on up-close days and subtracts on down-close days, creating a cumulative measure of buying vs selling pressure.' },
+                q2: { correct: 'b', explanation: 'Bearish divergence occurs when price makes higher highs but volume/OBV makes lower highs—indicating weakening buying pressure and potential top.' },
+                q3: { correct: 'b', explanation: 'A Spring is a false breakdown below support (shaking out weak holders) that quickly reverses, signaling accumulation is complete.' },
+                q4: { correct: 'b', explanation: 'Each indicator has limitations. When multiple indicators align, false signals are filtered out and trade conviction increases.' },
+                q5: { correct: 'b', explanation: 'VROC measures how fast volume is changing relative to past periods. Spikes indicate unusual activity that often precedes breakouts.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+
+            const pct = (score / 5 * 100).toFixed(0);
+            document.getElementById('quizScore').innerHTML = `
+                <h3>Score: ${score}/5 (${pct}%)</h3>
+                <p>${pct >= 80 ? 'Excellent! You understand combined volume strategies.' : pct >= 60 ? 'Good progress! Review the concepts.' : 'Keep studying the material.'}</p>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCharts);
+    </script>
+</body>
+</html>

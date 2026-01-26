@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master volatility calculation for quantitative trading. Learn to measure risk, calculate annualized volatility, and use rolling volatility for dynamic risk management.">
+  <title>1.4 Volatility Calculation | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="1.3_price_normalization.html" class="nav-home">← Previous Module</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 1.4</span>
+          <span class="nav-module-title">Volatility Calculation</span>
+        </div>
+        <a href="../../index.html" class="nav-next">Back to Course →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 1: Price Action & Returns</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>1.4 Volatility Calculation</span>
+        </div>
+        <h1>Volatility Calculation</h1>
+        <p class="module-subtitle">
+          Measure market risk through volatility - the most important risk metric in quantitative trading.
+          Learn to calculate, annualize, and interpret volatility for position sizing and risk management.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 18 min read</span>
+          <span class="meta-item">📊 4 Visualizations</span>
+          <span class="meta-item">💻 Volatility Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ The Hidden Risk</div>
+        <p>
+          Two strategies both return +20% annually. Which should you choose? "They're the same," you think.
+          <strong>Wrong.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          Strategy A: Volatility 5% (steady gains, max drawdown -3%)
+          <br>Strategy B: Volatility 40% (wild swings, max drawdown -35%)
+          <br><br>
+          <strong>Strategy B will destroy your account and your sleep.</strong> Without measuring volatility,
+          you're flying blind on risk. Most traders who blow up didn't measure volatility properly.
+        </p>
+      </div>
+
+      <h3>The Cost of Ignoring Volatility</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Position Sizing Failures</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Without volatility, you can't size positions correctly. You'll risk too much on volatile assets
+            and too little on stable ones, leading to inconsistent results and blown accounts.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Wrong Risk Metrics</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Sharpe ratio, Value at Risk, and all risk-adjusted returns require volatility. Get it wrong,
+            and you're comparing strategies on false premises.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Unexpected Drawdowns</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Volatility predicts potential losses. Ignore it, and you'll be shocked when "normal" market
+            moves trigger margin calls or stop losses.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why Volatility Matters</div>
+        <p style="margin-bottom: 0;">
+          Volatility is the <strong>universal measure of risk</strong> in finance. It tells you how much an asset's
+          returns vary over time. High volatility = high risk = need smaller positions. Low volatility = low risk =
+          can use larger positions. Every professional trader, risk manager, and portfolio optimizer uses volatility
+          as the foundation of risk management. Master it, and you'll never over-leverage or under-size positions again.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition (No Math Yet)</h2>
+
+      <h3>What Is Volatility?</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">🎯 The Dartboard Analogy</div>
+        <p>
+          Imagine two dart players both averaging bullseye (center). Player A's darts cluster tightly around
+          the bullseye. Player B's darts scatter wildly - some hit bullseye, others miss the board entirely.
+        </p>
+        <p style="margin-bottom: 0;">
+          <strong>Both have the same average score, but very different consistency.</strong> Player A has low
+          volatility (predictable), Player B has high volatility (unpredictable). In trading, volatility measures
+          how far returns deviate from their average. Wide scatter = high volatility = high risk.
+        </p>
+      </div>
+
+      <h3>Visual: Low vs High Volatility</h3>
+
+      <svg width="100%" height="350" viewBox="0 0 900 350" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <!-- Title -->
+        <text x="450" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="20" font-weight="600">
+          Same Average Return, Different Volatility
+        </text>
+
+        <!-- Low Volatility Stock -->
+        <g>
+          <text x="220" y="70" fill="var(--success)" text-anchor="middle" font-size="16" font-weight="600">
+            Low Volatility (5%)
+          </text>
+
+          <!-- Price line -->
+          <path d="M 50 150 Q 100 145, 150 148 T 250 150 T 350 152 T 390 150"
+                stroke="var(--success)" stroke-width="3" fill="none"/>
+
+          <!-- Volatility band (tight) -->
+          <path d="M 50 140 Q 100 135, 150 138 T 250 140 T 350 142 T 390 140"
+                stroke="var(--success)" stroke-width="1" fill="none" stroke-dasharray="3,3" opacity="0.5"/>
+          <path d="M 50 160 Q 100 155, 150 158 T 250 160 T 350 162 T 390 160"
+                stroke="var(--success)" stroke-width="1" fill="none" stroke-dasharray="3,3" opacity="0.5"/>
+
+          <text x="220" y="200" fill="var(--text-secondary)" text-anchor="middle" font-size="14">
+            ✓ Predictable, steady
+          </text>
+          <text x="220" y="220" fill="var(--text-secondary)" text-anchor="middle" font-size="14">
+            Easy to sleep at night
+          </text>
+        </g>
+
+        <!-- High Volatility Stock -->
+        <g transform="translate(450, 0)">
+          <text x="220" y="70" fill="var(--error)" text-anchor="middle" font-size="16" font-weight="600">
+            High Volatility (40%)
+          </text>
+
+          <!-- Price line (wild swings) -->
+          <path d="M 50 150 Q 70 100, 90 180 T 130 120 T 170 190 T 210 110 T 250 170 T 290 130 T 330 185 T 370 125 T 390 150"
+                stroke="var(--error)" stroke-width="3" fill="none"/>
+
+          <!-- Volatility band (wide) -->
+          <path d="M 50 80 Q 70 60, 90 100 T 130 70 T 390 80"
+                stroke="var(--error)" stroke-width="1" fill="none" stroke-dasharray="3,3" opacity="0.5"/>
+          <path d="M 50 220 Q 70 240, 90 200 T 130 230 T 390 220"
+                stroke="var(--error)" stroke-width="1" fill="none" stroke-dasharray="3,3" opacity="0.5"/>
+
+          <text x="220" y="200" fill="var(--text-secondary)" text-anchor="middle" font-size="14">
+            ❌ Chaotic, unpredictable
+          </text>
+          <text x="220" y="220" fill="var(--text-secondary)" text-anchor="middle" font-size="14">
+            Heart attack inducing
+          </text>
+        </g>
+
+        <!-- Bottom explanation -->
+        <text x="450" y="270" fill="var(--text-primary)" text-anchor="middle" font-size="16" font-weight="600">
+          Both End at Same Price, But Very Different Journey!
+        </text>
+
+        <text x="450" y="300" fill="var(--success)" text-anchor="middle" font-size="14">
+          Low Vol: Small daily swings, comfortable ride
+        </text>
+        <text x="450" y="320" fill="var(--error)" text-anchor="middle" font-size="14">
+          High Vol: Massive daily swings, emotional rollercoaster
+        </text>
+      </svg>
+
+      <div class="grid grid-2" style="margin-top: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--success);">
+          <h3>Low Volatility Assets 😌</h3>
+          <p><strong>Examples:</strong> Utility stocks, bonds, dividend aristocrats</p>
+          <p><strong>Daily returns:</strong> -0.5% to +0.5% typically</p>
+          <p><strong>Annual volatility:</strong> ~10-15%</p>
+          <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+            <strong>Impact:</strong> Can use larger positions (less risky), more predictable returns,
+            suitable for conservative portfolios.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--error);">
+          <h3>High Volatility Assets 😱</h3>
+          <p><strong>Examples:</strong> Crypto, penny stocks, leveraged ETFs</p>
+          <p><strong>Daily returns:</strong> -10% to +10% commonly</p>
+          <p><strong>Annual volatility:</strong> 50-100%+</p>
+          <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+            <strong>Impact:</strong> Must use tiny positions (very risky), potential for huge gains/losses,
+            not suitable for most investors.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <h3>Volatility = Standard Deviation of Returns</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Daily Volatility (Standard Deviation)</div>
+        <div class="formula-content">
+          σ<sub>daily</sub> = √[Σ(r<sub>i</sub> - r̄)² / (n - 1)]
+        </div>
+        <div class="formula-description">
+          Where r<sub>i</sub> is each return, r̄ is mean return, n is number of observations
+        </div>
+      </div>
+
+      <div class="formula-box" style="margin-top: 1rem;">
+        <div class="formula-label">Annualized Volatility</div>
+        <div class="formula-content">
+          σ<sub>annual</sub> = σ<sub>daily</sub> × √252
+        </div>
+        <div class="formula-description">
+          Multiply daily volatility by square root of trading days (252 in a year)
+        </div>
+      </div>
+
+      <h3>Step-by-Step Example</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">volatility_example.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+
+# Daily returns for one week (as decimals)
+daily_returns = np.array([0.01, -0.005, 0.02, -0.01, 0.015])
+
+# Step 1: Calculate daily volatility (standard deviation)
+daily_vol = np.std(daily_returns, ddof=1)  # ddof=1 for sample std
+print(f"Daily Volatility: {daily_vol:.4f} = {daily_vol*100:.2f}%")
+# Output: Daily Volatility: 0.0123 = 1.23%
+
+# Step 2: Annualize the volatility
+annual_vol = daily_vol * np.sqrt(252)  # 252 trading days
+print(f"Annual Volatility: {annual_vol:.4f} = {annual_vol*100:.2f}%")
+# Output: Annual Volatility: 0.1954 = 19.54%
+
+# Interpretation
+print(f"\nInterpretation:")
+print(f"This asset has {annual_vol*100:.1f}% annual volatility")
+print(f"In a typical year, ~68% of returns will be within ±{annual_vol*100:.1f}%")
+print(f"In a typical year, ~95% of returns will be within ±{annual_vol*2*100:.1f}%")
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Comparison Table: Different Asset Classes</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Asset Class</th>
+              <th>Example</th>
+              <th>Daily Vol</th>
+              <th>Annual Vol</th>
+              <th>Risk Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Government Bonds</strong></td>
+              <td>TLT</td>
+              <td>0.6%</td>
+              <td style="color: var(--success);">~10%</td>
+              <td style="color: var(--success);">Very Low</td>
+            </tr>
+            <tr>
+              <td><strong>Dividend Stocks</strong></td>
+              <td>JNJ, PG</td>
+              <td>0.8%</td>
+              <td style="color: var(--success);">~13%</td>
+              <td style="color: var(--success);">Low</td>
+            </tr>
+            <tr>
+              <td><strong>S&P 500</strong></td>
+              <td>SPY</td>
+              <td>1.0%</td>
+              <td style="color: var(--info);">~16%</td>
+              <td style="color: var(--info);">Moderate</td>
+            </tr>
+            <tr>
+              <td><strong>Tech Stocks</strong></td>
+              <td>TSLA, NVDA</td>
+              <td>2.5%</td>
+              <td style="color: var(--warning);">~40%</td>
+              <td style="color: var(--warning);">High</td>
+            </tr>
+            <tr>
+              <td><strong>Cryptocurrency</strong></td>
+              <td>BTC, ETH</td>
+              <td>4.0%</td>
+              <td style="color: var(--error);">~65%</td>
+              <td style="color: var(--error);">Very High</td>
+            </tr>
+            <tr>
+              <td><strong>Leveraged ETFs</strong></td>
+              <td>TQQQ (3x)</td>
+              <td>6.0%</td>
+              <td style="color: var(--error);">~95%</td>
+              <td style="color: var(--error);">Extreme</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Why √252?</div>
+        <p>
+          Volatility scales with the <strong>square root of time</strong>, not linearly. This comes from the properties
+          of Brownian motion (random walk). If daily vol is 1%, monthly vol is NOT 20× (20 trading days) = 20%.
+          It's 1% × √20 ≈ 4.47%.
+        </p>
+        <p style="margin-bottom: 0;">
+          For annual: √252 ≈ 15.87, so 1% daily × 15.87 ≈ 15.87% annual. This is fundamental to option pricing
+          and risk management.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties of Volatility</h2>
+
+      <h3>1. Time-Varying Volatility</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📊 Volatility Clustering</div>
+        <p>
+          Volatility is <strong>not constant</strong>. High volatility periods tend to cluster together (2008 crisis,
+          COVID crash), as do low volatility periods (2017 calm). This is called "volatility clustering" - an important
+          feature that GARCH models capture.
+        </p>
+        <p style="margin-bottom: 0;">
+          <strong>Implication:</strong> Use rolling windows to track changing volatility. A 30-day or 60-day rolling
+          volatility adapts to current market conditions better than a static historical average.
+        </p>
+      </div>
+
+      <h3>2. Mean Reversion</h3>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--accent-blue);">Volatility Spikes</h4>
+          <p>
+            During crises (2008, 2020), volatility can spike from 15% to 80%+ overnight.
+            VIX (volatility index) went from 15 to 85 in March 2020.
+          </p>
+          <p style="margin-bottom: 0; font-size: 0.95rem;">
+            <strong>Mean Reversion:</strong> Extreme volatility eventually returns to long-term average.
+            This creates volatility trading opportunities.
+          </p>
+        </div>
+
+        <div class="card">
+          <h4 style="color: var(--success);">Calm Periods</h4>
+          <p>
+            Extended bull markets see volatility compress. 2017 saw SPY volatility drop to ~8%,
+            below historical 16% average.
+          </p>
+          <p style="margin-bottom: 0; font-size: 0.95rem;">
+            <strong>Beware:</strong> Low volatility breeds complacency. When it spikes again,
+            unprepared traders get hurt.
+          </p>
+        </div>
+      </div>
+
+      <h3>3. The VIX: Market's Fear Gauge</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">vix_interpretation.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python"># VIX levels and what they mean
+def interpret_vix(vix_level: float) -> str:
+    """
+    Interpret VIX (CBOE Volatility Index) level.
+
+    VIX represents expected 30-day volatility of S&P 500.
+    """
+    if vix_level < 12:
+        return "😴 Extremely Low - Market complacent, potential for sudden spike"
+    elif vix_level < 20:
+        return "😌 Low - Normal calm market conditions"
+    elif vix_level < 30:
+        return "😐 Moderate - Uncertainty rising, caution warranted"
+    elif vix_level < 40:
+        return "😰 High - Significant fear, market stress"
+    else:
+        return "😱 Extreme - Panic, crisis conditions"
+
+# Examples
+print(f"VIX 10: {interpret_vix(10)}")
+print(f"VIX 15: {interpret_vix(15)}")
+print(f"VIX 25: {interpret_vix(25)}")
+print(f"VIX 35: {interpret_vix(35)}")
+print(f"VIX 85: {interpret_vix(85)}")  # COVID crash peak
+</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Interactive Volatility Calculator</h2>
+
+      <div class="calculator-widget" data-calc-id="vol-calc">
+        <h3 class="calculator-title">Volatility Calculator</h3>
+        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+          Enter daily returns (separated by commas) to calculate daily and annualized volatility.
+        </p>
+
+        <div class="calculator-input-group">
+          <label class="calculator-label" for="returnsInput">Daily Returns (%, comma-separated)</label>
+          <input type="text" id="returnsInput" class="calculator-input"
+                 value="1.2, -0.8, 2.1, -1.5, 0.9, 1.8, -0.5, 0.3, -1.2, 1.5"
+                 placeholder="e.g., 1.2, -0.8, 2.1, -1.5">
+        </div>
+
+        <div class="calculator-input-group">
+          <label class="calculator-label" for="tradingDays">Trading Days per Year</label>
+          <input type="number" id="tradingDays" class="calculator-input" value="252" min="1" max="365">
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculateVolatility()">
+          Calculate Volatility
+        </button>
+
+        <div class="calculator-result" style="margin-top: 1.5rem; display: none;" id="volResults">
+          <div class="grid grid-2">
+            <div>
+              <div class="calculator-result-label">Daily Volatility</div>
+              <div class="calculator-result-value" id="dailyVol" style="color: var(--accent-blue);">1.23%</div>
+            </div>
+            <div>
+              <div class="calculator-result-label">Annualized Volatility</div>
+              <div class="calculator-result-value" id="annualVol" style="color: var(--accent-purple);">19.54%</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-md); border-left: 4px solid var(--accent-blue);">
+            <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Risk Interpretation</h4>
+            <p id="riskLevel" style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;"></p>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.5rem;">Confidence Intervals (Normal Distribution)</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+              Assuming returns are normally distributed:
+            </p>
+            <div id="confidenceIntervals" style="font-family: var(--font-mono); font-size: 0.9rem;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <h3>Professional Volatility Calculator</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">volatility_calculator.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+import pandas as pd
+from typing import Union
+
+def calculate_volatility(returns: Union[pd.Series, np.ndarray],
+                        window: int = None,
+                        annualize: bool = True,
+                        trading_days: int = 252) -> Union[float, pd.Series]:
+    """
+    Calculate volatility (standard deviation of returns).
+
+    Args:
+        returns: Series of returns (daily, weekly, etc.)
+        window: Rolling window size (None for full period)
+        annualize: Whether to annualize the volatility
+        trading_days: Number of trading periods per year
+
+    Returns:
+        Volatility as float (if window=None) or Series (if rolling)
+    """
+    if window is None:
+        # Calculate volatility for entire period
+        vol = returns.std()
+    else:
+        # Calculate rolling volatility
+        if isinstance(returns, pd.Series):
+            vol = returns.rolling(window=window).std()
+        else:
+            vol = pd.Series(returns).rolling(window=window).std().values
+
+    if annualize:
+        vol = vol * np.sqrt(trading_days)
+
+    return vol
+
+
+def calculate_realized_volatility(prices: pd.Series,
+                                  period: int = 30,
+                                  annualize: bool = True) -> pd.Series:
+    """
+    Calculate realized volatility using log returns.
+
+    Args:
+        prices: Price series
+        period: Lookback period for volatility
+        annualize: Whether to annualize
+
+    Returns:
+        Rolling realized volatility
+    """
+    # Calculate log returns
+    log_returns = np.log(prices / prices.shift(1))
+
+    # Calculate rolling standard deviation
+    realized_vol = log_returns.rolling(window=period).std()
+
+    if annualize:
+        realized_vol *= np.sqrt(252)
+
+    return realized_vol
+
+
+# Example Usage
+if __name__ == "__main__":
+    # Simulate price data
+    np.random.seed(42)
+    returns = np.random.normal(0.0005, 0.015, 252)  # Daily returns
+
+    # Calculate volatility
+    daily_vol = calculate_volatility(returns, annualize=False)
+    annual_vol = calculate_volatility(returns, annualize=True)
+
+    print("="*60)
+    print("VOLATILITY METRICS")
+    print("="*60)
+    print(f"Daily Volatility:     {daily_vol:.4f} ({daily_vol*100:.2f}%)")
+    print(f"Annual Volatility:    {annual_vol:.4f} ({annual_vol*100:.2f}%)")
+    print(f"Scaling Factor:       {np.sqrt(252):.2f}")
+    print("="*60)
+
+    # Risk interpretation
+    if annual_vol < 0.15:
+        risk = "Low Risk"
+    elif annual_vol < 0.25:
+        risk = "Moderate Risk"
+    elif annual_vol < 0.40:
+        risk = "High Risk"
+    else:
+        risk = "Very High Risk"
+
+    print(f"\nRisk Level: {risk}")
+
+    # Value at Risk (1-day, 95% confidence)
+    var_95 = 1.645 * daily_vol  # 95th percentile
+    print(f"1-Day VaR (95%): {var_95:.2%}")
+    print(f"Expected max loss in 1 day (95% confidence): {var_95:.2%}")
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Rolling Volatility Analysis</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">rolling_volatility.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def analyze_rolling_volatility(ticker: str,
+                               period: str = '2y',
+                               windows: list = [20, 60, 120]):
+    """
+    Analyze rolling volatility with multiple windows.
+
+    Args:
+        ticker: Stock ticker symbol
+        period: Data period to download
+        windows: List of rolling window sizes
+
+    Returns:
+        DataFrame with price and volatility columns
+    """
+    # Download data
+    data = yf.download(ticker, period=period, progress=False)
+    prices = data['Adj Close']
+
+    # Calculate returns
+    returns = np.log(prices / prices.shift(1))
+
+    # Calculate rolling volatilities
+    results = pd.DataFrame({'Price': prices})
+
+    for window in windows:
+        vol = returns.rolling(window=window).std() * np.sqrt(252)
+        results[f'{window}D Vol'] = vol
+
+    return results
+
+
+# Example: SPY volatility analysis
+ticker = 'SPY'
+vol_data = analyze_rolling_volatility(ticker, period='2y', windows=[20, 60, 120])
+
+# Plot
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+
+# Price plot
+ax1.plot(vol_data.index, vol_data['Price'], linewidth=2, color='#3b82f6')
+ax1.set_title(f'{ticker} Price', fontsize=14, color='white')
+ax1.set_ylabel('Price ($)', fontsize=12, color='white')
+ax1.grid(True, alpha=0.2)
+ax1.set_facecolor('#1e1e1e')
+
+# Volatility plot
+colors = ['#10b981', '#f59e0b', '#ef4444']
+for i, window in enumerate([20, 60, 120]):
+    ax2.plot(vol_data.index, vol_data[f'{window}D Vol'],
+             label=f'{window}-Day Vol', linewidth=2, color=colors[i])
+
+ax2.axhline(y=0.20, color='white', linestyle='--', alpha=0.3, label='20% Level')
+ax2.set_title('Rolling Volatility (Annualized)', fontsize=14, color='white')
+ax2.set_ylabel('Volatility', fontsize=12, color='white')
+ax2.set_xlabel('Date', fontsize=12, color='white')
+ax2.legend(fontsize=10)
+ax2.grid(True, alpha=0.2)
+ax2.set_facecolor('#1e1e1e')
+
+# Dark theme
+fig.patch.set_facecolor('#0a0e1a')
+for ax in [ax1, ax2]:
+    ax.tick_params(colors='white')
+    for spine in ax.spines.values():
+        spine.set_color('white')
+
+plt.tight_layout()
+plt.show()
+
+# Summary statistics
+print("\nVolatility Statistics:")
+print(vol_data[[f'{w}D Vol' for w in [20, 60, 120]]].describe())
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Visualizations</h3>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Price Chart with Volatility Bands</h4>
+        <canvas id="volatilityBandsChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Rolling 30-Day Volatility</h4>
+        <canvas id="rollingVolChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Volatility Comparison Across Assets</h4>
+        <canvas id="volComparisonChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Return Distribution vs Normal</h4>
+        <canvas id="distributionChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 6: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Trading Applications</h2>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px solid var(--accent-blue);">
+          <h3 style="color: var(--accent-blue);">Position Sizing</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Risk Parity:</strong> Allocate capital inversely to volatility</li>
+            <li><strong>Kelly Criterion:</strong> Optimal bet size depends on volatility</li>
+            <li><strong>Fixed Risk %:</strong> Size positions to risk same $ amount per trade</li>
+            <li><strong>Volatility Targeting:</strong> Scale leverage to maintain constant vol</li>
+            <li><strong>Stop Loss Placement:</strong> Set stops at 2-3× daily volatility</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); border: 2px solid var(--accent-purple);">
+          <h3 style="color: var(--accent-purple);">Risk Management</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>VaR Calculation:</strong> Estimate maximum loss at confidence level</li>
+            <li><strong>Sharpe Ratio:</strong> Risk-adjusted returns (Return / Volatility)</li>
+            <li><strong>Volatility Targeting:</strong> Reduce exposure in high-vol regimes</li>
+            <li><strong>Options Pricing:</strong> Implied vol vs realized vol opportunities</li>
+            <li><strong>Portfolio Diversification:</strong> Combine assets with different vols</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Practical Example: Volatility-Based Position Sizing</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">position_sizing.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">def calculate_position_size(portfolio_value: float,
+                           risk_per_trade: float,
+                           volatility: float,
+                           price: float,
+                           volatility_multiplier: float = 2.0) -> dict:
+    """
+    Calculate position size based on volatility.
+
+    Args:
+        portfolio_value: Total portfolio value
+        risk_per_trade: Risk per trade as decimal (e.g., 0.01 for 1%)
+        volatility: Daily volatility as decimal
+        price: Current price of asset
+        volatility_multiplier: How many std devs for stop loss
+
+    Returns:
+        Dict with position size, shares, and stop loss
+    """
+    # Dollar risk per trade
+    dollar_risk = portfolio_value * risk_per_trade
+
+    # Expected move (volatility-based stop distance)
+    stop_distance = price * volatility * volatility_multiplier
+
+    # Shares to buy
+    shares = int(dollar_risk / stop_distance)
+
+    # Position value
+    position_value = shares * price
+
+    # Stop loss price
+    stop_loss = price - stop_distance
+
+    return {
+        'shares': shares,
+        'position_value': position_value,
+        'position_pct': position_value / portfolio_value,
+        'stop_loss': stop_loss,
+        'stop_distance_pct': (stop_distance / price) * 100
+    }
+
+
+# Example: Compare two stocks with different volatilities
+portfolio = 100000  # $100k portfolio
+risk_pct = 0.01     # Risk 1% per trade
+
+# Low volatility stock
+stock_a = calculate_position_size(
+    portfolio_value=portfolio,
+    risk_per_trade=risk_pct,
+    volatility=0.01,  # 1% daily vol
+    price=100
+)
+
+# High volatility stock
+stock_b = calculate_position_size(
+    portfolio_value=portfolio,
+    risk_per_trade=risk_pct,
+    volatility=0.04,  # 4% daily vol
+    price=100
+)
+
+print("VOLATILITY-BASED POSITION SIZING")
+print("="*60)
+print(f"Portfolio Value: ${portfolio:,}")
+print(f"Risk per Trade: {risk_pct:.1%}\n")
+
+print("Stock A (Low Volatility: 1% daily):")
+print(f"  Shares:        {stock_a['shares']:,}")
+print(f"  Position:      ${stock_a['position_value']:,} ({stock_a['position_pct']:.1%})")
+print(f"  Stop Loss:     ${stock_a['stop_loss']:.2f} (-{stock_a['stop_distance_pct']:.1f}%)")
+
+print("\nStock B (High Volatility: 4% daily):")
+print(f"  Shares:        {stock_b['shares']:,}")
+print(f"  Position:      ${stock_b['position_value']:,} ({stock_b['position_pct']:.1%})")
+print(f"  Stop Loss:     ${stock_b['stop_loss']:.2f} (-{stock_b['stop_distance_pct']:.1f}%)")
+
+print("\n" + "="*60)
+print(f"Lower volatility = Larger position ({stock_a['shares'] / stock_b['shares']:.1f}x bigger)")
+print("Both risk the same $1,000 if stopped out")
+</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 7: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Common Mistakes (And How to Avoid Them)</h2>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #1: Using Simple Returns for Volatility</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># WRONG: Simple returns have bias for volatility
+simple_returns = prices.pct_change()
+volatility = simple_returns.std()  # Slightly biased!
+
+# Problem: Simple returns aren't symmetric around zero
+# for large moves, leading to upward bias in volatility</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Use log returns for volatility
+log_returns = np.log(prices / prices.shift(1))
+volatility = log_returns.std()
+
+# Log returns have proper statistical properties
+# for volatility estimation</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #2: Wrong Annualization</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># NEVER multiply by number of periods!
+daily_vol = 0.01  # 1% daily
+annual_vol = daily_vol * 252  # = 2.52 or 252%
+# This is COMPLETELY WRONG!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Multiply by SQUARE ROOT of periods
+daily_vol = 0.01  # 1% daily
+annual_vol = daily_vol * np.sqrt(252)  # = 0.1587 or 15.87%
+
+# Volatility scales with sqrt(time), not linearly!
+# This comes from properties of Brownian motion</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #3: Using Population Std Instead of Sample Std</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># WRONG: Using ddof=0 (population std)
+volatility = returns.std(ddof=0)
+
+# This slightly underestimates volatility
+# because we're working with a sample, not population</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Use ddof=1 (sample std, Bessel's correction)
+volatility = returns.std(ddof=1)  # Default for pandas
+# or
+volatility = returns.std()  # pandas default is ddof=1
+
+# Note: numpy default is ddof=0, so specify it!
+volatility = np.std(returns, ddof=1)</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #4: Ignoring Changing Volatility</div>
+        <p><strong>The Problem:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># Using static historical volatility for current decisions
+# Calculate volatility from ALL historical data
+historical_vol = returns.std()
+
+# Use this for position sizing TODAY
+position_size = calculate_size(historical_vol)  # Danger!
+
+# Problem: Current volatility might be 2x or 0.5x historical
+# You'll be over/under-sized for current conditions!</code></pre>
+          </div>
+        </div>
+        <p><strong>Solution:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># Use ROLLING volatility to adapt to current conditions
+rolling_vol = returns.rolling(window=30).std().iloc[-1]
+
+# Use most recent volatility estimate
+position_size = calculate_size(rolling_vol)  # Better!
+
+# Even better: Use exponentially weighted moving average
+ewma_vol = returns.ewm(span=30).std().iloc[-1]
+# This gives more weight to recent observations</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Understanding</h2>
+
+      <div class="quiz-container" data-quiz-id="vol-quiz">
+        <div class="quiz-score" style="text-align: right; font-weight: 600; color: var(--accent-blue); margin-bottom: 1rem;">
+          Score: 0/5
+        </div>
+
+        <!-- Question 1 -->
+        <div class="quiz-question-group" data-question-id="q1">
+          <div class="quiz-question">1. If daily volatility is 2%, what is the approximate annualized volatility?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="You can't just multiply by 252 trading days - volatility scales with square root of time!">
+              504% (2% × 252 days)
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Annual vol = Daily vol × √252 = 2% × 15.87 ≈ 31.75%">
+              ~32% (2% × √252)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="This would be monthly volatility (2% × √20 ≈ 8.9%), not annual.">
+              ~9% (2% × √20)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Volatility increases with time horizon, not decreases.">
+              ~1% (2% / 2)
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-question-group" data-question-id="q2">
+          <div class="quiz-question">2. What does volatility measure in quantitative trading?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="That's average return, not volatility.">
+              The average return of an asset
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Volatility = standard deviation of returns, measuring dispersion around the mean.">
+              The standard deviation of returns (variability/risk)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That's maximum drawdown, a different risk metric.">
+              The maximum loss from peak to trough
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That's correlation, not volatility.">
+              The relationship between two assets
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-question-group" data-question-id="q3">
+          <div class="quiz-question">3. An asset has 40% annual volatility. How should this affect your position sizing?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Higher volatility = higher risk = need SMALLER positions, not larger!">
+              Take a larger position (high vol = high potential returns)
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! High volatility means high risk, requiring smaller position size to maintain consistent dollar risk.">
+              Take a smaller position (high vol = high risk)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Volatility is crucial for position sizing - you must account for it!">
+              Volatility doesn't affect position size
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Completely avoiding it isn't necessary - just size appropriately for the risk.">
+              Avoid the asset entirely
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="quiz-question-group" data-question-id="q4">
+          <div class="quiz-question">4. Why should you use log returns instead of simple returns for volatility calculation?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Both are equally easy to calculate.">
+              Log returns are easier to calculate
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Log returns are symmetric and time-additive, making them better for statistical analysis like volatility.">
+              Log returns have better statistical properties for volatility
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Actually, institutional traders prefer log returns for analysis.">
+              Simple returns are preferred by institutions
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Log returns can be positive or negative just like simple returns.">
+              Log returns are always positive
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 5 -->
+        <div class="quiz-question-group" data-question-id="q5">
+          <div class="quiz-question">5. What is 'volatility clustering'?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="That's correlation, not clustering.">
+              When multiple assets have similar volatility
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! High volatility periods tend to be followed by high volatility, and low by low - they cluster together.">
+              When high volatility periods tend to follow high volatility periods
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Volatility varies over time - it's not constant.">
+              When volatility remains constant over time
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="That would be perfect mean reversion, which doesn't describe clustering.">
+              When volatility always returns to exactly 15%
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 8: SUMMARY & CHEAT SHEET -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Summary & Cheat Sheet</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Volatility</strong> is the standard deviation of returns - the universal measure of risk</li>
+          <li><strong>Annualize</strong> by multiplying daily vol by √252, NOT by 252</li>
+          <li>Use <strong>log returns</strong> for volatility calculation (better statistical properties)</li>
+          <li><strong>Rolling volatility</strong> adapts to changing market conditions</li>
+          <li>Higher volatility = higher risk = <strong>smaller position sizes</strong></li>
+          <li>Volatility is <strong>time-varying</strong> (clustering) and <strong>mean-reverting</strong></li>
+        </ul>
+      </div>
+
+      <h3>Quick Reference Formulas</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Formula</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Daily Volatility</strong></td>
+              <td>σ<sub>d</sub> = std(returns, ddof=1)</td>
+              <td>Use sample std (ddof=1)</td>
+            </tr>
+            <tr>
+              <td><strong>Annual Volatility</strong></td>
+              <td>σ<sub>a</sub> = σ<sub>d</sub> × √252</td>
+              <td>252 trading days/year</td>
+            </tr>
+            <tr>
+              <td><strong>Monthly from Daily</strong></td>
+              <td>σ<sub>m</sub> = σ<sub>d</sub> × √20</td>
+              <td>~20 trading days/month</td>
+            </tr>
+            <tr>
+              <td><strong>Rolling Volatility</strong></td>
+              <td>returns.rolling(30).std()</td>
+              <td>30-day or 60-day typical</td>
+            </tr>
+            <tr>
+              <td><strong>1-Day VaR (95%)</strong></td>
+              <td>VaR = 1.645 × σ<sub>d</sub></td>
+              <td>95th percentile loss</td>
+            </tr>
+            <tr>
+              <td><strong>Sharpe Ratio</strong></td>
+              <td>(Return - RFR) / Volatility</td>
+              <td>Risk-adjusted return</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Volatility Levels Guide</h3>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid var(--success);">
+          <h4 style="color: var(--success);">Low Volatility (< 20%)</h4>
+          <ul style="margin-top: 0.5rem;">
+            <li>Bonds, utilities, dividend stocks</li>
+            <li>Can use larger position sizes</li>
+            <li>Lower expected returns</li>
+            <li>Suitable for conservative portfolios</li>
+            <li>Example: JNJ (~13% vol)</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: rgba(239, 68, 68, 0.05); border-left: 4px solid var(--error);">
+          <h4 style="color: var(--error);">High Volatility (> 40%)</h4>
+          <ul style="margin-top: 0.5rem;">
+            <li>Crypto, biotech, penny stocks</li>
+            <li>Must use tiny position sizes</li>
+            <li>Higher potential returns (and losses)</li>
+            <li>Only for risk-tolerant traders</li>
+            <li>Example: BTC (~65% vol)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="formula-box" style="margin-top: 2rem;">
+        <div class="formula-label">The Golden Rule of Volatility</div>
+        <div class="formula-content" style="font-size: 1.3rem;">
+          σ<sub>annual</sub> = σ<sub>daily</sub> × √(Trading Days)
+        </div>
+        <div class="formula-description">
+          Volatility scales with the square root of time, not linearly!
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="1.3_price_normalization.html" class="btn btn-secondary">
+        ← Previous: Price Normalization
+      </a>
+      <a href="../../index.html" class="btn btn-primary">
+        Complete Module 1 →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Module 1.4: Volatility Calculation</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of the Quantitative Trading Mastery course
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            🎉 You've completed Module 1: Price Action & Returns!
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    // ============================================
+    // INTERACTIVE CALCULATOR
+    // ============================================
+    function calculateVolatility() {
+      const input = document.getElementById('returnsInput').value;
+      const tradingDays = parseInt(document.getElementById('tradingDays').value) || 252;
+
+      // Parse returns
+      const returns = input.split(',').map(r => parseFloat(r.trim()) / 100).filter(r => !isNaN(r));
+
+      if (returns.length < 2) {
+        alert('Please enter at least 2 returns');
+        return;
+      }
+
+      // Calculate mean
+      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+
+      // Calculate variance (sample)
+      const squaredDiffs = returns.map(r => Math.pow(r - mean, 2));
+      const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (returns.length - 1);
+
+      // Daily volatility
+      const dailyVol = Math.sqrt(variance);
+
+      // Annual volatility
+      const annualVol = dailyVol * Math.sqrt(tradingDays);
+
+      // Display results
+      document.getElementById('volResults').style.display = 'block';
+      document.getElementById('dailyVol').textContent = (dailyVol * 100).toFixed(2) + '%';
+      document.getElementById('annualVol').textContent = (annualVol * 100).toFixed(2) + '%';
+
+      // Risk interpretation
+      let riskText = '';
+      if (annualVol < 0.15) {
+        riskText = '😌 Low Risk - Stable, conservative asset suitable for larger positions.';
+      } else if (annualVol < 0.25) {
+        riskText = '😐 Moderate Risk - Typical stock-like volatility, standard position sizing.';
+      } else if (annualVol < 0.40) {
+        riskText = '😰 High Risk - Volatile asset, use reduced position sizes.';
+      } else {
+        riskText = '😱 Very High Risk - Extremely volatile, use very small positions or avoid.';
+      }
+      document.getElementById('riskLevel').textContent = riskText;
+
+      // Confidence intervals
+      const ci68 = annualVol * 100;
+      const ci95 = annualVol * 2 * 100;
+      const ci99 = annualVol * 3 * 100;
+
+      document.getElementById('confidenceIntervals').innerHTML = `
+        68% of returns within: ±${ci68.toFixed(1)}% (1σ)<br>
+        95% of returns within: ±${ci95.toFixed(1)}% (2σ)<br>
+        99.7% of returns within: ±${ci99.toFixed(1)}% (3σ)
+      `;
+    }
+
+    // ============================================
+    // CHART.JS VISUALIZATIONS
+    // ============================================
+
+    // Generate sample price data with volatility
+    function generatePriceData() {
+      const periods = 100;
+      const prices = [100];
+      const returns = [];
+
+      for (let i = 0; i < periods; i++) {
+        const ret = (Math.random() - 0.48) * 0.04;
+        returns.push(ret);
+        prices.push(prices[i] * (1 + ret));
+      }
+
+      // Calculate rolling volatility
+      const rollingVol = [];
+      const window = 20;
+
+      for (let i = 0; i < returns.length; i++) {
+        if (i < window - 1) {
+          rollingVol.push(null);
+        } else {
+          const windowReturns = returns.slice(i - window + 1, i + 1);
+          const mean = windowReturns.reduce((a, b) => a + b) / window;
+          const variance = windowReturns.map(r => Math.pow(r - mean, 2)).reduce((a, b) => a + b) / (window - 1);
+          const vol = Math.sqrt(variance) * Math.sqrt(252) * 100;
+          rollingVol.push(vol);
+        }
+      }
+
+      return { prices, returns, rollingVol };
+    }
+
+    const data = generatePriceData();
+    const labels = Array.from({length: data.prices.length}, (_, i) => `Day ${i}`);
+
+    // Chart 1: Price with Volatility Bands
+    const recentVol = data.rollingVol[data.rollingVol.length - 1] / 100 / Math.sqrt(252);
+    const upperBand = data.prices.map((p, i) => p * (1 + recentVol * 2));
+    const lowerBand = data.prices.map((p, i) => p * (1 - recentVol * 2));
+
+    const ctx1 = document.getElementById('volatilityBandsChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Price',
+          data: data.prices,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          fill: false
+        }, {
+          label: 'Upper Band (+2σ)',
+          data: upperBand,
+          borderColor: 'rgba(239, 68, 68, 0.5)',
+          borderWidth: 1,
+          borderDash: [5, 5],
+          fill: false,
+          pointRadius: 0
+        }, {
+          label: 'Lower Band (-2σ)',
+          data: lowerBand,
+          borderColor: 'rgba(239, 68, 68, 0.5)',
+          borderWidth: 1,
+          borderDash: [5, 5],
+          fill: false,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Price ($)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1', maxTicksLimit: 10 },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 2: Rolling Volatility
+    const ctx2 = document.getElementById('rollingVolChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: labels.slice(1),
+        datasets: [{
+          label: '20-Day Rolling Volatility (Annualized)',
+          data: data.rollingVol.slice(1),
+          borderColor: 'rgb(139, 92, 246)',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderWidth: 3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Volatility (%)', color: '#a8b2d1' },
+            ticks: {
+              color: '#a8b2d1',
+              callback: function(value) { return value?.toFixed(1) + '%'; }
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1', maxTicksLimit: 10 },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 3: Volatility Comparison
+    const ctx3 = document.getElementById('volComparisonChart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: ['Bonds', 'Utilities', 'S&P 500', 'Tech Stocks', 'Crypto', '3x Leverage'],
+        datasets: [{
+          label: 'Annual Volatility (%)',
+          data: [10, 13, 16, 40, 65, 95],
+          backgroundColor: [
+            'rgba(16, 185, 129, 0.7)',
+            'rgba(16, 185, 129, 0.7)',
+            'rgba(59, 130, 246, 0.7)',
+            'rgba(245, 158, 11, 0.7)',
+            'rgba(239, 68, 68, 0.7)',
+            'rgba(239, 68, 68, 0.9)'
+          ],
+          borderColor: [
+            'rgb(16, 185, 129)',
+            'rgb(16, 185, 129)',
+            'rgb(59, 130, 246)',
+            'rgb(245, 158, 11)',
+            'rgb(239, 68, 68)',
+            'rgb(239, 68, 68)'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Annual Volatility (%)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 4: Return Distribution
+    const ctx4 = document.getElementById('distributionChart').getContext('2d');
+
+    // Create histogram of returns
+    const bins = 15;
+    const returns = data.returns.map(r => r * 100);
+    const min = Math.min(...returns);
+    const max = Math.max(...returns);
+    const binSize = (max - min) / bins;
+    const histogram = new Array(bins).fill(0);
+    const binLabels = [];
+
+    for (let i = 0; i < bins; i++) {
+      const binStart = min + i * binSize;
+      binLabels.push(binStart.toFixed(1));
+      returns.forEach(r => {
+        if (r >= binStart && r < binStart + binSize) {
+          histogram[i]++;
+        }
+      });
+    }
+
+    new Chart(ctx4, {
+      type: 'bar',
+      data: {
+        labels: binLabels,
+        datasets: [{
+          label: 'Frequency',
+          data: histogram,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: 'Distribution of Daily Returns',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Frequency', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            title: { display: true, text: 'Return (%)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  </script>
+
+  <style>
+    /* Module-specific styles */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

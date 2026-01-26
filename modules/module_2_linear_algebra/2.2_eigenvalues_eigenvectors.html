@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master eigenvalues and eigenvectors for quantitative trading. Learn PCA for risk decomposition, factor analysis, and noise filtering in portfolio management.">
+  <title>2.2 Eigenvalues & Eigenvectors | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+
+  <style>
+        .eigen-visual {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .eigen-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        .eigen-item .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #818cf8;
+        }
+        .eigen-item .label {
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+        .pca-step {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+        .pca-step .step-num {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .variance-bar {
+            height: 30px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+            font-weight: 500;
+            margin: 5px 0;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 2.2</span>
+          <span class="nav-module-title">Eigenvalues & Eigenvectors</span>
+        </div>
+        <a href="2.3_matrix_decomposition.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 2: Linear Algebra</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>2.2 Eigenvalues & Eigenvectors</span>
+        </div>
+        <h1>Eigenvalues & Eigenvectors</h1>
+        <p class="module-subtitle">
+          Uncover hidden structure in financial data through spectral analysis.
+          Master PCA for risk decomposition and factor analysis.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 20 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💻 Interactive Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+        <!-- Section 1: Why Should You Care? -->
+        <section class="content-section">
+            <h2>1. Why Should You Care? 🎯</h2>
+
+            <div class="key-concept">
+                <h3>The Hidden Drivers of Portfolio Risk</h3>
+                <p>Your portfolio has 50 stocks. Are there really 50 independent sources of risk? Eigenvalues reveal that most variance comes from just a few dominant factors - often market risk, sector exposure, and style factors account for 80%+ of portfolio volatility.</p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🎯 PCA Risk Decomposition</h4>
+                    <p>Identify the true drivers of portfolio risk - often 3-5 factors explain 90% of variance in a 100-stock portfolio.</p>
+                </div>
+                <div class="card">
+                    <h4>📉 Dimensionality Reduction</h4>
+                    <p>Reduce 500 correlated features to 20 uncorrelated principal components without losing predictive power.</p>
+                </div>
+                <div class="card">
+                    <h4>⚠️ Risk Factor Analysis</h4>
+                    <p>Discover that "diversified" portfolios may actually be concentrated bets on a single hidden factor.</p>
+                </div>
+                <div class="card">
+                    <h4>🔮 Noise Filtering</h4>
+                    <p>Separate signal from noise in covariance matrices using random matrix theory and eigenvalue analysis.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Building Intuition -->
+        <section class="content-section">
+            <h2>2. Building Intuition 🧠</h2>
+
+            <div class="info-box info">
+                <h3>The Stretching Analogy</h3>
+                <p>Imagine a covariance matrix as a transformation that stretches space. Eigenvectors are the special directions that only get stretched (not rotated), and eigenvalues tell you how much stretching happens in each direction. In finance, these directions are your principal risk factors!</p>
+            </div>
+
+            <svg viewBox="0 0 700 350" class="svg-diagram">
+                <!-- Before transformation -->
+                <g transform="translate(150, 175)">
+                    <!-- Unit circle -->
+                    <circle cx="0" cy="0" r="80" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="5,5"/>
+
+                    <!-- Original vectors -->
+                    <line x1="0" y1="0" x2="80" y2="0" stroke="#10b981" stroke-width="3" marker-end="url(#arrowGreen)"/>
+                    <line x1="0" y1="0" x2="0" y2="-80" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowOrange)"/>
+
+                    <text x="0" y="120" text-anchor="middle" fill="#e2e8f0" font-size="14">Unit Circle</text>
+                    <text x="0" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">Before Transformation</text>
+                </g>
+
+                <!-- Arrow -->
+                <text x="320" y="175" fill="#94a3b8" font-size="24">→</text>
+                <text x="340" y="175" fill="#94a3b8" font-size="14">Σ</text>
+                <text x="360" y="175" fill="#94a3b8" font-size="24">→</text>
+
+                <!-- After transformation -->
+                <g transform="translate(530, 175)">
+                    <!-- Ellipse (transformed circle) -->
+                    <ellipse cx="0" cy="0" rx="120" ry="50" fill="none" stroke="#8b5cf6" stroke-width="2"/>
+
+                    <!-- Eigenvectors (scaled by eigenvalues) -->
+                    <line x1="0" y1="0" x2="120" y2="0" stroke="#10b981" stroke-width="3" marker-end="url(#arrowGreen)"/>
+                    <line x1="0" y1="0" x2="0" y2="-50" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowOrange)"/>
+
+                    <text x="130" y="5" fill="#10b981" font-size="12">λ₁ = 2.25</text>
+                    <text x="5" y="-55" fill="#f59e0b" font-size="12">λ₂ = 0.39</text>
+
+                    <text x="0" y="120" text-anchor="middle" fill="#e2e8f0" font-size="14">Covariance Ellipse</text>
+                    <text x="0" y="140" text-anchor="middle" fill="#94a3b8" font-size="12">Eigenvectors are Principal Axes</text>
+                </g>
+
+                <!-- Arrow markers -->
+                <defs>
+                    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <path d="M0,0 L0,6 L9,3 z" fill="#10b981"/>
+                    </marker>
+                    <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <path d="M0,0 L0,6 L9,3 z" fill="#f59e0b"/>
+                    </marker>
+                </defs>
+            </svg>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Eigenvalue (λ)</h4>
+                    <p>The variance explained by each principal direction. Larger eigenvalues = more important risk factors.</p>
+                    <div class="highlight">λ₁ > λ₂ > ... > λₙ</div>
+                </div>
+                <div class="card">
+                    <h4>Eigenvector (v)</h4>
+                    <p>The direction of each principal component. Shows how assets load onto each risk factor.</p>
+                    <div class="highlight">Σv = λv</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: The Mathematics -->
+        <section class="content-section">
+            <h2>3. The Mathematics 📐</h2>
+
+            <div class="formula-box">
+                <h3>Eigenvalue Equation</h3>
+                <div class="formula">
+                    Σv = λv
+                </div>
+                <p>Where Σ is the covariance matrix, v is an eigenvector, and λ is the corresponding eigenvalue</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Characteristic Equation</h3>
+                <div class="formula">
+                    det(Σ - λI) = 0
+                </div>
+                <p>Solving this equation yields all eigenvalues of the matrix</p>
+            </div>
+
+            <div class="info-box warning">
+                <h3>2×2 Example: Two-Asset Portfolio</h3>
+                <p>Given covariance matrix Σ:</p>
+                <div class="formula" style="font-size: 1.2rem;">
+                    Σ = [0.04  0.02]
+                        [0.02  0.03]
+                </div>
+                <p><strong>Step 1:</strong> det(Σ - λI) = (0.04-λ)(0.03-λ) - 0.0004 = 0</p>
+                <p><strong>Step 2:</strong> λ² - 0.07λ + 0.0008 = 0</p>
+                <p><strong>Step 3:</strong> λ₁ = 0.0544, λ₂ = 0.0156</p>
+                <p><strong>Interpretation:</strong> First PC explains 77.7% of variance (0.0544/0.07)</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Variance Explained Ratio</h3>
+                <div class="formula">
+                    Explained Ratio_k = λₖ / Σᵢλᵢ
+                </div>
+                <p>Proportion of total variance captured by the k-th principal component</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Portfolio Variance via Eigendecomposition</h3>
+                <div class="formula">
+                    σ²ₚ = w'Σw = Σₖ λₖ(w'vₖ)²
+                </div>
+                <p>Portfolio variance equals sum of eigenvalues weighted by squared factor exposures</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Key Properties -->
+        <section class="content-section">
+            <h2>4. Key Properties for Trading 📋</h2>
+
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Orthogonality</span>
+                    <span class="property-desc">Eigenvectors of symmetric matrices (like covariance) are orthogonal - principal components are uncorrelated</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Non-negative Eigenvalues</span>
+                    <span class="property-desc">Covariance matrices are positive semi-definite, so all eigenvalues ≥ 0</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Trace Property</span>
+                    <span class="property-desc">Sum of eigenvalues = trace(Σ) = total variance of all assets</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Determinant Property</span>
+                    <span class="property-desc">Product of eigenvalues = det(Σ) = generalized variance</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Condition Number</span>
+                    <span class="property-desc">κ(Σ) = λₘₐₓ/λₘᵢₙ measures matrix ill-conditioning; high values indicate multicollinearity</span>
+                </div>
+            </div>
+
+            <div class="pca-step">
+                <div class="step-num">1</div>
+                <div>
+                    <strong>Standardize Returns</strong>
+                    <p>Convert returns to z-scores so all assets contribute equally to variance</p>
+                </div>
+            </div>
+            <div class="pca-step">
+                <div class="step-num">2</div>
+                <div>
+                    <strong>Compute Covariance/Correlation Matrix</strong>
+                    <p>Use correlation matrix for PCA to avoid scale bias</p>
+                </div>
+            </div>
+            <div class="pca-step">
+                <div class="step-num">3</div>
+                <div>
+                    <strong>Eigendecomposition</strong>
+                    <p>Extract eigenvalues and eigenvectors using np.linalg.eig()</p>
+                </div>
+            </div>
+            <div class="pca-step">
+                <div class="step-num">4</div>
+                <div>
+                    <strong>Select Principal Components</strong>
+                    <p>Keep components explaining 90-95% of variance (scree plot analysis)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section">
+            <h2>5. Python Implementation 🐍</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Eigenvalue Analysis for Portfolio Risk</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import pandas as pd
+from scipy import stats
+
+def eigenvalue_analysis(returns_df):
+    """
+    Perform eigenvalue decomposition on asset returns
+    for risk factor analysis.
+
+    Parameters:
+    -----------
+    returns_df : pd.DataFrame
+        DataFrame of asset returns (rows=dates, columns=assets)
+
+    Returns:
+    --------
+    dict : eigenvalues, eigenvectors, variance explained
+    """
+    # Calculate correlation matrix (standardized)
+    corr_matrix = returns_df.corr().values
+
+    # Eigendecomposition
+    eigenvalues, eigenvectors = np.linalg.eig(corr_matrix)
+
+    # Sort by eigenvalue magnitude (descending)
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[idx]
+    eigenvectors = eigenvectors[:, idx]
+
+    # Ensure real values (numerical precision)
+    eigenvalues = np.real(eigenvalues)
+    eigenvectors = np.real(eigenvectors)
+
+    # Calculate variance explained
+    total_variance = np.sum(eigenvalues)
+    variance_explained = eigenvalues / total_variance
+    cumulative_variance = np.cumsum(variance_explained)
+
+    return {
+        'eigenvalues': eigenvalues,
+        'eigenvectors': eigenvectors,
+        'variance_explained': variance_explained,
+        'cumulative_variance': cumulative_variance,
+        'correlation_matrix': corr_matrix,
+        'asset_names': returns_df.columns.tolist()
+    }
+
+# Example with simulated multi-asset data
+np.random.seed(42)
+n_days = 252
+n_assets = 5
+asset_names = ['SPY', 'QQQ', 'IWM', 'EFA', 'BND']
+
+# Create correlated returns (market factor + idiosyncratic)
+market_factor = np.random.normal(0.0004, 0.01, n_days)
+returns_data = {}
+
+betas = [1.0, 1.2, 1.1, 0.8, 0.1]  # Market betas
+idio_vols = [0.005, 0.008, 0.007, 0.006, 0.003]
+
+for i, (name, beta, idio_vol) in enumerate(zip(asset_names, betas, idio_vols)):
+    idio = np.random.normal(0, idio_vol, n_days)
+    returns_data[name] = beta * market_factor + idio
+
+returns_df = pd.DataFrame(returns_data)
+
+# Perform eigenvalue analysis
+results = eigenvalue_analysis(returns_df)
+
+print("=" * 50)
+print("EIGENVALUE ANALYSIS RESULTS")
+print("=" * 50)
+print(f"\nAssets: {results['asset_names']}")
+print(f"\nEigenvalues: {results['eigenvalues'].round(4)}")
+print(f"\nVariance Explained: {(results['variance_explained'] * 100).round(2)}%")
+print(f"Cumulative Variance: {(results['cumulative_variance'] * 100).round(2)}%")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Principal Component Analysis (PCA) Implementation</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def pca_transform(returns_df, n_components=None, variance_threshold=0.95):
+    """
+    Transform returns into principal component space.
+
+    Parameters:
+    -----------
+    returns_df : pd.DataFrame
+        Asset returns
+    n_components : int, optional
+        Number of components to keep
+    variance_threshold : float
+        Keep components until this variance is explained
+
+    Returns:
+    --------
+    dict : transformed data and PCA results
+    """
+    # Standardize returns
+    returns_standardized = (returns_df - returns_df.mean()) / returns_df.std()
+
+    # Get eigendecomposition
+    analysis = eigenvalue_analysis(returns_df)
+
+    # Determine number of components
+    if n_components is None:
+        n_components = np.argmax(
+            analysis['cumulative_variance'] >= variance_threshold
+        ) + 1
+
+    # Select top components
+    selected_eigenvectors = analysis['eigenvectors'][:, :n_components]
+    selected_eigenvalues = analysis['eigenvalues'][:n_components]
+
+    # Transform to PC space
+    pc_returns = returns_standardized.values @ selected_eigenvectors
+
+    # Create PC names
+    pc_names = [f'PC{i+1}' for i in range(n_components)]
+    pc_df = pd.DataFrame(pc_returns,
+                         index=returns_df.index,
+                         columns=pc_names)
+
+    # Factor loadings (how assets map to PCs)
+    loadings = pd.DataFrame(
+        selected_eigenvectors,
+        index=returns_df.columns,
+        columns=pc_names
+    )
+
+    return {
+        'pc_returns': pc_df,
+        'loadings': loadings,
+        'eigenvalues': selected_eigenvalues,
+        'variance_explained': analysis['variance_explained'][:n_components],
+        'n_components': n_components,
+        'total_variance_captured': analysis['cumulative_variance'][n_components-1]
+    }
+
+# Apply PCA
+pca_results = pca_transform(returns_df, variance_threshold=0.90)
+
+print("\n" + "=" * 50)
+print("PCA TRANSFORMATION RESULTS")
+print("=" * 50)
+print(f"\nComponents selected: {pca_results['n_components']}")
+print(f"Total variance captured: {pca_results['total_variance_captured']*100:.2f}%")
+print(f"\nFactor Loadings (how assets map to PCs):")
+print(pca_results['loadings'].round(4))
+print(f"\nPC Returns (first 5 days):")
+print(pca_results['pc_returns'].head().round(6))</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Risk Factor Decomposition</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def decompose_portfolio_risk(weights, returns_df):
+    """
+    Decompose portfolio risk into principal component contributions.
+
+    Parameters:
+    -----------
+    weights : np.array
+        Portfolio weights
+    returns_df : pd.DataFrame
+        Asset returns
+
+    Returns:
+    --------
+    dict : risk decomposition by factor
+    """
+    weights = np.array(weights)
+
+    # Get eigendecomposition
+    cov_matrix = returns_df.cov().values
+    eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
+
+    # Sort by eigenvalue
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvalues = np.real(eigenvalues[idx])
+    eigenvectors = np.real(eigenvectors[:, idx])
+
+    # Total portfolio variance
+    portfolio_variance = weights @ cov_matrix @ weights
+    portfolio_vol = np.sqrt(portfolio_variance * 252)  # Annualized
+
+    # Factor exposures (w'v_k)
+    factor_exposures = weights @ eigenvectors
+
+    # Variance contribution from each factor: λ_k * (w'v_k)²
+    factor_variances = eigenvalues * (factor_exposures ** 2)
+    factor_var_pct = factor_variances / portfolio_variance * 100
+
+    # Marginal risk contribution
+    marginal_risk = cov_matrix @ weights / np.sqrt(portfolio_variance)
+    component_risk = weights * marginal_risk
+
+    return {
+        'portfolio_volatility': portfolio_vol,
+        'factor_exposures': factor_exposures,
+        'factor_variance_contrib': factor_variances,
+        'factor_variance_pct': factor_var_pct,
+        'eigenvalues': eigenvalues,
+        'component_risk': component_risk
+    }
+
+# Example: Equal-weighted portfolio
+weights = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
+risk_decomp = decompose_portfolio_risk(weights, returns_df)
+
+print("\n" + "=" * 50)
+print("PORTFOLIO RISK DECOMPOSITION")
+print("=" * 50)
+print(f"\nPortfolio Volatility: {risk_decomp['portfolio_volatility']*100:.2f}%")
+print(f"\nRisk Attribution by Principal Component:")
+for i, (exp, var_pct) in enumerate(zip(
+    risk_decomp['factor_exposures'][:3],
+    risk_decomp['factor_variance_pct'][:3]
+)):
+    print(f"  PC{i+1}: Exposure = {exp:.4f}, Variance Contribution = {var_pct:.1f}%")
+
+print(f"\nTop 3 PCs explain {sum(risk_decomp['factor_variance_pct'][:3]):.1f}% of portfolio variance")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Random Matrix Theory - Noise Detection</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def marcenko_pastur_bounds(n_samples, n_assets):
+    """
+    Calculate Marcenko-Pastur distribution bounds for random matrices.
+    Eigenvalues within these bounds are likely noise.
+
+    Parameters:
+    -----------
+    n_samples : int
+        Number of time periods (T)
+    n_assets : int
+        Number of assets (N)
+
+    Returns:
+    --------
+    tuple : (lambda_min, lambda_max) theoretical bounds
+    """
+    q = n_samples / n_assets  # T/N ratio
+
+    lambda_min = (1 - np.sqrt(1/q))**2
+    lambda_max = (1 + np.sqrt(1/q))**2
+
+    return lambda_min, lambda_max
+
+def identify_signal_eigenvalues(returns_df):
+    """
+    Identify which eigenvalues represent signal vs noise
+    using random matrix theory.
+    """
+    n_samples, n_assets = returns_df.shape
+
+    # Calculate theoretical noise bounds
+    lambda_min, lambda_max = marcenko_pastur_bounds(n_samples, n_assets)
+
+    # Get actual eigenvalues from correlation matrix
+    corr_matrix = returns_df.corr().values
+    eigenvalues = np.real(np.linalg.eigvalsh(corr_matrix))
+    eigenvalues = np.sort(eigenvalues)[::-1]
+
+    # Classify eigenvalues
+    signal_mask = eigenvalues > lambda_max
+    noise_mask = eigenvalues <= lambda_max
+
+    return {
+        'eigenvalues': eigenvalues,
+        'signal_eigenvalues': eigenvalues[signal_mask],
+        'noise_eigenvalues': eigenvalues[noise_mask],
+        'n_signal_factors': np.sum(signal_mask),
+        'lambda_max_theoretical': lambda_max,
+        'lambda_min_theoretical': lambda_min,
+        'q_ratio': n_samples / n_assets
+    }
+
+# Analyze signal vs noise
+rmt_results = identify_signal_eigenvalues(returns_df)
+
+print("\n" + "=" * 50)
+print("RANDOM MATRIX THEORY ANALYSIS")
+print("=" * 50)
+print(f"\nSample size (T): {len(returns_df)}, Assets (N): {len(returns_df.columns)}")
+print(f"T/N ratio: {rmt_results['q_ratio']:.2f}")
+print(f"\nMarcenko-Pastur noise bounds: [{rmt_results['lambda_min_theoretical']:.4f}, {rmt_results['lambda_max_theoretical']:.4f}]")
+print(f"\nSignal eigenvalues (above noise): {rmt_results['signal_eigenvalues'].round(4)}")
+print(f"Number of true factors: {rmt_results['n_signal_factors']}")
+print(f"\nInterpretation: Only {rmt_results['n_signal_factors']} factor(s) contain signal, rest is noise")</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section">
+            <h2>6. Interactive PCA Calculator 🔢</h2>
+
+            <div class="calculator">
+                <h3>Eigenvalue & Variance Explained Calculator</h3>
+
+                <div class="input-group">
+                    <label for="eigenInput">Enter Eigenvalues (comma-separated):</label>
+                    <input type="text" id="eigenInput" value="2.8, 1.2, 0.6, 0.25, 0.15"
+                           placeholder="e.g., 3.2, 1.5, 0.8, 0.3, 0.2">
+                </div>
+
+                <button class="calculate-btn" onclick="calculatePCA()">Analyze Eigenvalues</button>
+
+                <div class="result" id="pcaResult">
+                    <!-- Results appear here -->
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Variance Explained by Component</h3>
+                <canvas id="varianceChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Scree Plot with Cumulative Variance</h3>
+                <canvas id="screeChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 7: Trading Applications -->
+        <section class="content-section">
+            <h2>7. Trading Applications 💹</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>📊 Statistical Arbitrage</h4>
+                    <p>Use PCA to identify mean-reverting residuals. Regress asset returns on principal components; residuals (idiosyncratic returns) often mean-revert faster than raw prices.</p>
+                    <div class="highlight">Pairs trading on PC residuals has lower factor exposure</div>
+                </div>
+                <div class="card">
+                    <h4>🎯 Risk Parity on Factors</h4>
+                    <p>Instead of risk parity across assets, apply it across principal components to achieve true diversification across independent risk sources.</p>
+                    <div class="highlight">Target equal variance from each PC</div>
+                </div>
+                <div class="card">
+                    <h4>📈 Factor Timing</h4>
+                    <p>Track PC1 (usually market) for regime detection. When PC1 variance spikes, it signals increased systematic risk.</p>
+                    <div class="highlight">High λ₁ variance = risk-off regime</div>
+                </div>
+                <div class="card">
+                    <h4>🔍 Anomaly Detection</h4>
+                    <p>Large moves in minor PCs (high reconstruction error) signal unusual asset-specific events or potential data errors.</p>
+                    <div class="highlight">Monitor outliers in PC residuals</div>
+                </div>
+            </div>
+
+            <div class="info-box info">
+                <h3>Real-World PCA Example: S&P 500</h3>
+                <p>Analyzing 500 stocks, typically:</p>
+                <ul>
+                    <li><strong>PC1 (40-50%)</strong>: Market factor - all stocks load positively</li>
+                    <li><strong>PC2-3 (10-15%)</strong>: Sector rotations (tech vs value, growth vs defensive)</li>
+                    <li><strong>PC4-10 (15-20%)</strong>: Style factors (size, momentum, quality)</li>
+                    <li><strong>PC11+ (remaining)</strong>: Idiosyncratic noise - often tradeable for stat arb</li>
+                </ul>
+            </div>
+
+            <div class="chart-container">
+                <h3>Factor Loadings Heatmap</h3>
+                <canvas id="loadingsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 8: Common Mistakes -->
+        <section class="content-section">
+            <h2>8. Common Mistakes to Avoid ⚠️</h2>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 1: Using Covariance Instead of Correlation</h3>
+                <p>When assets have different volatilities, PCA on covariance matrix will be dominated by high-vol assets. Use correlation matrix for comparable factor loadings.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Wrong vs Right</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python"># WRONG: High-vol assets dominate
+eigenvalues_cov = np.linalg.eigvalsh(returns_df.cov())
+
+# RIGHT: All assets contribute equally
+eigenvalues_corr = np.linalg.eigvalsh(returns_df.corr())</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 2: Ignoring Eigenvalue Ordering</h3>
+                <p>np.linalg.eig() doesn't sort eigenvalues! Always sort in descending order before interpreting principal components.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Always Sort Eigenvalues</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python"># Get eigendecomposition
+eigenvalues, eigenvectors = np.linalg.eig(corr_matrix)
+
+# CRITICAL: Sort by magnitude
+idx = np.argsort(eigenvalues)[::-1]
+eigenvalues = eigenvalues[idx]
+eigenvectors = eigenvectors[:, idx]  # Reorder columns</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 3: Overfitting with Too Many Components</h3>
+                <p>More components = better in-sample fit but worse out-of-sample. Use cross-validation or random matrix theory to determine optimal component count.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 4: Non-Stationary Data</h3>
+                <p>PCA assumes stationarity. Factor loadings estimated on 2020 data may not apply in 2024. Re-estimate regularly with rolling windows.</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 5: Interpreting Eigenvector Signs</h3>
+                <p>Eigenvector sign is arbitrary - (v) and (-v) are equally valid. Focus on relative magnitudes and signs within each eigenvector, not absolute signs.</p>
+            </div>
+        </section>
+
+        <!-- Section 9: Summary -->
+        <section class="content-section">
+            <h2>9. Summary 📝</h2>
+
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>Eigenvalues</strong> reveal variance concentration - most portfolio risk comes from few factors</li>
+                    <li><strong>Eigenvectors</strong> define principal directions - use for factor construction</li>
+                    <li><strong>PCA</strong> transforms correlated assets into uncorrelated risk factors</li>
+                    <li><strong>Random Matrix Theory</strong> separates signal eigenvalues from noise</li>
+                    <li><strong>Risk Decomposition</strong> shows true diversification (or lack thereof)</li>
+                </ul>
+            </div>
+
+            <div class="formula-box">
+                <h3>Essential Formulas</h3>
+                <div class="formula">Σv = λv</div>
+                <p>Eigenvalue equation - fundamental relationship</p>
+
+                <div class="formula" style="margin-top: 15px;">
+                    Variance Explained = λₖ / Σᵢλᵢ
+                </div>
+                <p>Proportion of risk from k-th component</p>
+
+                <div class="formula" style="margin-top: 15px;">
+                    λₘₐₓ = (1 + √(N/T))²
+                </div>
+                <p>Marcenko-Pastur upper bound for noise eigenvalues</p>
+            </div>
+
+            <div class="nav-buttons">
+                <a href="2.1_vectors_matrices.html" class="nav-btn">← Previous: Vectors & Matrices</a>
+                <a href="2.3_matrix_decomposition.html" class="nav-btn">Next: Matrix Decomposition →</a>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section class="content-section">
+            <h2>Test Your Knowledge 🧪</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Question 1: What does a large first eigenvalue indicate about a portfolio's correlation structure?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> Assets are uncorrelated</label>
+                        <label><input type="radio" name="q1" value="b"> One dominant factor drives most variance</label>
+                        <label><input type="radio" name="q1" value="c"> Portfolio is well-diversified</label>
+                        <label><input type="radio" name="q1" value="d"> Covariance matrix is singular</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 2: Why should you use the correlation matrix instead of covariance matrix for PCA?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> Correlation matrix is faster to compute</label>
+                        <label><input type="radio" name="q2" value="b"> Prevents high-volatility assets from dominating</label>
+                        <label><input type="radio" name="q2" value="c"> Correlation matrix has larger eigenvalues</label>
+                        <label><input type="radio" name="q2" value="d"> Required by numpy's eig function</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 3: In random matrix theory, eigenvalues above the Marcenko-Pastur bound indicate:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> Numerical errors</label>
+                        <label><input type="radio" name="q3" value="b"> True risk factors (signal)</label>
+                        <label><input type="radio" name="q3" value="c"> Random noise</label>
+                        <label><input type="radio" name="q3" value="d"> Negative correlations</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 4: If a 5-asset portfolio has eigenvalues [2.5, 1.0, 0.8, 0.5, 0.2], what percentage of variance does PC1 explain?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> 25%</label>
+                        <label><input type="radio" name="q4" value="b"> 50%</label>
+                        <label><input type="radio" name="q4" value="c"> 70%</label>
+                        <label><input type="radio" name="q4" value="d"> 100%</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 5: The sum of all eigenvalues of a correlation matrix with N assets equals:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> 1</label>
+                        <label><input type="radio" name="q5" value="b"> N</label>
+                        <label><input type="radio" name="q5" value="c"> N²</label>
+                        <label><input type="radio" name="q5" value="d"> √N</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <button class="calculate-btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        // Initialize charts
+        let varianceChart, screeChart, loadingsChart;
+
+        function initializeCharts() {
+            // Variance explained bar chart
+            const varianceCtx = document.getElementById('varianceChart').getContext('2d');
+            varianceChart = new Chart(varianceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['PC1', 'PC2', 'PC3', 'PC4', 'PC5'],
+                    datasets: [{
+                        label: 'Variance Explained (%)',
+                        data: [56, 24, 12, 5, 3],
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(192, 132, 252, 0.8)',
+                            'rgba(216, 180, 254, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(99, 102, 241)',
+                            'rgb(139, 92, 246)',
+                            'rgb(168, 85, 247)',
+                            'rgb(192, 132, 252)',
+                            'rgb(216, 180, 254)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y.toFixed(1)}% of variance`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Variance Explained (%)',
+                                color: '#94a3b8'
+                            },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Scree plot with cumulative line
+            const screeCtx = document.getElementById('screeChart').getContext('2d');
+            screeChart = new Chart(screeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['PC1', 'PC2', 'PC3', 'PC4', 'PC5'],
+                    datasets: [
+                        {
+                            label: 'Eigenvalue',
+                            data: [2.8, 1.2, 0.6, 0.25, 0.15],
+                            backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                            borderColor: 'rgb(99, 102, 241)',
+                            borderWidth: 2,
+                            order: 2
+                        },
+                        {
+                            label: 'Cumulative Variance (%)',
+                            data: [56, 80, 92, 97, 100],
+                            type: 'line',
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Eigenvalue',
+                                color: '#94a3b8'
+                            },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y1: {
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Cumulative %',
+                                color: '#10b981'
+                            },
+                            ticks: { color: '#10b981' },
+                            grid: { display: false }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Factor loadings heatmap (using bar chart)
+            const loadingsCtx = document.getElementById('loadingsChart').getContext('2d');
+            loadingsChart = new Chart(loadingsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['SPY', 'QQQ', 'IWM', 'EFA', 'BND'],
+                    datasets: [
+                        {
+                            label: 'PC1 (Market)',
+                            data: [0.48, 0.52, 0.49, 0.45, 0.15],
+                            backgroundColor: 'rgba(99, 102, 241, 0.8)'
+                        },
+                        {
+                            label: 'PC2 (Tech/Value)',
+                            data: [-0.15, 0.55, -0.25, -0.10, -0.05],
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)'
+                        },
+                        {
+                            label: 'PC3 (Size)',
+                            data: [0.10, -0.20, 0.60, 0.15, -0.02],
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'How Assets Load onto Principal Components',
+                            color: '#e2e8f0'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Factor Loading',
+                                color: '#94a3b8'
+                            },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calculatePCA() {
+            const input = document.getElementById('eigenInput').value;
+            const eigenvalues = input.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+
+            if (eigenvalues.length < 2) {
+                document.getElementById('pcaResult').innerHTML = `
+                    <div style="color: #f87171;">Please enter at least 2 eigenvalues</div>
+                `;
+                return;
+            }
+
+            // Sort descending
+            eigenvalues.sort((a, b) => b - a);
+
+            // Calculate statistics
+            const total = eigenvalues.reduce((a, b) => a + b, 0);
+            const varianceExplained = eigenvalues.map(e => (e / total * 100));
+            const cumulative = [];
+            let sum = 0;
+            varianceExplained.forEach(v => {
+                sum += v;
+                cumulative.push(sum);
+            });
+
+            // Find components for 90% variance
+            const componentsFor90 = cumulative.findIndex(c => c >= 90) + 1 || eigenvalues.length;
+
+            // Display results
+            let resultHTML = `
+                <div class="eigen-visual">
+                    <div class="eigen-item">
+                        <div class="value">${eigenvalues.length}</div>
+                        <div class="label">Components</div>
+                    </div>
+                    <div class="eigen-item">
+                        <div class="value">${total.toFixed(2)}</div>
+                        <div class="label">Total Variance</div>
+                    </div>
+                    <div class="eigen-item">
+                        <div class="value">${componentsFor90}</div>
+                        <div class="label">For 90% Var</div>
+                    </div>
+                </div>
+                <h4>Variance Breakdown:</h4>
+            `;
+
+            eigenvalues.forEach((e, i) => {
+                const width = varianceExplained[i];
+                resultHTML += `
+                    <div style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <span style="width: 50px; color: #94a3b8;">PC${i+1}</span>
+                        <div class="variance-bar" style="width: ${Math.max(width, 5)}%;">
+                            ${varianceExplained[i].toFixed(1)}%
+                        </div>
+                        <span style="color: #10b981; font-size: 0.9rem;">
+                            (cum: ${cumulative[i].toFixed(1)}%)
+                        </span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('pcaResult').innerHTML = resultHTML;
+
+            // Update charts
+            const labels = eigenvalues.map((_, i) => `PC${i+1}`);
+
+            varianceChart.data.labels = labels;
+            varianceChart.data.datasets[0].data = varianceExplained;
+            varianceChart.data.datasets[0].backgroundColor = eigenvalues.map((_, i) =>
+                `rgba(99, 102, 241, ${1 - i * 0.15})`
+            );
+            varianceChart.update();
+
+            screeChart.data.labels = labels;
+            screeChart.data.datasets[0].data = eigenvalues;
+            screeChart.data.datasets[1].data = cumulative;
+            screeChart.update();
+        }
+
+        // Quiz checking
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'A large first eigenvalue means one factor (usually "market") explains most of the variance - indicating high correlation among assets.' },
+                q2: { correct: 'b', explanation: 'The correlation matrix standardizes all assets to unit variance, preventing high-volatility assets from dominating the principal components.' },
+                q3: { correct: 'b', explanation: 'Eigenvalues above the Marcenko-Pastur bound exceed what random chance would produce, indicating true underlying structure (signal factors).' },
+                q4: { correct: 'b', explanation: 'Total = 2.5+1.0+0.8+0.5+0.2 = 5.0. PC1 variance = 2.5/5.0 = 50%' },
+                q5: { correct: 'b', explanation: 'The trace of a correlation matrix equals N (sum of diagonal 1s), and trace = sum of eigenvalues.' }
+            };
+
+            let score = 0;
+            const total = Object.keys(answers).length;
+
+            for (const [question, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const feedback = document.getElementById(`feedback${question.slice(1)}`);
+
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #f87171;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+
+            const percentage = (score / total * 100).toFixed(0);
+            let message = '';
+            if (percentage >= 80) message = 'Excellent! You understand eigenvalue analysis well!';
+            else if (percentage >= 60) message = 'Good progress! Review the sections on PCA interpretation.';
+            else message = 'Keep studying! Focus on the relationship between eigenvalues and variance.';
+
+            document.getElementById('quizScore').innerHTML = `
+                <h3>Score: ${score}/${total} (${percentage}%)</h3>
+                <p>${message}</p>
+            `;
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            calculatePCA();
+        });
+    </script>
+</body>
+</html>

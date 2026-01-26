@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn price normalization for comparing multiple assets on the same scale. Essential for relative performance analysis in quantitative trading.">
+  <title>1.3 Price Normalization | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="1.2_cumulative_returns.html" class="nav-home">← Previous Module</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 1.3</span>
+          <span class="nav-module-title">Price Normalization</span>
+        </div>
+        <a href="1.4_volatility_calculation.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 1: Price Action & Returns</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>1.3 Price Normalization</span>
+        </div>
+        <h1>Price Normalization</h1>
+        <p class="module-subtitle">
+          Transform assets to the same starting point to easily compare relative performance.
+          Essential for portfolio analysis, backtesting, and visual comparisons.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 12 min read</span>
+          <span class="meta-item">📊 4 Visualizations</span>
+          <span class="meta-item">💻 Interactive Normalizer</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ The Comparison Problem</div>
+        <p>
+          You're comparing SPY ($450/share), TSLA ($250/share), and BTC ($45,000/coin). Looking at price charts,
+          TSLA appears to be underperforming massively. But is it?
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          <strong>You can't compare them!</strong> Different price levels make visual comparison impossible.
+          A $10 move in SPY (2.2%) is very different from a $10 move in BTC (0.02%).
+          <strong>You need normalization.</strong>
+        </p>
+      </div>
+
+      <h3>Why Normalization Matters</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Visual Confusion</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Without normalization, expensive stocks dominate charts while cheaper stocks appear flat,
+            even if they're outperforming on a percentage basis.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Wrong Decisions</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Choosing investments based on absolute price changes instead of percentage returns
+            leads to systematically picking wrong assets.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Portfolio Misallocation</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Without normalization, you can't properly weight assets or understand relative contributions
+            to portfolio performance.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ The Power of Normalization</div>
+        <p style="margin-bottom: 0;">
+          Price normalization puts all assets on a level playing field by rebasing them to the same starting value
+          (typically $100 or $1). This lets you instantly see which assets have performed best in percentage terms,
+          regardless of their actual price. It's the foundation of relative performance analysis and essential for
+          portfolio comparison, sector rotation strategies, and pair trading.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition (No Math Yet)</h2>
+
+      <h3>What Is Price Normalization?</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">💡 The Starting Line Analogy</div>
+        <p>
+          Imagine a race where runners start at different positions: one at mile 0, another at mile 5, and another
+          at mile 10. Who's winning? It's impossible to tell!
+        </p>
+        <p style="margin-bottom: 0;">
+          <strong>Normalization moves everyone to the same starting line.</strong> Whether a stock costs $1 or $1,000,
+          we rebase it to $100. Now we can clearly see which "runner" has traveled the furthest from their start.
+          A stock that doubles from $100 to $200 performed identically to one that doubled from $1,000 to $2,000.
+        </p>
+      </div>
+
+      <h3>Before vs After Normalization</h3>
+
+      <svg width="100%" height="400" viewBox="0 0 900 400" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <!-- Before Normalization -->
+        <g>
+          <text x="220" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="18" font-weight="600">
+            Before: Misleading Comparison
+          </text>
+
+          <!-- Y-axis -->
+          <line x1="50" y1="50" x2="50" y2="180" stroke="var(--text-muted)" stroke-width="2"/>
+          <text x="30" y="55" fill="var(--text-secondary)" font-size="12">$500</text>
+          <text x="30" y="115" fill="var(--text-secondary)" font-size="12">$250</text>
+          <text x="30" y="180" fill="var(--text-secondary)" font-size="12">$0</text>
+
+          <!-- Stock A: $100 to $150 (looks tiny) -->
+          <path d="M 70 160 L 390 135" stroke="var(--accent-blue)" stroke-width="3" fill="none"/>
+          <text x="390" y="130" fill="var(--accent-blue)" font-size="14" font-weight="600">Stock A</text>
+
+          <!-- Stock B: $400 to $450 (looks huge) -->
+          <path d="M 70 60 L 390 47" stroke="var(--error)" stroke-width="3" fill="none"/>
+          <text x="390" y="40" fill="var(--error)" font-size="14" font-weight="600">Stock B</text>
+
+          <text x="220" y="210" fill="var(--text-muted)" text-anchor="middle" font-size="14">
+            ❌ Stock B looks like the winner!
+          </text>
+        </g>
+
+        <!-- After Normalization -->
+        <g transform="translate(450, 0)">
+          <text x="220" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="18" font-weight="600">
+            After: Clear Comparison
+          </text>
+
+          <!-- Y-axis -->
+          <line x1="50" y1="50" x2="50" y2="180" stroke="var(--text-muted)" stroke-width="2"/>
+          <text x="30" y="55" fill="var(--text-secondary)" font-size="12">$150</text>
+          <text x="30" y="115" fill="var(--text-secondary)" font-size="12">$100</text>
+          <text x="30" y="180" fill="var(--text-secondary)" font-size="12">$50</text>
+
+          <!-- Stock A: $100 to $150 (+50%) -->
+          <path d="M 70 115 L 390 55" stroke="var(--success)" stroke-width="4" fill="none"/>
+          <text x="390" y="50" fill="var(--success)" font-size="14" font-weight="600">Stock A (+50%)</text>
+
+          <!-- Stock B: $100 to $112.5 (+12.5%) -->
+          <path d="M 70 115 L 390 100" stroke="var(--accent-blue)" stroke-width="3" fill="none"/>
+          <text x="390" y="95" fill="var(--accent-blue)" font-size="14" font-weight="600">Stock B (+12.5%)</text>
+
+          <text x="220" y="210" fill="var(--success)" text-anchor="middle" font-size="14">
+            ✓ Stock A is the real winner!
+          </text>
+        </g>
+
+        <!-- Bottom explanation -->
+        <text x="450" y="260" fill="var(--text-primary)" text-anchor="middle" font-size="16" font-weight="600">
+          Same Percentage Gains = Same Height After Normalization
+        </text>
+
+        <text x="450" y="290" fill="var(--text-secondary)" text-anchor="middle" font-size="14">
+          Stock A: $100 → $150 = +50% gain
+        </text>
+        <text x="450" y="310" fill="var(--text-secondary)" text-anchor="middle" font-size="14">
+          Stock B: $400 → $450 = +12.5% gain
+        </text>
+
+        <text x="450" y="340" fill="var(--accent-purple)" text-anchor="middle" font-size="14" style="font-style: italic;">
+          After normalization to $100 base: A reaches $150, B reaches $112.50
+        </text>
+      </svg>
+
+      <div class="grid grid-2" style="margin-top: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--error);">
+          <h3>Without Normalization ❌</h3>
+          <p>
+            BTC at $50,000 moves $1,000 (+2%).
+            <br>SPY at $450 moves $9 (+2%).
+          </p>
+          <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+            On a chart, BTC's line jumps dramatically while SPY barely moves, even though they had identical
+            percentage returns. This is visually misleading!
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--success);">
+          <h3>With Normalization ✓</h3>
+          <p>
+            BTC: $100 → $102 (+2%).
+            <br>SPY: $100 → $102 (+2%).
+          </p>
+          <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--success);">
+            Both lines move identically on the chart because they're measuring the same thing: percentage change
+            from a common baseline. Now you can actually compare them!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <h3>Normalization Formula</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Price Normalization to Base Value</div>
+        <div class="formula-content">
+          Normalized Price = (Current Price / Initial Price) × Base Value
+        </div>
+        <div class="formula-content" style="font-size: 1.2rem; margin-top: 1rem;">
+          P<sub>norm</sub> = (P<sub>t</sub> / P<sub>0</sub>) × 100
+        </div>
+        <div class="formula-description">
+          Where P<sub>t</sub> is price at time t, P<sub>0</sub> is initial price, and 100 is typical base value
+        </div>
+      </div>
+
+      <h3>Step-by-Step Example</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">normalization_example.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+
+# Original prices for three stocks
+spy_prices = np.array([450, 455, 460, 458, 465])
+tsla_prices = np.array([250, 260, 255, 270, 275])
+aapl_prices = np.array([180, 182, 185, 183, 190])
+
+# Normalize to base 100
+spy_normalized = (spy_prices / spy_prices[0]) * 100
+tsla_normalized = (tsla_prices / tsla_prices[0]) * 100
+aapl_normalized = (aapl_prices / aapl_prices[0]) * 100
+
+print("Normalized Prices (Base = 100):")
+print(f"SPY:  {spy_normalized}")
+print(f"TSLA: {tsla_normalized}")
+print(f"AAPL: {aapl_normalized}")
+
+# Output:
+# SPY:  [100.   101.11 102.22 101.78 103.33]
+# TSLA: [100.   104.   102.   108.   110.  ]
+# AAPL: [100.   101.11 102.78 101.67 105.56]
+
+# Now we can easily see TSLA outperformed (+10% vs SPY +3.33% vs AAPL +5.56%)
+print(f"\nFinal Returns:")
+print(f"SPY:  {spy_normalized[-1] - 100:.2f}% ")
+print(f"TSLA: {tsla_normalized[-1] - 100:.2f}%  ← Winner!")
+print(f"AAPL: {aapl_normalized[-1] - 100:.2f}%")
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Alternative: Normalize to $1</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Two Common Bases</div>
+        <p><strong>Base 100:</strong> Most common. Easy to read (105 = +5%, 95 = -5%). Standard in finance.</p>
+        <p style="margin-bottom: 0;">
+          <strong>Base 1:</strong> Used in some contexts. Normalized price directly equals the return multiplier
+          (1.05 = 5% gain). Common in academic research.
+        </p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Original Price</th>
+              <th>Final Price</th>
+              <th>Normalized (Base 100)</th>
+              <th>Return</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>SPY</strong></td>
+              <td>$450</td>
+              <td>$465</td>
+              <td style="color: var(--success);">103.33</td>
+              <td style="color: var(--success);">+3.33%</td>
+            </tr>
+            <tr>
+              <td><strong>TSLA</strong></td>
+              <td>$250</td>
+              <td>$275</td>
+              <td style="color: var(--success);">110.00</td>
+              <td style="color: var(--success);">+10.00%</td>
+            </tr>
+            <tr>
+              <td><strong>AAPL</strong></td>
+              <td>$180</td>
+              <td>$190</td>
+              <td style="color: var(--success);">105.56</td>
+              <td style="color: var(--success);">+5.56%</td>
+            </tr>
+            <tr>
+              <td><strong>BTC</strong></td>
+              <td>$45,000</td>
+              <td>$40,500</td>
+              <td style="color: var(--error);">90.00</td>
+              <td style="color: var(--error);">-10.00%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties of Normalization</h2>
+
+      <h3>1. Preserves Percentage Changes</h3>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">✓ Returns Stay Identical</div>
+        <p>
+          Normalization doesn't change the underlying returns, it just makes them easier to compare visually.
+          If Stock A gained 5% in the original data, it gains 5% in normalized data.
+        </p>
+        <p style="margin-bottom: 0;">
+          Formula: (P<sub>norm,t</sub> / P<sub>norm,t-1</sub>) - 1 = (P<sub>t</sub> / P<sub>t-1</sub>) - 1
+        </p>
+      </div>
+
+      <h3>2. Relative Performance Becomes Obvious</h3>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--accent-blue);">Raw Prices (Confusing)</h4>
+          <div class="code-block" style="margin-top: 1rem;">
+            <div class="code-content">
+<pre><code class="language-python"># Three assets, very different prices
+Asset A: $10 → $15 → $20
+Asset B: $500 → $525 → $550
+Asset C: $2 → $2.5 → $3
+
+# Which performed best?
+# Hard to tell at a glance!</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="color: var(--success);">Normalized (Crystal Clear)</h4>
+          <div class="code-block" style="margin-top: 1rem;">
+            <div class="code-content">
+<pre><code class="language-python"># Normalized to 100
+Asset A: 100 → 150 → 200  (+100%)
+Asset B: 100 → 105 → 110  (+10%)
+Asset C: 100 → 125 → 150  (+50%)
+
+# Winner: Asset A!
+# Crystal clear now!</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>3. Works for Any Time Period</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">🕐 Flexible Time Windows</div>
+        <p style="margin-bottom: 0;">
+          You can normalize from any starting point: beginning of year, beginning of month, a specific date,
+          or even a custom event (like "normalize from the day the Fed announced rate cuts"). The choice of
+          P<sub>0</sub> (initial price) determines your reference point for comparison.
+        </p>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Interactive Price Normalizer</h2>
+
+      <div class="calculator-widget" data-calc-id="normalize-calc">
+        <h3 class="calculator-title">Multi-Asset Price Normalizer</h3>
+        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+          Enter prices for up to 3 assets to see them normalized to a common base.
+        </p>
+
+        <div class="grid grid-2">
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="asset1Name">Asset 1 Name</label>
+            <input type="text" id="asset1Name" class="calculator-input" value="SPY" placeholder="e.g., SPY">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="asset1Price">Asset 1 Starting Price ($)</label>
+            <input type="number" id="asset1Price" class="calculator-input" value="450" step="0.01" min="0.01">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="asset2Name">Asset 2 Name</label>
+            <input type="text" id="asset2Name" class="calculator-input" value="TSLA" placeholder="e.g., TSLA">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="asset2Price">Asset 2 Starting Price ($)</label>
+            <input type="number" id="asset2Price" class="calculator-input" value="250" step="0.01" min="0.01">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="asset3Name">Asset 3 Name</label>
+            <input type="text" id="asset3Name" class="calculator-input" value="AAPL" placeholder="e.g., AAPL">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="asset3Price">Asset 3 Starting Price ($)</label>
+            <input type="number" id="asset3Price" class="calculator-input" value="180" step="0.01" min="0.01">
+          </div>
+        </div>
+
+        <div class="calculator-input-group">
+          <label class="calculator-label" for="baseValue">Base Value (typically 100 or 1)</label>
+          <input type="number" id="baseValue" class="calculator-input" value="100" step="1" min="1">
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="normalizeAssets()">
+          Normalize Prices
+        </button>
+
+        <div class="calculator-result" style="margin-top: 1.5rem; display: none;" id="normalizeResults">
+          <h4 style="text-align: center; color: var(--text-primary); margin-bottom: 1rem;">Normalized Prices</h4>
+          <div class="table-container">
+            <table id="normalizedTable">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Original Price</th>
+                  <th>Normalized Price</th>
+                  <th>Multiplier</th>
+                </tr>
+              </thead>
+              <tbody id="normalizedTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <h3>Professional Normalization Function</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">price_normalization.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Union
+
+def normalize_prices(prices: Union[pd.Series, pd.DataFrame],
+                     base: float = 100.0) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Normalize price series to a common base value.
+
+    Args:
+        prices: Price series (Series) or multiple assets (DataFrame)
+        base: Base value for normalization (default: 100)
+
+    Returns:
+        Normalized prices with same structure as input
+    """
+    return (prices / prices.iloc[0]) * base
+
+
+def normalize_from_date(prices: pd.DataFrame,
+                        start_date: str,
+                        base: float = 100.0) -> pd.DataFrame:
+    """
+    Normalize prices from a specific date.
+
+    Args:
+        prices: DataFrame of prices with DatetimeIndex
+        start_date: Date to use as normalization point
+        base: Base value for normalization
+
+    Returns:
+        Normalized DataFrame
+    """
+    start_prices = prices.loc[start_date]
+    return (prices / start_prices) * base
+
+
+# Example Usage
+if __name__ == "__main__":
+    # Create sample price data
+    dates = pd.date_range('2024-01-01', periods=5, freq='D')
+
+    prices_df = pd.DataFrame({
+        'SPY': [450, 455, 460, 458, 465],
+        'TSLA': [250, 260, 255, 270, 275],
+        'AAPL': [180, 182, 185, 183, 190],
+        'BTC': [45000, 46000, 44000, 47000, 48000]
+    }, index=dates)
+
+    print("Original Prices:")
+    print(prices_df)
+    print("\n" + "="*60 + "\n")
+
+    # Normalize to base 100
+    normalized = normalize_prices(prices_df, base=100)
+
+    print("Normalized Prices (Base 100):")
+    print(normalized.round(2))
+    print("\n" + "="*60 + "\n")
+
+    # Calculate returns from normalized prices
+    returns = normalized.iloc[-1] - 100
+    print("Total Returns:")
+    for asset in returns.index:
+        print(f"{asset:6s}: {returns[asset]:+.2f}%")
+
+    # Identify best performer
+    best = returns.idxmax()
+    print(f"\nBest Performer: {best} with {returns[best]:+.2f}% return")
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Compare Multiple Assets Visually</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">visual_comparison.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def compare_assets_normalized(tickers: list,
+                              start_date: str,
+                              end_date: str,
+                              base: float = 100):
+    """
+    Download and compare multiple assets with normalized prices.
+
+    Args:
+        tickers: List of ticker symbols
+        start_date: Start date for data
+        end_date: End date for data
+        base: Normalization base value
+
+    Returns:
+        DataFrame of normalized prices
+    """
+    # Download data
+    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+
+    # Normalize
+    normalized = normalize_prices(data, base)
+
+    # Plot
+    plt.figure(figsize=(12, 6))
+    for ticker in tickers:
+        plt.plot(normalized.index, normalized[ticker], label=ticker, linewidth=2)
+
+    plt.axhline(y=base, color='white', linestyle='--', alpha=0.3, label=f'Base ({base})')
+    plt.title('Normalized Price Comparison', fontsize=16, color='white')
+    plt.xlabel('Date', fontsize=12, color='white')
+    plt.ylabel(f'Normalized Price (Base = {base})', fontsize=12, color='white')
+    plt.legend(fontsize=10)
+    plt.grid(True, alpha=0.2)
+
+    # Dark theme
+    plt.gca().set_facecolor('#1e1e1e')
+    plt.gcf().patch.set_facecolor('#0a0e1a')
+    plt.tick_params(colors='white')
+
+    plt.tight_layout()
+    plt.show()
+
+    return normalized
+
+
+# Example: Compare tech stocks
+tickers = ['AAPL', 'MSFT', 'GOOGL', 'TSLA']
+normalized = compare_assets_normalized(
+    tickers=tickers,
+    start_date='2024-01-01',
+    end_date='2024-12-31',
+    base=100
+)
+
+print("\nFinal Normalized Prices:")
+print(normalized.iloc[-1].sort_values(ascending=False))
+</code></pre>
+        </div>
+      </div>
+
+      <h3>Visualizations</h3>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Before Normalization: Misleading Comparison</h4>
+        <canvas id="beforeNormalizeChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">After Normalization: Clear Winner (Base = 100)</h4>
+        <canvas id="afterNormalizeChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Relative Performance: All Assets Compared</h4>
+        <canvas id="relativePerformanceChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Final Returns Comparison</h4>
+        <canvas id="returnsComparisonChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 6: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Trading Applications</h2>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px solid var(--accent-blue);">
+          <h3 style="color: var(--accent-blue);">Portfolio Analysis</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Asset Comparison:</strong> Compare stocks, ETFs, crypto, bonds on same scale</li>
+            <li><strong>Sector Rotation:</strong> Identify which sectors are outperforming</li>
+            <li><strong>Relative Strength:</strong> Find strongest assets in your universe</li>
+            <li><strong>Correlation Analysis:</strong> See which assets move together visually</li>
+            <li><strong>Rebalancing Decisions:</strong> Identify overperformers to trim</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); border: 2px solid var(--accent-purple);">
+          <h3 style="color: var(--accent-purple);">Strategy Development</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Pair Trading:</strong> Normalize two correlated assets to find divergences</li>
+            <li><strong>Momentum Strategies:</strong> Rank assets by normalized price to buy leaders</li>
+            <li><strong>Mean Reversion:</strong> Identify when normalized spread is too wide</li>
+            <li><strong>Backtesting:</strong> Compare strategy performance to benchmarks fairly</li>
+            <li><strong>Performance Attribution:</strong> Understand which holdings drove returns</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Practical Example: Sector Rotation Strategy</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">sector_rotation.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">def identify_sector_leaders(sector_etfs: dict,
+                           lookback_days: int = 60) -> pd.Series:
+    """
+    Identify leading sectors based on normalized performance.
+
+    Args:
+        sector_etfs: Dict of {sector_name: ticker}
+        lookback_days: Period for comparison
+
+    Returns:
+        Series of normalized prices, sorted by performance
+    """
+    import yfinance as yf
+
+    # Download prices
+    tickers = list(sector_etfs.values())
+    data = yf.download(tickers, period=f"{lookback_days}d")['Adj Close']
+
+    # Normalize to 100
+    normalized = normalize_prices(data, base=100)
+
+    # Get current normalized prices (performance)
+    current = normalized.iloc[-1].sort_values(ascending=False)
+
+    # Map back to sector names
+    ticker_to_sector = {v: k for k, v in sector_etfs.items()}
+    current.index = current.index.map(ticker_to_sector)
+
+    return current
+
+
+# Example: Sector ETFs
+sectors = {
+    'Technology': 'XLK',
+    'Financials': 'XLF',
+    'Healthcare': 'XLV',
+    'Energy': 'XLE',
+    'Utilities': 'XLU',
+    'Real Estate': 'XLRE',
+    'Consumer Discretionary': 'XLY',
+    'Consumer Staples': 'XLP'
+}
+
+leaders = identify_sector_leaders(sectors, lookback_days=90)
+
+print("Sector Performance (Last 90 Days):")
+print("="*50)
+for sector, normalized_price in leaders.items():
+    return_pct = normalized_price - 100
+    print(f"{sector:25s}: {normalized_price:6.2f} ({return_pct:+.2f}%)")
+
+# Investment decision: Overweight top 3, underweight bottom 3
+print(f"\nRecommendation:")
+print(f"  Overweight: {', '.join(leaders.head(3).index)}")
+print(f"  Underweight: {', '.join(leaders.tail(3).index)}")
+</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 7: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Common Mistakes (And How to Avoid Them)</h2>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #1: Comparing Raw Prices</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># NEVER compare absolute price changes!
+spy_change = 465 - 450  # = $15
+tsla_change = 275 - 250  # = $25
+
+# Conclusion: "TSLA moved more, so it performed better"
+# This is COMPLETELY WRONG!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Compare percentage returns
+spy_return = (465 / 450 - 1) * 100  # = 3.33%
+tsla_return = (275 / 250 - 1) * 100  # = 10.00%
+
+# OR normalize both to 100
+spy_norm = (465 / 450) * 100  # = 103.33
+tsla_norm = (275 / 250) * 100  # = 110.00
+
+# Now TSLA's outperformance is clear!</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #2: Using Wrong Initial Price</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># Trying to normalize mid-series without proper reference
+prices = [100, 105, 110, 108, 115]
+
+# Using current price as base (WRONG!)
+normalized = (prices / prices[-1]) * 100
+# This makes the end value always 100, destroying information!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Always use the FIRST price as reference
+prices = [100, 105, 110, 108, 115]
+
+normalized = (prices / prices[0]) * 100
+# Now you can see growth: [100, 105, 110, 108, 115]
+
+# This preserves the performance information!</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #3: Forgetting to Multiply by Base</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># Common copy-paste error
+prices = [450, 465]
+normalized = prices / prices[0]  # = [1.0, 1.033]
+
+# This gives growth factors, not normalized prices!
+# You need to multiply by base value!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Multiply by base value
+prices = [450, 465]
+normalized = (prices / prices[0]) * 100  # = [100.0, 103.33]
+
+# Now it's in the familiar base-100 format!</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Understanding</h2>
+
+      <div class="quiz-container" data-quiz-id="normalize-quiz">
+        <div class="quiz-score" style="text-align: right; font-weight: 600; color: var(--accent-blue); margin-bottom: 1rem;">
+          Score: 0/5
+        </div>
+
+        <!-- Question 1 -->
+        <div class="quiz-question-group" data-question-id="q1">
+          <div class="quiz-question">1. Stock A goes from $50 to $55. Stock B goes from $200 to $210. After normalizing both to base 100, which statement is TRUE?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="B had a larger absolute gain ($10 vs $5), but that doesn't matter for normalized prices.">
+              Stock B's normalized price is higher because it moved $10 vs $5
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! A: 110 (+10%), B: 105 (+5%). Normalization reveals A outperformed despite smaller dollar gain.">
+              Stock A's normalized price is higher (110 vs 105)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="They're not equal - they had different percentage returns.">
+              Both have the same normalized price
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="You can always compare normalized prices - that's the whole point!">
+              You cannot compare them after normalization
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-question-group" data-question-id="q2">
+          <div class="quiz-question">2. What is the formula for price normalization to base 100?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="This would give you the return percentage, not the normalized price.">
+              (Current Price - Initial Price) / Initial Price × 100
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Divide by initial price to get growth factor, multiply by 100 to get base-100 value.">
+              (Current Price / Initial Price) × 100
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="This is backwards - you'd be dividing by the changing price.">
+              (Initial Price / Current Price) × 100
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Adding 100 doesn't normalize, it just shifts all values up by 100.">
+              Current Price + 100
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-question-group" data-question-id="q3">
+          <div class="quiz-question">3. Why is price normalization essential for comparing multiple assets?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Normalization changes the scale, not the volatility of returns.">
+              It reduces volatility
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! Assets with different price levels can't be visually compared. Normalization puts them on equal footing.">
+              It allows visual comparison of percentage performance regardless of price level
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Normalization doesn't change the underlying price movements.">
+              It eliminates price fluctuations
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Normalization is about comparison, not about making prices look bigger.">
+              It makes all prices appear larger
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="quiz-question-group" data-question-id="q4">
+          <div class="quiz-question">4. If a normalized price is 95 (base 100), what does this mean?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="The normalized value represents performance, not the actual dollar price.">
+              The current price is $95
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! 95 means the asset is at 95% of its initial value, so it's down 5%.">
+              The asset has lost 5% from its starting point
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="95 means it lost 5%, not gained.">
+              The asset has gained 5%
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="95 represents the relative performance, not some arbitrary ranking.">
+              The asset ranks 95th in performance
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 5 -->
+        <div class="quiz-question-group" data-question-id="q5">
+          <div class="quiz-question">5. What property of returns does normalization preserve?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Absolute price changes are lost - that's the point! We preserve percentage changes.">
+              Absolute dollar price changes
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! (P_norm,t / P_norm,t-1) - 1 = (P_t / P_t-1) - 1. The percentage returns stay exactly the same.">
+              Percentage returns between periods
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="The actual price level is transformed - only percentage changes are preserved.">
+              The actual price level
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Dividend yields aren't affected by price normalization, but that's not what's being preserved.">
+              Dividend yields
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 8: SUMMARY & CHEAT SHEET -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Summary & Cheat Sheet</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Price normalization</strong> rebases all assets to same starting value for fair comparison</li>
+          <li><strong>Standard formula:</strong> (Price / Initial Price) × Base Value (typically 100)</li>
+          <li>Preserves percentage returns while enabling visual comparison</li>
+          <li>Essential for comparing assets with vastly different price levels</li>
+          <li>Widely used in portfolio analysis, backtesting, and performance reporting</li>
+          <li>Always normalize from the first date you want to compare from</li>
+        </ul>
+      </div>
+
+      <h3>Quick Reference</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Concept</th>
+              <th>Formula / Description</th>
+              <th>Use Case</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Basic Normalization</strong></td>
+              <td>(P<sub>t</sub> / P<sub>0</sub>) × 100</td>
+              <td>Compare any assets</td>
+            </tr>
+            <tr>
+              <td><strong>Base 1</strong></td>
+              <td>P<sub>t</sub> / P<sub>0</sub></td>
+              <td>Academic research</td>
+            </tr>
+            <tr>
+              <td><strong>Return from Normalized</strong></td>
+              <td>P<sub>norm</sub> - 100</td>
+              <td>Quick return calculation</td>
+            </tr>
+            <tr>
+              <td><strong>Relative Strength</strong></td>
+              <td>Compare final normalized values</td>
+              <td>Identify outperformers</td>
+            </tr>
+            <tr>
+              <td><strong>Preservation Property</strong></td>
+              <td>% returns stay identical</td>
+              <td>Backtesting validation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="formula-box" style="margin-top: 2rem;">
+        <div class="formula-label">The Golden Rule of Normalization</div>
+        <div class="formula-content" style="font-size: 1.3rem;">
+          Always divide by the FIRST price (P₀), not the current price
+        </div>
+        <div class="formula-description">
+          This preserves the performance information and makes all assets comparable!
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="1.2_cumulative_returns.html" class="btn btn-secondary">
+        ← Previous: Cumulative Returns
+      </a>
+      <a href="1.4_volatility_calculation.html" class="btn btn-primary">
+        Next: Volatility Calculation →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Module 1.3: Price Normalization</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of the Quantitative Trading Mastery course
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="1.4_volatility_calculation.html">1.4 Volatility Calculation</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    // ============================================
+    // INTERACTIVE CALCULATOR
+    // ============================================
+    function normalizeAssets() {
+      const base = parseFloat(document.getElementById('baseValue').value) || 100;
+
+      const assets = [];
+      for (let i = 1; i <= 3; i++) {
+        const name = document.getElementById(`asset${i}Name`).value.trim();
+        const price = parseFloat(document.getElementById(`asset${i}Price`).value);
+
+        if (name && price > 0) {
+          assets.push({ name, price });
+        }
+      }
+
+      if (assets.length === 0) {
+        alert('Please enter at least one valid asset');
+        return;
+      }
+
+      // Build table
+      let tbody = '';
+      assets.forEach(asset => {
+        const normalized = (asset.price / asset.price) * base; // Always 100 at start
+        const multiplier = asset.price / base;
+
+        tbody += `
+          <tr>
+            <td><strong>${asset.name}</strong></td>
+            <td>$${asset.price.toFixed(2)}</td>
+            <td style="color: var(--accent-blue);">${normalized.toFixed(2)}</td>
+            <td>×${multiplier.toFixed(4)}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('normalizedTableBody').innerHTML = tbody;
+      document.getElementById('normalizeResults').style.display = 'block';
+    }
+
+    // ============================================
+    // CHART.JS VISUALIZATIONS
+    // ============================================
+
+    // Sample data for three assets
+    const rawPrices = {
+      SPY: [450, 455, 460, 458, 465, 470, 468, 475],
+      TSLA: [250, 260, 255, 270, 275, 265, 280, 285],
+      AAPL: [180, 182, 185, 183, 190, 188, 195, 193]
+    };
+
+    const labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8'];
+
+    // Chart 1: Before Normalization
+    const ctx1 = document.getElementById('beforeNormalizeChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'SPY',
+          data: rawPrices.SPY,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2
+        }, {
+          label: 'TSLA',
+          data: rawPrices.TSLA,
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2
+        }, {
+          label: 'AAPL',
+          data: rawPrices.AAPL,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: 'Hard to compare - different price scales!',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Price ($)', color: '#a8b2d1' },
+            ticks: {
+              color: '#a8b2d1',
+              callback: function(value) { return '$' + value; }
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Normalize data
+    const normalized = {};
+    Object.keys(rawPrices).forEach(asset => {
+      const initial = rawPrices[asset][0];
+      normalized[asset] = rawPrices[asset].map(p => (p / initial) * 100);
+    });
+
+    // Chart 2: After Normalization
+    const ctx2 = document.getElementById('afterNormalizeChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'SPY',
+          data: normalized.SPY,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2
+        }, {
+          label: 'TSLA',
+          data: normalized.TSLA,
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 3
+        }, {
+          label: 'AAPL',
+          data: normalized.AAPL,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: 'TSLA is the clear winner! (+14% vs SPY +5.6% vs AAPL +7.2%)',
+            color: '#10b981'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Normalized Price (Base = 100)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 3: Relative Performance (area chart)
+    const ctx3 = document.getElementById('relativePerformanceChart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'SPY',
+          data: normalized.SPY,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderWidth: 2,
+          fill: true
+        }, {
+          label: 'TSLA',
+          data: normalized.TSLA,
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
+          borderWidth: 2,
+          fill: true
+        }, {
+          label: 'AAPL',
+          data: normalized.AAPL,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          borderWidth: 2,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Normalized Price', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 4: Final Returns Comparison
+    const finalReturns = {
+      SPY: normalized.SPY[normalized.SPY.length - 1] - 100,
+      TSLA: normalized.TSLA[normalized.TSLA.length - 1] - 100,
+      AAPL: normalized.AAPL[normalized.AAPL.length - 1] - 100
+    };
+
+    const ctx4 = document.getElementById('returnsComparisonChart').getContext('2d');
+    new Chart(ctx4, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(finalReturns),
+        datasets: [{
+          label: 'Total Return (%)',
+          data: Object.values(finalReturns),
+          backgroundColor: [
+            'rgba(59, 130, 246, 0.7)',
+            'rgba(239, 68, 68, 0.7)',
+            'rgba(16, 185, 129, 0.7)'
+          ],
+          borderColor: [
+            'rgb(59, 130, 246)',
+            'rgb(239, 68, 68)',
+            'rgb(16, 185, 129)'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Period Returns Comparison',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Return (%)', color: '#a8b2d1' },
+            ticks: {
+              color: '#a8b2d1',
+              callback: function(value) { return value.toFixed(1) + '%'; }
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  </script>
+
+  <style>
+    /* Module-specific styles */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

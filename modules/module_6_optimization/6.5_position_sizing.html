@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master position sizing algorithms for quantitative trading. Learn fixed fractional, volatility-based, and ATR-based position sizing methods.">
+    <title>6.5 Position Sizing Algorithms | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; display: none; }
+        .code-block { background: #1a1f2e; border-radius: var(--radius-lg); overflow: hidden; margin: 1.5rem 0; }
+        .code-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--bg-tertiary); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .code-header span { color: var(--text-muted); font-size: 0.85rem; }
+        .code-block pre { margin: 0; padding: 1.5rem; overflow-x: auto; }
+        .code-block code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.6; }
+        .chart-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 1.5rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        .method-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .method-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        .method-card h4 { color: var(--accent-blue); margin-bottom: 1rem; }
+        .method-card .formula { background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; text-align: center; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 6.5</span>
+                    <span class="nav-module-title">Position Sizing</span>
+                </div>
+                <a href="6.6_multi_objective.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 6: Optimization & Portfolio Theory</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>6.5 Position Sizing Algorithms</span>
+                </div>
+                <h1>Position Sizing Algorithms</h1>
+                <p class="module-subtitle">
+                    Master the art and science of determining how much capital to allocate to each trade.
+                    Learn fixed fractional, volatility-based, and ATR-based position sizing methods.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 40 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Position Size Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="important-note">
+                <h3>Position Sizing Can Make or Break Your Strategy</h3>
+                <p>
+                    A profitable strategy with poor position sizing can lead to ruin. Conversely, proper
+                    position sizing can turn a mediocre strategy into a successful one. <strong>Position sizing
+                    is arguably more important than entry and exit signals.</strong>
+                </p>
+            </div>
+
+            <div class="key-concept">
+                <h3>The Core Principle</h3>
+                <p><strong>Risk a consistent percentage of capital per trade to survive losing streaks while maximizing long-term growth.</strong></p>
+                <p style="margin-top: 1rem;">
+                    Without proper position sizing, you're gambling. With it, you're managing risk systematically.
+                    The goal is to size positions so that a series of losses won't wipe out your account,
+                    while wins compound your capital effectively.
+                </p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">📉 Survival First</h4>
+                    <p>Proper sizing ensures you survive drawdowns. A 50% loss requires a 100% gain to recover—avoid large losses at all costs.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-purple);">📈 Optimal Growth</h4>
+                    <p>Kelly Criterion shows the mathematically optimal bet size. But most traders use fractional Kelly for safety margins.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-cyan);">⚖️ Risk Normalization</h4>
+                    <p>Volatility-based sizing ensures each position contributes equal risk, regardless of the asset's price or volatility.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 2: Position Sizing Methods -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Position Sizing Methods</h2>
+
+            <div class="method-comparison">
+                <div class="method-card">
+                    <h4>Fixed Fractional</h4>
+                    <p>Risk a fixed percentage of account equity per trade.</p>
+                    <div class="formula">Position Size = (Account × Risk%) / Risk per Share</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                        <strong>Pros:</strong> Simple, automatic scaling<br>
+                        <strong>Cons:</strong> Doesn't account for volatility differences
+                    </p>
+                </div>
+
+                <div class="method-card">
+                    <h4>Volatility-Based (% Risk)</h4>
+                    <p>Size positions based on asset volatility to equalize risk contribution.</p>
+                    <div class="formula">Position Size = (Account × Risk%) / (ATR × Multiplier)</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                        <strong>Pros:</strong> Equal risk per position<br>
+                        <strong>Cons:</strong> Requires volatility estimation
+                    </p>
+                </div>
+
+                <div class="method-card">
+                    <h4>Fixed Dollar Amount</h4>
+                    <p>Allocate a fixed dollar amount to each position.</p>
+                    <div class="formula">Shares = Fixed Amount / Price per Share</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                        <strong>Pros:</strong> Very simple<br>
+                        <strong>Cons:</strong> Doesn't scale with account size
+                    </p>
+                </div>
+
+                <div class="method-card">
+                    <h4>Maximum Drawdown-Based</h4>
+                    <p>Size based on acceptable maximum drawdown.</p>
+                    <div class="formula">Position Size = Max DD% / (Max Consecutive Losses × Loss%)</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                        <strong>Pros:</strong> Explicit drawdown control<br>
+                        <strong>Cons:</strong> Requires historical drawdown analysis
+                    </p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h4 style="margin-bottom: 1rem;">Equity Curves: Different Position Sizing Methods</h4>
+                <canvas id="equityCurveChart" height="350"></canvas>
+            </div>
+
+            <div class="key-concept">
+                <h3>ATR-Based Position Sizing</h3>
+                <p>
+                    The Average True Range (ATR) measures volatility. By sizing positions inversely proportional
+                    to ATR, you ensure that more volatile assets get smaller positions, normalizing risk.
+                </p>
+                <div class="formula-box" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                    <div style="text-align: center; font-size: 1.1rem;">
+                        Position Size = (Account Equity × Risk %) / (Entry Price × ATR × N)
+                    </div>
+                    <p style="text-align: center; color: var(--text-muted); margin-top: 0.5rem;">
+                        Where N is the ATR multiplier (typically 2-3)
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 3: The Mathematics -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <h3>Fixed Fractional Position Sizing</h3>
+            <div class="info-box info-box-info">
+                <div class="info-box-title">Example Calculation</div>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Parameter</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Account Equity</td><td>$100,000</td></tr>
+                        <tr><td>Risk per Trade</td><td>2%</td></tr>
+                        <tr><td>Entry Price</td><td>$50</td></tr>
+                        <tr><td>Stop Loss</td><td>$47 (6% below entry)</td></tr>
+                        <tr><td>Risk per Share</td><td>$3</td></tr>
+                        <tr><td><strong>Position Size</strong></td><td><strong>($100,000 × 2%) / $3 = 667 shares</strong></td></tr>
+                        <tr><td>Position Value</td><td>667 × $50 = $33,350 (33.35% of account)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Volatility-Weighted Position Sizing</h3>
+            <div class="formula-box">
+                <div class="formula" style="text-align: center; font-size: 1.2rem; padding: 1rem;">
+                    Target Volatility Position Size = (Account × Target Vol) / Asset Volatility
+                </div>
+                <p style="text-align: center; color: var(--text-muted);">
+                    If target portfolio vol = 10% and asset vol = 25%, weight = 40%
+                </p>
+            </div>
+
+            <h3>Risk Parity Position Sizing</h3>
+            <div class="formula-box">
+                <div class="formula" style="text-align: center; font-size: 1.1rem; padding: 1rem;">
+                    wᵢ = (1/σᵢ) / Σ(1/σⱼ)
+                </div>
+                <p style="text-align: center; color: var(--text-muted);">
+                    Inverse volatility weighting: lower volatility assets get higher weights
+                </p>
+            </div>
+
+            <div class="important-note">
+                <h3>The 2% Rule</h3>
+                <p>
+                    Many professional traders limit risk to 1-2% of account equity per trade. With 2% risk,
+                    you can withstand 10 consecutive losses and still retain 81.7% of your capital.
+                    At 10% risk per trade, 10 consecutive losses would leave you with only 34.9%.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h4 style="margin-bottom: 1rem;">Capital Remaining After Consecutive Losses</h4>
+                <canvas id="lossChart" height="300"></canvas>
+            </div>
+        </section>
+
+        <!-- Part 4: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>position_sizing.py</span>
+                    <button onclick="copyCode(this)" style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer;">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Position Sizing Algorithms
+==========================
+Comprehensive position sizing methods for quantitative trading.
+"""
+
+import numpy as np
+import pandas as pd
+from typing import Union, Optional
+
+
+class PositionSizer:
+    """Position sizing calculator with multiple methods."""
+
+    def __init__(self, account_equity: float, max_risk_pct: float = 0.02):
+        """
+        Initialize position sizer.
+
+        Parameters
+        ----------
+        account_equity : float
+            Total account equity
+        max_risk_pct : float
+            Maximum risk per trade as decimal (default 2%)
+        """
+        self.account_equity = account_equity
+        self.max_risk_pct = max_risk_pct
+
+    def fixed_fractional(self, entry_price: float, stop_loss: float) -> dict:
+        """
+        Fixed fractional position sizing.
+
+        Risk a fixed percentage of equity per trade.
+
+        Parameters
+        ----------
+        entry_price : float
+            Entry price per share
+        stop_loss : float
+            Stop loss price per share
+
+        Returns
+        -------
+        dict
+            Position sizing details
+        """
+        risk_per_share = abs(entry_price - stop_loss)
+        dollar_risk = self.account_equity * self.max_risk_pct
+        shares = int(dollar_risk / risk_per_share)
+        position_value = shares * entry_price
+        position_pct = position_value / self.account_equity
+
+        return {
+            'method': 'Fixed Fractional',
+            'shares': shares,
+            'position_value': position_value,
+            'position_pct': position_pct,
+            'dollar_risk': dollar_risk,
+            'risk_per_share': risk_per_share
+        }
+
+    def volatility_based(self, entry_price: float, atr: float,
+                        atr_multiplier: float = 2.0) -> dict:
+        """
+        Volatility-based position sizing using ATR.
+
+        Parameters
+        ----------
+        entry_price : float
+            Entry price per share
+        atr : float
+            Average True Range
+        atr_multiplier : float
+            Multiplier for ATR to determine stop distance
+
+        Returns
+        -------
+        dict
+            Position sizing details
+        """
+        stop_distance = atr * atr_multiplier
+        stop_loss = entry_price - stop_distance
+        dollar_risk = self.account_equity * self.max_risk_pct
+        shares = int(dollar_risk / stop_distance)
+        position_value = shares * entry_price
+        position_pct = position_value / self.account_equity
+
+        return {
+            'method': 'Volatility-Based (ATR)',
+            'shares': shares,
+            'position_value': position_value,
+            'position_pct': position_pct,
+            'dollar_risk': dollar_risk,
+            'stop_loss': stop_loss,
+            'atr': atr,
+            'stop_distance': stop_distance
+        }
+
+    def percent_volatility(self, entry_price: float,
+                          asset_volatility: float,
+                          target_volatility: float = 0.10) -> dict:
+        """
+        Percent volatility position sizing.
+
+        Size positions to target a specific portfolio volatility.
+
+        Parameters
+        ----------
+        entry_price : float
+            Entry price per share
+        asset_volatility : float
+            Annualized volatility of the asset
+        target_volatility : float
+            Target portfolio volatility
+
+        Returns
+        -------
+        dict
+            Position sizing details
+        """
+        # Weight to achieve target volatility
+        weight = target_volatility / asset_volatility
+        weight = min(weight, 1.0)  # Cap at 100%
+
+        position_value = self.account_equity * weight
+        shares = int(position_value / entry_price)
+        actual_position_value = shares * entry_price
+
+        return {
+            'method': 'Percent Volatility',
+            'shares': shares,
+            'position_value': actual_position_value,
+            'position_pct': weight,
+            'asset_volatility': asset_volatility,
+            'target_volatility': target_volatility,
+            'expected_contribution': weight * asset_volatility
+        }
+
+    def kelly_criterion(self, win_rate: float, avg_win: float,
+                       avg_loss: float, kelly_fraction: float = 0.5) -> dict:
+        """
+        Kelly Criterion position sizing.
+
+        Parameters
+        ----------
+        win_rate : float
+            Probability of winning (0-1)
+        avg_win : float
+            Average winning trade return
+        avg_loss : float
+            Average losing trade return (positive number)
+        kelly_fraction : float
+            Fraction of Kelly to use (default 50% = half-Kelly)
+
+        Returns
+        -------
+        dict
+            Position sizing details
+        """
+        # Kelly formula: f* = (bp - q) / b
+        # where b = win/loss ratio, p = win probability, q = loss probability
+        b = avg_win / avg_loss  # Win/loss ratio
+        p = win_rate
+        q = 1 - win_rate
+
+        full_kelly = (b * p - q) / b
+        full_kelly = max(0, full_kelly)  # Can't be negative
+
+        kelly_pct = full_kelly * kelly_fraction
+        position_value = self.account_equity * kelly_pct
+
+        return {
+            'method': f'Kelly Criterion ({kelly_fraction:.0%})',
+            'full_kelly': full_kelly,
+            'kelly_fraction_used': kelly_fraction,
+            'position_pct': kelly_pct,
+            'position_value': position_value,
+            'win_rate': win_rate,
+            'win_loss_ratio': b,
+            'edge': (p * avg_win) - (q * avg_loss)
+        }
+
+    def max_drawdown_based(self, max_acceptable_dd: float,
+                          expected_max_loss_streak: int,
+                          loss_per_trade_pct: float) -> dict:
+        """
+        Position sizing based on maximum acceptable drawdown.
+
+        Parameters
+        ----------
+        max_acceptable_dd : float
+            Maximum acceptable drawdown (e.g., 0.20 for 20%)
+        expected_max_loss_streak : int
+            Expected maximum consecutive losses
+        loss_per_trade_pct : float
+            Expected loss per losing trade
+
+        Returns
+        -------
+        dict
+            Position sizing details
+        """
+        # Calculate risk per trade to limit drawdown
+        # DD = 1 - (1 - risk)^n where n = loss streak
+        # Solve for risk: risk = 1 - (1 - DD)^(1/n)
+        risk_per_trade = 1 - (1 - max_acceptable_dd) ** (1 / expected_max_loss_streak)
+
+        # Adjust for expected loss percentage
+        position_pct = risk_per_trade / loss_per_trade_pct
+        position_pct = min(position_pct, 1.0)
+
+        position_value = self.account_equity * position_pct
+
+        return {
+            'method': 'Max Drawdown Based',
+            'position_pct': position_pct,
+            'position_value': position_value,
+            'risk_per_trade': risk_per_trade,
+            'max_acceptable_dd': max_acceptable_dd,
+            'expected_loss_streak': expected_max_loss_streak,
+            'expected_dd_after_streak': 1 - (1 - risk_per_trade) ** expected_max_loss_streak
+        }
+
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series,
+                  period: int = 14) -> pd.Series:
+    """
+    Calculate Average True Range.
+
+    Parameters
+    ----------
+    high, low, close : pd.Series
+        Price data
+    period : int
+        ATR period
+
+    Returns
+    -------
+    pd.Series
+        ATR values
+    """
+    prev_close = close.shift(1)
+    tr1 = high - low
+    tr2 = abs(high - prev_close)
+    tr3 = abs(low - prev_close)
+    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    atr = true_range.rolling(window=period).mean()
+    return atr
+
+
+def simulate_equity_curve(initial_capital: float,
+                         returns: np.ndarray,
+                         position_sizes: np.ndarray) -> np.ndarray:
+    """
+    Simulate equity curve with position sizing.
+
+    Parameters
+    ----------
+    initial_capital : float
+        Starting capital
+    returns : np.ndarray
+        Trade returns (as percentages)
+    position_sizes : np.ndarray
+        Position size for each trade (as % of equity)
+
+    Returns
+    -------
+    np.ndarray
+        Equity curve
+    """
+    equity = [initial_capital]
+    for ret, size in zip(returns, position_sizes):
+        pnl = equity[-1] * size * ret
+        equity.append(equity[-1] + pnl)
+    return np.array(equity)
+
+
+# Example usage
+if __name__ == "__main__":
+    # Initialize position sizer
+    sizer = PositionSizer(account_equity=100000, max_risk_pct=0.02)
+
+    # Example 1: Fixed Fractional
+    result = sizer.fixed_fractional(entry_price=50, stop_loss=47)
+    print("Fixed Fractional Position Sizing:")
+    print(f"  Shares: {result['shares']}")
+    print(f"  Position Value: ${result['position_value']:,.2f}")
+    print(f"  Position %: {result['position_pct']:.1%}")
+    print(f"  Dollar Risk: ${result['dollar_risk']:,.2f}")
+
+    # Example 2: Volatility-Based (ATR)
+    result = sizer.volatility_based(entry_price=50, atr=2.5, atr_multiplier=2)
+    print("\nVolatility-Based Position Sizing:")
+    print(f"  Shares: {result['shares']}")
+    print(f"  Position Value: ${result['position_value']:,.2f}")
+    print(f"  Stop Loss: ${result['stop_loss']:.2f}")
+
+    # Example 3: Kelly Criterion
+    result = sizer.kelly_criterion(
+        win_rate=0.55,
+        avg_win=0.10,
+        avg_loss=0.05,
+        kelly_fraction=0.5
+    )
+    print("\nKelly Criterion Position Sizing:")
+    print(f"  Full Kelly: {result['full_kelly']:.1%}")
+    print(f"  Half Kelly: {result['position_pct']:.1%}")
+    print(f"  Position Value: ${result['position_value']:,.2f}")
+    print(f"  Edge: {result['edge']:.2%}")
+
+    # Example 4: Max Drawdown Based
+    result = sizer.max_drawdown_based(
+        max_acceptable_dd=0.20,
+        expected_max_loss_streak=10,
+        loss_per_trade_pct=0.05
+    )
+    print("\nMax Drawdown Based Position Sizing:")
+    print(f"  Position %: {result['position_pct']:.1%}")
+    print(f"  Risk per Trade: {result['risk_per_trade']:.2%}")
+    print(f"  Expected DD after streak: {result['expected_dd_after_streak']:.1%}")</code></pre>
+            </div>
+        </section>
+
+        <!-- Part 5: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Position Size Calculator</h2>
+
+            <div class="calculator-container">
+                <h3>Position Size Calculator</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Calculate optimal position sizes using different methods.
+                </p>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Account Equity ($)</label>
+                        <input type="number" id="accountEquity" value="100000" step="1000">
+                    </div>
+                    <div class="input-group">
+                        <label>Risk per Trade (%)</label>
+                        <input type="number" id="riskPercent" value="2" step="0.1" min="0.1" max="10">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Entry Price ($)</label>
+                        <input type="number" id="entryPrice" value="50" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label>Stop Loss ($)</label>
+                        <input type="number" id="stopLoss" value="47" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label>ATR (for volatility method)</label>
+                        <input type="number" id="atrValue" value="2.5" step="0.1">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="calculatePositionSize()">Calculate Position Sizes</button>
+
+                <div class="results-container" id="resultsContainer" style="display: none;">
+                    <h4 style="margin-bottom: 1rem; color: var(--accent-cyan);">Position Sizing Results</h4>
+
+                    <div style="display: grid; gap: 1.5rem; margin-top: 1rem;">
+                        <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md);">
+                            <h5 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Fixed Fractional Method</h5>
+                            <div class="result-grid">
+                                <div class="result-item">
+                                    <span class="result-label">Shares</span>
+                                    <span class="result-value" id="ffShares">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Position Value</span>
+                                    <span class="result-value" id="ffValue">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Position %</span>
+                                    <span class="result-value" id="ffPercent">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Dollar Risk</span>
+                                    <span class="result-value" id="ffRisk">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md);">
+                            <h5 style="color: var(--accent-purple); margin-bottom: 0.5rem;">Volatility-Based (ATR) Method</h5>
+                            <div class="result-grid">
+                                <div class="result-item">
+                                    <span class="result-label">Shares</span>
+                                    <span class="result-value" id="volShares">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Position Value</span>
+                                    <span class="result-value" id="volValue">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">ATR Stop</span>
+                                    <span class="result-value" id="volStop">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Dollar Risk</span>
+                                    <span class="result-value" id="volRisk">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 6: Key Takeaways -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Key Takeaways</h2>
+
+            <div class="card" style="padding: 2rem;">
+                <div style="display: grid; gap: 1.5rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Risk a consistent percentage per trade</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">The 1-2% rule keeps you in the game through inevitable losing streaks.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Volatility-based sizing normalizes risk</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">Size positions inversely to volatility so each trade has similar risk impact.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Use fractional Kelly for safety</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">Full Kelly is too aggressive; half or quarter Kelly provides better risk-adjusted outcomes.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">4</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Position sizing > Entry signals</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">Poor sizing can ruin a good strategy; proper sizing can salvage a mediocre one.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 7: Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>1. What is the main purpose of the 2% rule in position sizing?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'a')">a) Maximize returns on winning trades</button>
+                        <button onclick="checkAnswer(1, 'b')">b) Survive losing streaks and limit drawdowns</button>
+                        <button onclick="checkAnswer(1, 'c')">c) Match market volatility</button>
+                        <button onclick="checkAnswer(1, 'd')">d) Simplify tax calculations</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>2. In volatility-based position sizing, how should you size a highly volatile asset?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'a')">a) Larger position to capture bigger moves</button>
+                        <button onclick="checkAnswer(2, 'b')">b) Smaller position to normalize risk</button>
+                        <button onclick="checkAnswer(2, 'c')">c) Same size as all other assets</button>
+                        <button onclick="checkAnswer(2, 'd')">d) Double the standard position size</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>3. Why is half-Kelly often preferred over full Kelly?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'a')">a) It generates higher returns</button>
+                        <button onclick="checkAnswer(3, 'b')">b) It reduces variance and drawdowns with modest return reduction</button>
+                        <button onclick="checkAnswer(3, 'c')">c) It's required by regulations</button>
+                        <button onclick="checkAnswer(3, 'd')">d) Full Kelly never works in practice</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>4. What does ATR measure and why is it useful for position sizing?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'a')">a) Average price; helps determine value</button>
+                        <button onclick="checkAnswer(4, 'b')">b) Average volatility; helps set appropriate stop distances</button>
+                        <button onclick="checkAnswer(4, 'c')">c) Average volume; helps determine liquidity</button>
+                        <button onclick="checkAnswer(4, 'd')">d) Average trend; helps determine direction</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>5. If you risk 2% per trade, approximately what percentage of capital remains after 10 consecutive losses?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'a')">a) 80%</button>
+                        <button onclick="checkAnswer(5, 'b')">b) 82%</button>
+                        <button onclick="checkAnswer(5, 'c')">c) 60%</button>
+                        <button onclick="checkAnswer(5, 'd')">d) 50%</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <div class="score-container" id="scoreContainer">
+                    <h3>Quiz Complete! Score: <span id="finalScore">0</span>/5</h3>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Quiz
+        const correctAnswers = { 1: 'b', 2: 'b', 3: 'b', 4: 'b', 5: 'b' };
+        const explanations = {
+            1: { 'a': 'The goal is survival, not maximizing wins.', 'b': 'Correct! Limiting risk per trade ensures survival through drawdowns.', 'c': 'Risk management, not volatility matching.', 'd': 'Unrelated to position sizing purpose.' },
+            2: { 'a': 'Larger positions in volatile assets increase risk.', 'b': 'Correct! Size inversely to volatility for equal risk contribution.', 'c': 'This ignores volatility differences.', 'd': 'This would increase risk, not normalize it.' },
+            3: { 'a': 'Half-Kelly actually has lower expected returns.', 'b': 'Correct! Significantly reduces variance with only modest return reduction.', 'c': 'No such regulation exists.', 'd': 'Full Kelly works but is too aggressive for most traders.' },
+            4: { 'a': 'ATR measures volatility, not price.', 'b': 'Correct! ATR measures average price range and helps set volatility-appropriate stops.', 'c': 'ATR is about price movement, not volume.', 'd': 'ATR measures volatility, not trend direction.' },
+            5: { 'a': 'Close but not exact.', 'b': 'Correct! (1-0.02)^10 = 0.817 or about 82%.', 'c': 'This would be higher risk per trade.', 'd': 'This would require much higher risk per trade.' }
+        };
+        let quizAnswers = {};
+
+        function checkAnswer(q, a) {
+            const feedback = document.getElementById(`feedback${q}`);
+            const isCorrect = a === correctAnswers[q];
+            quizAnswers[q] = a;
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[q][a]}</div>`;
+            feedback.style.display = 'block';
+            document.querySelectorAll(`#q${q} button`).forEach(btn => btn.disabled = true);
+            if (Object.keys(quizAnswers).length === 5) {
+                const score = Object.keys(quizAnswers).reduce((sum, q) => sum + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('scoreContainer').style.display = 'block';
+            }
+        }
+
+        // Position Size Calculator
+        function calculatePositionSize() {
+            const account = parseFloat(document.getElementById('accountEquity').value);
+            const riskPct = parseFloat(document.getElementById('riskPercent').value) / 100;
+            const entry = parseFloat(document.getElementById('entryPrice').value);
+            const stop = parseFloat(document.getElementById('stopLoss').value);
+            const atr = parseFloat(document.getElementById('atrValue').value);
+
+            // Fixed Fractional
+            const riskPerShare = Math.abs(entry - stop);
+            const dollarRisk = account * riskPct;
+            const ffShares = Math.floor(dollarRisk / riskPerShare);
+            const ffValue = ffShares * entry;
+            const ffPct = ffValue / account;
+
+            document.getElementById('ffShares').textContent = ffShares.toLocaleString();
+            document.getElementById('ffValue').textContent = '$' + ffValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+            document.getElementById('ffPercent').textContent = (ffPct * 100).toFixed(1) + '%';
+            document.getElementById('ffRisk').textContent = '$' + dollarRisk.toLocaleString(undefined, {maximumFractionDigits: 0});
+
+            // Volatility-Based (ATR)
+            const atrMultiplier = 2;
+            const atrStopDistance = atr * atrMultiplier;
+            const volShares = Math.floor(dollarRisk / atrStopDistance);
+            const volValue = volShares * entry;
+            const volStop = entry - atrStopDistance;
+
+            document.getElementById('volShares').textContent = volShares.toLocaleString();
+            document.getElementById('volValue').textContent = '$' + volValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+            document.getElementById('volStop').textContent = '$' + volStop.toFixed(2);
+            document.getElementById('volRisk').textContent = '$' + dollarRisk.toLocaleString(undefined, {maximumFractionDigits: 0});
+
+            document.getElementById('resultsContainer').style.display = 'block';
+        }
+
+        // Charts
+        function initCharts() {
+            // Equity Curve Chart
+            const ctx1 = document.getElementById('equityCurveChart').getContext('2d');
+
+            // Simulate trades
+            const numTrades = 100;
+            const returns = [];
+            for (let i = 0; i < numTrades; i++) {
+                returns.push(Math.random() > 0.45 ? 0.03 : -0.02); // 55% win rate
+            }
+
+            // Different position sizing methods
+            const fixedEquity = [100000];
+            const volEquity = [100000];
+            const aggressiveEquity = [100000];
+
+            for (let i = 0; i < numTrades; i++) {
+                // Fixed 2% risk
+                fixedEquity.push(fixedEquity[i] * (1 + 0.02 * (returns[i] > 0 ? 1.5 : -1)));
+                // Volatility adjusted (more conservative)
+                volEquity.push(volEquity[i] * (1 + 0.015 * (returns[i] > 0 ? 1.5 : -1)));
+                // Aggressive 5% risk
+                aggressiveEquity.push(aggressiveEquity[i] * (1 + 0.05 * (returns[i] > 0 ? 1.5 : -1)));
+            }
+
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: numTrades + 1}, (_, i) => i),
+                    datasets: [{
+                        label: 'Fixed 2% Risk',
+                        data: fixedEquity,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }, {
+                        label: 'Volatility-Adjusted 1.5%',
+                        data: volEquity,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }, {
+                        label: 'Aggressive 5% Risk',
+                        data: aggressiveEquity,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { min: 0, max: 100, title: { display: true, text: 'Trade Number', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                        y: { min: 0, title: { display: true, text: 'Account Equity ($)', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', callback: v => '$' + v.toLocaleString() } }
+                    }
+                }
+            });
+
+            // Capital Remaining Chart
+            const ctx2 = document.getElementById('lossChart').getContext('2d');
+            const losses = Array.from({length: 15}, (_, i) => i + 1);
+
+            const remaining2pct = losses.map(n => 100 * Math.pow(0.98, n));
+            const remaining5pct = losses.map(n => 100 * Math.pow(0.95, n));
+            const remaining10pct = losses.map(n => 100 * Math.pow(0.90, n));
+
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: losses,
+                    datasets: [{
+                        label: '2% Risk per Trade',
+                        data: remaining2pct,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: false,
+                        tension: 0.1
+                    }, {
+                        label: '5% Risk per Trade',
+                        data: remaining5pct,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: false,
+                        tension: 0.1
+                    }, {
+                        label: '10% Risk per Trade',
+                        data: remaining10pct,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { title: { display: true, text: 'Consecutive Losses', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                        y: { title: { display: true, text: 'Capital Remaining (%)', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' }, min: 0, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('code').textContent;
+            navigator.clipboard.writeText(code);
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() { initCharts(); calculatePositionSize(); });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

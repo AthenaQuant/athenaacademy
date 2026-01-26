@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Master vectors and matrices for quantitative trading. Learn portfolio weights, covariance matrices, and essential matrix operations for finance.">
+  <title>2.1 Vectors & Matrices | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 2.1</span>
+          <span class="nav-module-title">Vectors & Matrices</span>
+        </div>
+        <a href="2.2_eigenvalues_eigenvectors.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 2: Linear Algebra</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>2.1 Vectors & Matrices</span>
+        </div>
+        <h1>Vectors & Matrices</h1>
+        <p class="module-subtitle">
+          The fundamental building blocks of quantitative finance. Learn to represent portfolios,
+          calculate returns, and work with covariance matrices using linear algebra.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 20 min read</span>
+          <span class="meta-item">📊 4 Visualizations</span>
+          <span class="meta-item">💻 Interactive Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ The Real Problem</div>
+        <p>
+          You manage a portfolio with 50 stocks. Each has a return, weight, and correlations with every other stock.
+          That's 50 weights, 50 returns, and 1,225 unique correlations. How do you calculate portfolio risk efficiently?
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          Without linear algebra: 1,225 manual calculations.
+          <br>With linear algebra: <strong>One matrix multiplication.</strong>
+          <br><br>
+          Portfolio variance = <strong>w'Σw</strong> — one elegant formula that handles any number of assets.
+        </p>
+      </div>
+
+      <h3>Why Linear Algebra Powers Quantitative Finance</h3>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Portfolio Representation</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Weights, returns, and risks are naturally vectors. A portfolio IS a weight vector.
+            Matrix operations let you calculate everything at once.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--accent-purple); margin-bottom: 1rem;">🔗 Correlation Structure</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Covariance matrices capture all asset relationships in one object.
+            Essential for diversification and risk management.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success); margin-bottom: 1rem;">⚡ Computational Efficiency</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            NumPy's vectorized operations are 100x faster than loops.
+            Real-time portfolio optimization requires matrix math.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ What You'll Master</div>
+        <p style="margin-bottom: 0;">
+          By the end of this module, you'll represent portfolios as vectors, returns as matrices, and calculate
+          portfolio risk using covariance matrices. You'll understand why every quant uses NumPy and how matrix
+          operations make impossible calculations trivial. This is the language of modern portfolio theory.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition (No Math Yet)</h2>
+
+      <h3>Vectors: Lists with Direction</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📍 Think of Vectors as Ordered Lists</div>
+        <p>
+          A vector is just an ordered list of numbers. In finance, vectors represent:
+        </p>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Portfolio weights:</strong> [0.3, 0.2, 0.5] = 30% AAPL, 20% GOOGL, 50% MSFT</li>
+          <li><strong>Asset returns:</strong> [0.05, 0.08, 0.03] = each asset's return</li>
+          <li><strong>Risk factors:</strong> [1.2, 0.8, 1.5] = exposure to market, size, value factors</li>
+        </ul>
+      </div>
+
+      <h3>Matrices: Grids of Relationships</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📊 Think of Matrices as Relationship Tables</div>
+        <p>
+          A matrix is a grid of numbers. In finance, matrices represent:
+        </p>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Covariance matrix:</strong> How all assets move together (risk structure)</li>
+          <li><strong>Correlation matrix:</strong> Standardized covariance (-1 to +1)</li>
+          <li><strong>Returns data:</strong> Rows = time periods, Columns = assets</li>
+          <li><strong>Factor loadings:</strong> How assets respond to different risk factors</li>
+        </ul>
+      </div>
+
+      <h3>Visual: Portfolio as a Vector</h3>
+
+      <svg width="100%" height="320" viewBox="0 0 900 320" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <!-- Title -->
+        <text x="450" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="20" font-weight="600">
+          Portfolio = Weight Vector × Return Vector
+        </text>
+
+        <!-- Weight Vector -->
+        <g transform="translate(50, 60)">
+          <text x="100" y="0" fill="var(--accent-blue)" font-size="16" font-weight="600" text-anchor="middle">Weight Vector (w)</text>
+          <rect x="50" y="20" width="100" height="40" fill="rgba(59, 130, 246, 0.2)" stroke="var(--accent-blue)" stroke-width="2" rx="5"/>
+          <text x="100" y="47" fill="var(--text-primary)" text-anchor="middle" font-size="16">0.40</text>
+          <text x="170" y="47" fill="var(--text-muted)" font-size="14">AAPL</text>
+
+          <rect x="50" y="70" width="100" height="40" fill="rgba(59, 130, 246, 0.2)" stroke="var(--accent-blue)" stroke-width="2" rx="5"/>
+          <text x="100" y="97" fill="var(--text-primary)" text-anchor="middle" font-size="16">0.35</text>
+          <text x="170" y="97" fill="var(--text-muted)" font-size="14">GOOGL</text>
+
+          <rect x="50" y="120" width="100" height="40" fill="rgba(59, 130, 246, 0.2)" stroke="var(--accent-blue)" stroke-width="2" rx="5"/>
+          <text x="100" y="147" fill="var(--text-primary)" text-anchor="middle" font-size="16">0.25</text>
+          <text x="170" y="147" fill="var(--text-muted)" font-size="14">MSFT</text>
+        </g>
+
+        <!-- Multiplication Symbol -->
+        <text x="320" y="145" fill="var(--text-primary)" font-size="40" text-anchor="middle">×</text>
+
+        <!-- Return Vector -->
+        <g transform="translate(370, 60)">
+          <text x="100" y="0" fill="var(--success)" font-size="16" font-weight="600" text-anchor="middle">Return Vector (r)</text>
+          <rect x="50" y="20" width="100" height="40" fill="rgba(16, 185, 129, 0.2)" stroke="var(--success)" stroke-width="2" rx="5"/>
+          <text x="100" y="47" fill="var(--text-primary)" text-anchor="middle" font-size="16">+8%</text>
+
+          <rect x="50" y="70" width="100" height="40" fill="rgba(16, 185, 129, 0.2)" stroke="var(--success)" stroke-width="2" rx="5"/>
+          <text x="100" y="97" fill="var(--text-primary)" text-anchor="middle" font-size="16">+5%</text>
+
+          <rect x="50" y="120" width="100" height="40" fill="rgba(16, 185, 129, 0.2)" stroke="var(--success)" stroke-width="2" rx="5"/>
+          <text x="100" y="147" fill="var(--text-primary)" text-anchor="middle" font-size="16">+3%</text>
+        </g>
+
+        <!-- Equals Symbol -->
+        <text x="600" y="145" fill="var(--text-primary)" font-size="40" text-anchor="middle">=</text>
+
+        <!-- Result -->
+        <g transform="translate(650, 60)">
+          <text x="100" y="0" fill="var(--accent-purple)" font-size="16" font-weight="600" text-anchor="middle">Portfolio Return</text>
+          <rect x="30" y="50" width="140" height="80" fill="rgba(139, 92, 246, 0.2)" stroke="var(--accent-purple)" stroke-width="3" rx="10"/>
+          <text x="100" y="100" fill="var(--accent-purple)" text-anchor="middle" font-size="28" font-weight="700">+5.7%</text>
+        </g>
+
+        <!-- Formula -->
+        <text x="450" y="260" fill="var(--text-secondary)" text-anchor="middle" font-size="16">
+          (0.40 × 8%) + (0.35 × 5%) + (0.25 × 3%) = 3.2% + 1.75% + 0.75% = 5.7%
+        </text>
+
+        <text x="450" y="290" fill="var(--accent-blue)" text-anchor="middle" font-size="16" font-weight="600">
+          This is the DOT PRODUCT: w · r = portfolio return
+        </text>
+      </svg>
+    </section>
+
+    <!-- PART 3: THE MATHEMATICS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: The Mathematics</h2>
+
+      <h3>Vector Operations</h3>
+
+      <div class="formula-box">
+        <div class="formula-label">Dot Product (Portfolio Return)</div>
+        <div class="formula-content">
+          r<sub>portfolio</sub> = w · r = Σ w<sub>i</sub> × r<sub>i</sub>
+        </div>
+        <div class="formula-description">
+          Sum of each weight times its corresponding return
+        </div>
+      </div>
+
+      <div class="formula-box" style="margin-top: 1rem;">
+        <div class="formula-label">Portfolio Variance (Risk)</div>
+        <div class="formula-content">
+          σ²<sub>portfolio</sub> = w<sup>T</sup>Σw
+        </div>
+        <div class="formula-description">
+          Weight vector × Covariance matrix × Weight vector (transpose)
+        </div>
+      </div>
+
+      <h3>Matrix Operations in Finance</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">matrix_operations.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+
+# Portfolio weights (must sum to 1)
+weights = np.array([0.40, 0.35, 0.25])
+
+# Asset returns
+returns = np.array([0.08, 0.05, 0.03])
+
+# Portfolio return = dot product
+portfolio_return = np.dot(weights, returns)
+print(f"Portfolio Return: {portfolio_return:.2%}")
+# Output: Portfolio Return: 5.70%
+
+# Covariance matrix (3x3 for 3 assets)
+cov_matrix = np.array([
+    [0.04, 0.02, 0.01],   # AAPL variance and covariances
+    [0.02, 0.03, 0.015],  # GOOGL variance and covariances
+    [0.01, 0.015, 0.02]   # MSFT variance and covariances
+])
+
+# Portfolio variance = w'Σw
+portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
+portfolio_volatility = np.sqrt(portfolio_variance)
+print(f"Portfolio Volatility: {portfolio_volatility:.2%}")
+# Output: Portfolio Volatility: 15.23%
+
+# Correlation matrix from covariance
+std_devs = np.sqrt(np.diag(cov_matrix))
+corr_matrix = cov_matrix / np.outer(std_devs, std_devs)
+print("\nCorrelation Matrix:")
+print(corr_matrix.round(2))</code></pre>
+        </div>
+      </div>
+
+      <h3>Key Matrix Types in Finance</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Matrix Type</th>
+              <th>Properties</th>
+              <th>Finance Application</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Covariance (Σ)</strong></td>
+              <td>Symmetric, positive semi-definite</td>
+              <td>Portfolio risk, diversification</td>
+            </tr>
+            <tr>
+              <td><strong>Correlation</strong></td>
+              <td>Symmetric, diagonal = 1, values ∈ [-1, 1]</td>
+              <td>Asset relationships, hedging</td>
+            </tr>
+            <tr>
+              <td><strong>Returns</strong></td>
+              <td>Rows = time, Columns = assets</td>
+              <td>Historical data, backtesting</td>
+            </tr>
+            <tr>
+              <td><strong>Factor Loading</strong></td>
+              <td>Rows = assets, Columns = factors</td>
+              <td>Factor models, risk decomposition</td>
+            </tr>
+            <tr>
+              <td><strong>Identity (I)</strong></td>
+              <td>Diagonal = 1, off-diagonal = 0</td>
+              <td>No transformation baseline</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PART 4: KEY PROPERTIES -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Key Properties & Operations</h2>
+
+      <h3>1. Matrix Transpose</h3>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--accent-blue);">What It Does</h4>
+          <p>Swaps rows and columns. A<sup>T</sup> means transpose of A.</p>
+          <div class="code-block" style="margin-top: 1rem;">
+            <div class="code-content">
+<pre><code class="language-python">A = np.array([[1, 2, 3],
+              [4, 5, 6]])
+# Shape: (2, 3)
+
+A_T = A.T  # or np.transpose(A)
+# [[1, 4],
+#  [2, 5],
+#  [3, 6]]
+# Shape: (3, 2)</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="color: var(--success);">Finance Use</h4>
+          <p>Convert row vector to column vector for matrix multiplication.</p>
+          <div class="code-block" style="margin-top: 1rem;">
+            <div class="code-content">
+<pre><code class="language-python"># Portfolio variance formula
+# w is (3,) array
+# Σ is (3,3) matrix
+# Need: w.T @ Σ @ w
+
+portfolio_var = weights @ cov_matrix @ weights
+# Same as: w'Σw</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>2. Matrix Multiplication Rules</h3>
+
+      <svg width="100%" height="200" viewBox="0 0 900 200" style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 1rem; margin: 1rem 0;">
+        <text x="450" y="30" fill="var(--text-primary)" text-anchor="middle" font-size="18" font-weight="600">
+          Matrix Multiplication: (m × n) @ (n × p) = (m × p)
+        </text>
+
+        <!-- Matrix A -->
+        <rect x="100" y="60" width="120" height="80" fill="rgba(59, 130, 246, 0.2)" stroke="var(--accent-blue)" stroke-width="2" rx="5"/>
+        <text x="160" y="110" fill="var(--accent-blue)" text-anchor="middle" font-size="24" font-weight="600">A</text>
+        <text x="160" y="160" fill="var(--text-secondary)" text-anchor="middle" font-size="14">(3 × 4)</text>
+
+        <!-- @ symbol -->
+        <text x="280" y="110" fill="var(--text-primary)" font-size="30" text-anchor="middle">@</text>
+
+        <!-- Matrix B -->
+        <rect x="340" y="50" width="80" height="100" fill="rgba(139, 92, 246, 0.2)" stroke="var(--accent-purple)" stroke-width="2" rx="5"/>
+        <text x="380" y="110" fill="var(--accent-purple)" text-anchor="middle" font-size="24" font-weight="600">B</text>
+        <text x="380" y="170" fill="var(--text-secondary)" text-anchor="middle" font-size="14">(4 × 2)</text>
+
+        <!-- = symbol -->
+        <text x="480" y="110" fill="var(--text-primary)" font-size="30" text-anchor="middle">=</text>
+
+        <!-- Result C -->
+        <rect x="540" y="70" width="80" height="60" fill="rgba(16, 185, 129, 0.2)" stroke="var(--success)" stroke-width="2" rx="5"/>
+        <text x="580" y="110" fill="var(--success)" text-anchor="middle" font-size="24" font-weight="600">C</text>
+        <text x="580" y="150" fill="var(--text-secondary)" text-anchor="middle" font-size="14">(3 × 2)</text>
+
+        <!-- Rule explanation -->
+        <text x="750" y="90" fill="var(--warning)" font-size="14" font-weight="600">Inner dimensions</text>
+        <text x="750" y="110" fill="var(--warning)" font-size="14" font-weight="600">must match!</text>
+        <text x="750" y="140" fill="var(--text-secondary)" font-size="14">(4 = 4) ✓</text>
+      </svg>
+
+      <h3>3. Symmetric Matrices (Covariance)</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📊 Covariance Matrix Properties</div>
+        <p>A covariance matrix Σ is:</p>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Symmetric:</strong> Σ = Σ<sup>T</sup> (cov(A,B) = cov(B,A))</li>
+          <li><strong>Positive semi-definite:</strong> x<sup>T</sup>Σx ≥ 0 for all x</li>
+          <li><strong>Diagonal:</strong> Variances (σ²) of each asset</li>
+          <li><strong>Off-diagonal:</strong> Covariances between asset pairs</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE CALCULATOR -->
+    <section class="content-section fade-in">
+      <h2>Interactive Matrix Calculator</h2>
+
+      <div class="calculator-widget" data-calc-id="matrix-calc">
+        <h3 class="calculator-title">Portfolio Calculator</h3>
+        <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">
+          Enter portfolio weights and returns to calculate portfolio return using dot product.
+        </p>
+
+        <div class="grid grid-2">
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="weightsInput">Weights (comma-separated, must sum to 1)</label>
+            <input type="text" id="weightsInput" class="calculator-input" value="0.4, 0.35, 0.25" placeholder="e.g., 0.4, 0.35, 0.25">
+          </div>
+
+          <div class="calculator-input-group">
+            <label class="calculator-label" for="assetReturns">Returns (%, comma-separated)</label>
+            <input type="text" id="assetReturns" class="calculator-input" value="8, 5, 3" placeholder="e.g., 8, 5, 3">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculatePortfolio()">
+          Calculate Portfolio Return
+        </button>
+
+        <div class="calculator-result" style="margin-top: 1.5rem; display: none;" id="matrixResults">
+          <div class="grid grid-2">
+            <div>
+              <div class="calculator-result-label">Portfolio Return (w · r)</div>
+              <div class="calculator-result-value" id="portfolioReturn">5.70%</div>
+            </div>
+            <div>
+              <div class="calculator-result-label">Weight Sum</div>
+              <div class="calculator-result-value" id="weightSum" style="font-size: 1.3rem;">1.00</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; font-family: var(--font-mono); font-size: 0.9rem;">
+            <h4 style="margin-bottom: 0.5rem;">Calculation:</h4>
+            <div id="dotProductCalc" style="color: var(--text-secondary);"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 5: PYTHON IMPLEMENTATION -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Python Implementation</h2>
+
+      <h3>Complete Portfolio Linear Algebra</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">portfolio_linalg.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">import numpy as np
+from typing import Tuple
+
+def calculate_portfolio_return(weights: np.ndarray,
+                               returns: np.ndarray) -> float:
+    """
+    Calculate portfolio return using dot product.
+
+    Parameters
+    ----------
+    weights : np.ndarray
+        Portfolio weights vector (must sum to 1)
+    returns : np.ndarray
+        Asset returns vector
+
+    Returns
+    -------
+    float
+        Portfolio return
+    """
+    return np.dot(weights, returns)
+
+
+def calculate_portfolio_risk(weights: np.ndarray,
+                            cov_matrix: np.ndarray) -> Tuple[float, float]:
+    """
+    Calculate portfolio variance and volatility.
+
+    Parameters
+    ----------
+    weights : np.ndarray
+        Portfolio weights vector
+    cov_matrix : np.ndarray
+        Covariance matrix of returns
+
+    Returns
+    -------
+    Tuple[float, float]
+        (variance, volatility)
+    """
+    variance = weights @ cov_matrix @ weights
+    volatility = np.sqrt(variance)
+    return variance, volatility
+
+
+def covariance_to_correlation(cov_matrix: np.ndarray) -> np.ndarray:
+    """
+    Convert covariance matrix to correlation matrix.
+
+    Parameters
+    ----------
+    cov_matrix : np.ndarray
+        Covariance matrix
+
+    Returns
+    -------
+    np.ndarray
+        Correlation matrix
+    """
+    std_devs = np.sqrt(np.diag(cov_matrix))
+    corr_matrix = cov_matrix / np.outer(std_devs, std_devs)
+    return corr_matrix
+
+
+# Example: 4-asset portfolio
+if __name__ == "__main__":
+    # Asset names
+    assets = ['AAPL', 'GOOGL', 'MSFT', 'AMZN']
+
+    # Portfolio weights
+    weights = np.array([0.25, 0.25, 0.30, 0.20])
+    print(f"Weights sum: {weights.sum():.2f}")  # Should be 1.00
+
+    # Expected returns
+    expected_returns = np.array([0.12, 0.10, 0.11, 0.14])
+
+    # Covariance matrix (annual)
+    cov_matrix = np.array([
+        [0.0400, 0.0250, 0.0200, 0.0280],
+        [0.0250, 0.0350, 0.0180, 0.0220],
+        [0.0200, 0.0180, 0.0300, 0.0200],
+        [0.0280, 0.0220, 0.0200, 0.0450]
+    ])
+
+    # Calculate portfolio metrics
+    port_return = calculate_portfolio_return(weights, expected_returns)
+    port_var, port_vol = calculate_portfolio_risk(weights, cov_matrix)
+
+    print("\n" + "="*50)
+    print("PORTFOLIO ANALYSIS")
+    print("="*50)
+    print(f"Expected Return:  {port_return:.2%}")
+    print(f"Portfolio Risk:   {port_vol:.2%}")
+    print(f"Sharpe Ratio:     {(port_return - 0.02) / port_vol:.2f}")
+    print("="*50)
+
+    # Show correlation matrix
+    corr = covariance_to_correlation(cov_matrix)
+    print("\nCorrelation Matrix:")
+    print(np.round(corr, 2))</code></pre>
+        </div>
+      </div>
+
+      <h3>Visualizations</h3>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Portfolio Weights Distribution</h4>
+        <canvas id="weightsChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Covariance Matrix Heatmap</h4>
+        <canvas id="covHeatmapChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h4 class="chart-title">Return Contribution by Asset</h4>
+        <canvas id="contributionChart"></canvas>
+      </div>
+    </section>
+
+    <!-- PART 6: TRADING APPLICATIONS -->
+    <section class="content-section fade-in">
+      <h2>Part 6: Trading Applications</h2>
+
+      <div class="grid grid-2">
+        <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); border: 2px solid var(--accent-blue);">
+          <h3 style="color: var(--accent-blue);">Portfolio Construction</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Mean-Variance Optimization:</strong> w = argmax(r'w - λw'Σw)</li>
+            <li><strong>Risk Parity:</strong> Equal risk contribution via weights</li>
+            <li><strong>Factor Tilts:</strong> Factor exposure = Factor loadings × weights</li>
+            <li><strong>Rebalancing:</strong> Current weights vs target weights</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); border: 2px solid var(--accent-purple);">
+          <h3 style="color: var(--accent-purple);">Risk Management</h3>
+          <ul style="margin-top: 1rem;">
+            <li><strong>Portfolio VaR:</strong> Uses covariance matrix</li>
+            <li><strong>Marginal Contribution:</strong> ∂(portfolio risk)/∂w</li>
+            <li><strong>Diversification Ratio:</strong> Weighted vol / Portfolio vol</li>
+            <li><strong>Correlation Breakdown:</strong> Detect regime changes</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Real Example: Multi-Asset Risk Calculation</h3>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <span class="code-title">risk_calculation.py</span>
+        </div>
+        <div class="code-content">
+<pre><code class="language-python">def calculate_risk_contribution(weights: np.ndarray,
+                                cov_matrix: np.ndarray) -> np.ndarray:
+    """
+    Calculate each asset's contribution to portfolio risk.
+
+    Parameters
+    ----------
+    weights : np.ndarray
+        Portfolio weights
+    cov_matrix : np.ndarray
+        Covariance matrix
+
+    Returns
+    -------
+    np.ndarray
+        Risk contribution of each asset (sums to 100%)
+    """
+    # Portfolio volatility
+    port_vol = np.sqrt(weights @ cov_matrix @ weights)
+
+    # Marginal contribution to risk
+    marginal_risk = cov_matrix @ weights / port_vol
+
+    # Component risk contribution
+    component_risk = weights * marginal_risk
+
+    # Percentage contribution
+    risk_pct = component_risk / port_vol
+
+    return risk_pct
+
+
+# Example
+weights = np.array([0.30, 0.40, 0.30])
+cov_matrix = np.array([
+    [0.04, 0.02, 0.01],
+    [0.02, 0.03, 0.015],
+    [0.01, 0.015, 0.02]
+])
+
+risk_contrib = calculate_risk_contribution(weights, cov_matrix)
+print("Risk Contribution by Asset:")
+for i, rc in enumerate(risk_contrib):
+    print(f"  Asset {i+1}: {rc:.1%}")</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 7: COMMON MISTAKES -->
+    <section class="content-section fade-in">
+      <h2>Part 7: Common Mistakes (And How to Avoid Them)</h2>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #1: Dimension Mismatch</div>
+        <p><strong>Wrong:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--error);"># WRONG: Trying to multiply incompatible shapes
+weights = np.array([0.3, 0.4, 0.3])  # (3,)
+returns = np.array([[0.05], [0.08], [0.03]])  # (3, 1)
+
+result = np.dot(weights, returns)  # Works but gives (1,) array
+# Confusing output shape!</code></pre>
+          </div>
+        </div>
+        <p><strong>Correct:</strong></p>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># CORRECT: Use consistent shapes
+weights = np.array([0.3, 0.4, 0.3])  # (3,)
+returns = np.array([0.05, 0.08, 0.03])  # (3,)
+
+result = np.dot(weights, returns)  # Clean scalar output
+# or use @ operator
+result = weights @ returns</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #2: Weights Not Summing to 1</div>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># ALWAYS validate weights
+def validate_weights(weights: np.ndarray, tolerance: float = 1e-6) -> bool:
+    """Check if weights sum to 1."""
+    return np.abs(weights.sum() - 1.0) < tolerance
+
+# Normalize if needed
+weights = weights / weights.sum()</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-box-error">
+        <div class="info-box-title">❌ Mistake #3: Non-Symmetric Covariance Matrix</div>
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-content">
+<pre><code class="language-python" style="color: var(--success);"># ALWAYS make covariance matrix symmetric
+def make_symmetric(matrix: np.ndarray) -> np.ndarray:
+    """Force matrix symmetry (fix numerical errors)."""
+    return (matrix + matrix.T) / 2
+
+cov_matrix = make_symmetric(cov_matrix)</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE QUIZ -->
+    <section class="content-section fade-in">
+      <h2>Test Your Understanding</h2>
+
+      <div class="quiz-container" data-quiz-id="vectors-quiz">
+        <div class="quiz-score" style="text-align: right; font-weight: 600; color: var(--accent-blue); margin-bottom: 1rem;">
+          Score: 0/5
+        </div>
+
+        <!-- Question 1 -->
+        <div class="quiz-question-group" data-question-id="q1">
+          <div class="quiz-question">1. What does the dot product w · r represent in portfolio theory?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! The dot product of weights and returns gives the weighted average return, which is the portfolio return.">
+              Portfolio return (weighted sum of asset returns)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Portfolio variance requires the covariance matrix: w'Σw.">
+              Portfolio variance
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Correlation is a separate calculation involving covariance and standard deviations.">
+              Correlation between assets
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="The number of assets is just the length of the vectors.">
+              Number of assets in portfolio
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-question-group" data-question-id="q2">
+          <div class="quiz-question">2. What is the formula for portfolio variance using matrix notation?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="That's portfolio return, not variance.">
+              w · r (dot product)
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! w'Σw gives portfolio variance, where w is weights and Σ is the covariance matrix.">
+              w'Σw (quadratic form)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Simple sum of variances ignores diversification effects.">
+              Σ(w × σ²)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="This doesn't account for correlations between assets.">
+              w × w' (outer product)
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-question-group" data-question-id="q3">
+          <div class="quiz-question">3. A covariance matrix is symmetric. What does this mean?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="Diagonals contain variances, which are generally not equal.">
+              All diagonal elements are equal
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! cov(A,B) = cov(B,A), so element (i,j) equals element (j,i).">
+              Element (i,j) equals element (j,i)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Covariance values can be positive or negative.">
+              All elements are positive
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Covariance matrices can be any size, depending on number of assets.">
+              The matrix must be square with exactly 3 rows
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="quiz-question-group" data-question-id="q4">
+          <div class="quiz-question">4. For matrix multiplication A @ B to work, what must be true?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="They don't need to be the same size - just compatible dimensions.">
+              A and B must be the same size
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! If A is (m×n) and B is (n×p), the result is (m×p). Inner dimensions must match.">
+              Number of columns in A must equal number of rows in B
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Matrices don't need to be square for multiplication.">
+              Both matrices must be square
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="Symmetry is not required for general matrix multiplication.">
+              Both matrices must be symmetric
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 5 -->
+        <div class="quiz-question-group" data-question-id="q5">
+          <div class="quiz-question">5. Portfolio weights must sum to 1.0. What happens if they don't?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-correct="false" data-explanation="NumPy will still compute a result, but it will be wrong.">
+              NumPy throws an error
+            </div>
+            <div class="quiz-option" data-correct="true" data-explanation="Correct! You'd be calculating returns for more or less than 100% of your capital.">
+              Calculations are invalid (wrong leverage)
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="NumPy doesn't auto-normalize. You must do it yourself.">
+              Python automatically normalizes them
+            </div>
+            <div class="quiz-option" data-correct="false" data-explanation="The sum constraint is fundamental - there's no workaround.">
+              It only matters for variance, not return
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 8: SUMMARY & CHEAT SHEET -->
+    <section class="content-section fade-in">
+      <h2>Part 8: Summary & Cheat Sheet</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li><strong>Vectors</strong> represent portfolio weights and asset returns</li>
+          <li><strong>Matrices</strong> represent covariance/correlation structures</li>
+          <li><strong>Dot product</strong> w · r gives portfolio return</li>
+          <li><strong>Quadratic form</strong> w'Σw gives portfolio variance</li>
+          <li>Covariance matrices are <strong>symmetric</strong> and <strong>positive semi-definite</strong></li>
+          <li>Always validate: weights sum to 1, dimensions match</li>
+        </ul>
+      </div>
+
+      <h3>NumPy Cheat Sheet</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Code</th>
+              <th>Finance Use</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Dot Product</strong></td>
+              <td><code>np.dot(a, b)</code> or <code>a @ b</code></td>
+              <td>Portfolio return</td>
+            </tr>
+            <tr>
+              <td><strong>Transpose</strong></td>
+              <td><code>A.T</code></td>
+              <td>Row ↔ Column conversion</td>
+            </tr>
+            <tr>
+              <td><strong>Matrix Multiply</strong></td>
+              <td><code>A @ B</code></td>
+              <td>Risk calculations</td>
+            </tr>
+            <tr>
+              <td><strong>Outer Product</strong></td>
+              <td><code>np.outer(a, b)</code></td>
+              <td>Covariance construction</td>
+            </tr>
+            <tr>
+              <td><strong>Diagonal</strong></td>
+              <td><code>np.diag(A)</code></td>
+              <td>Extract variances</td>
+            </tr>
+            <tr>
+              <td><strong>Identity</strong></td>
+              <td><code>np.eye(n)</code></td>
+              <td>Neutral transformation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="formula-box" style="margin-top: 2rem;">
+        <div class="formula-label">The Two Essential Portfolio Formulas</div>
+        <div class="formula-content" style="font-size: 1.2rem;">
+          Return: r<sub>p</sub> = w'r = Σ w<sub>i</sub>r<sub>i</sub>
+        </div>
+        <div class="formula-content" style="font-size: 1.2rem; margin-top: 1rem;">
+          Variance: σ²<sub>p</sub> = w'Σw
+        </div>
+        <div class="formula-description">
+          Master these two formulas and you understand the core of portfolio theory!
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="../../index.html" class="btn btn-secondary">
+        ← Back to Course
+      </a>
+      <a href="2.2_eigenvalues_eigenvectors.html" class="btn btn-primary">
+        Next: Eigenvalues & Eigenvectors →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Module 2.1: Vectors & Matrices</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of the Quantitative Trading Mastery course
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="2.2_eigenvalues_eigenvectors.html">2.2 Eigenvalues & Eigenvectors</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../../assets/js/shared-scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <script>
+    // ============================================
+    // INTERACTIVE CALCULATOR
+    // ============================================
+    function calculatePortfolio() {
+      const weightsStr = document.getElementById('weightsInput').value;
+      const returnsStr = document.getElementById('assetReturns').value;
+
+      const weights = weightsStr.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w));
+      const returns = returnsStr.split(',').map(r => parseFloat(r.trim()) / 100).filter(r => !isNaN(r));
+
+      if (weights.length !== returns.length || weights.length === 0) {
+        alert('Weights and returns must have the same number of elements');
+        return;
+      }
+
+      // Calculate dot product
+      let portfolioReturn = 0;
+      let calcSteps = [];
+      for (let i = 0; i < weights.length; i++) {
+        portfolioReturn += weights[i] * returns[i];
+        calcSteps.push(`(${weights[i]} × ${(returns[i]*100).toFixed(1)}%)`);
+      }
+
+      const weightSum = weights.reduce((a, b) => a + b, 0);
+
+      // Display results
+      document.getElementById('matrixResults').style.display = 'block';
+      document.getElementById('portfolioReturn').textContent = (portfolioReturn * 100).toFixed(2) + '%';
+      document.getElementById('portfolioReturn').style.color = portfolioReturn >= 0 ? 'var(--success)' : 'var(--error)';
+      document.getElementById('weightSum').textContent = weightSum.toFixed(2);
+      document.getElementById('weightSum').style.color = Math.abs(weightSum - 1) < 0.01 ? 'var(--success)' : 'var(--error)';
+      document.getElementById('dotProductCalc').innerHTML = calcSteps.join(' + ') + ' = <strong>' + (portfolioReturn * 100).toFixed(2) + '%</strong>';
+    }
+
+    // ============================================
+    // CHART.JS VISUALIZATIONS
+    // ============================================
+
+    // Chart 1: Portfolio Weights
+    const ctx1 = document.getElementById('weightsChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: ['AAPL', 'GOOGL', 'MSFT', 'AMZN'],
+        datasets: [{
+          data: [25, 25, 30, 20],
+          backgroundColor: [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)'
+          ],
+          borderColor: '#0a0e1a',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#e8eaf0' }
+          },
+          title: {
+            display: true,
+            text: 'Weight Vector: [0.25, 0.25, 0.30, 0.20]',
+            color: '#e8eaf0'
+          }
+        }
+      }
+    });
+
+    // Chart 2: Covariance Heatmap (as bar chart approximation)
+    const covData = [
+      [4.0, 2.5, 2.0, 2.8],
+      [2.5, 3.5, 1.8, 2.2],
+      [2.0, 1.8, 3.0, 2.0],
+      [2.8, 2.2, 2.0, 4.5]
+    ];
+
+    const ctx2 = document.getElementById('covHeatmapChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: ['AAPL-AAPL', 'AAPL-GOOGL', 'AAPL-MSFT', 'AAPL-AMZN', 'GOOGL-GOOGL', 'MSFT-MSFT', 'AMZN-AMZN'],
+        datasets: [{
+          label: 'Covariance (×100)',
+          data: [4.0, 2.5, 2.0, 2.8, 3.5, 3.0, 4.5],
+          backgroundColor: [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(139, 92, 246, 0.6)',
+            'rgba(139, 92, 246, 0.5)',
+            'rgba(139, 92, 246, 0.6)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(239, 68, 68, 0.8)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Covariance Matrix Elements (Diagonal = Variance)',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Covariance (%²)', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // Chart 3: Return Contribution
+    const ctx3 = document.getElementById('contributionChart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: ['AAPL', 'GOOGL', 'MSFT', 'AMZN'],
+        datasets: [{
+          label: 'Weight (%)',
+          data: [25, 25, 30, 20],
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1
+        }, {
+          label: 'Return Contribution (%)',
+          data: [3.0, 2.5, 3.3, 2.8],
+          backgroundColor: 'rgba(16, 185, 129, 0.7)',
+          borderColor: 'rgb(16, 185, 129)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e8eaf0' } },
+          title: {
+            display: true,
+            text: 'Each Asset\'s Contribution to Portfolio Return',
+            color: '#e8eaf0'
+          }
+        },
+        scales: {
+          y: {
+            title: { display: true, text: 'Percentage', color: '#a8b2d1' },
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            ticks: { color: '#a8b2d1' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  </script>
+
+  <style>
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .nav-content { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .nav-home, .nav-next { color: var(--accent-blue); font-weight: 500; transition: color var(--transition-fast); }
+    .nav-home:hover, .nav-next:hover { color: var(--accent-cyan); }
+    .nav-module-info { text-align: center; }
+    .nav-module-number { display: block; color: var(--text-muted); font-size: 0.85rem; }
+    .nav-module-title { color: var(--text-primary); font-weight: 600; }
+    .module-hero { background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%); padding: 3rem 0 2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .module-hero-content { max-width: 900px; margin: 0 auto; }
+    .module-breadcrumb { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    .breadcrumb-separator { margin: 0 0.5rem; }
+    .module-subtitle { font-size: 1.2rem; color: var(--text-secondary); max-width: 700px; }
+    .module-meta { display: flex; gap: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .meta-item { color: var(--text-muted); font-size: 0.9rem; }
+    .content-section { margin-bottom: 4rem; }
+    .content-section h2 { margin-top: 2rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid rgba(59, 130, 246, 0.3); }
+    .content-section h3 { margin-top: 2rem; margin-bottom: 1rem; }
+    .module-bottom-nav { display: flex; justify-content: space-between; gap: 1rem; margin: 3rem 0; padding-top: 2rem; border-top: 2px solid rgba(255, 255, 255, 0.05); }
+    .module-footer { background: var(--bg-tertiary); padding: 2rem 0; margin-top: 4rem; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    @media (max-width: 768px) {
+      .nav-content { flex-direction: column; text-align: center; }
+      .module-meta { flex-direction: column; gap: 0.5rem; }
+      .module-bottom-nav { flex-direction: column; }
+    }
+  </style>
+
+</body>
+</html>

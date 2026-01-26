@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn SVD, Cholesky, and QR decomposition for quantitative trading. Essential techniques for Monte Carlo simulation, covariance denoising, and fast regression.">
+  <title>2.3 Matrix Decomposition | Quantitative Trading Mastery</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
+
+  <style>
+        .decomp-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .decomp-card h4 {
+            color: #818cf8;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .decomp-equation {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.4rem;
+            color: #e2e8f0;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .matrix-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .matrix-box {
+            background: rgba(99, 102, 241, 0.2);
+            border: 2px solid #6366f1;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            min-width: 80px;
+        }
+        .matrix-box.sigma {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+        }
+        .matrix-box.orthogonal {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: #f59e0b;
+        }
+        .matrix-box.lower {
+            background: rgba(236, 72, 153, 0.2);
+            border-color: #ec4899;
+        }
+        .matrix-box span {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .matrix-box p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+        .use-case-list {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .use-case-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+        .use-case-item .icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .comparison-table th {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            font-weight: 600;
+        }
+        .comparison-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .check-mark {
+            color: #10b981;
+        }
+        .x-mark {
+            color: #f87171;
+        }
+    </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Module 2.3</span>
+          <span class="nav-module-title">Matrix Decomposition</span>
+        </div>
+        <a href="2.4_linear_systems.html" class="nav-next">Next Module →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Module 2: Linear Algebra</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>2.3 Matrix Decomposition</span>
+        </div>
+        <h1>Matrix Decomposition</h1>
+        <p class="module-subtitle">
+          Break complex matrices into simpler, more useful components.
+          Master SVD, Cholesky, and QR for quantitative finance.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 20 min read</span>
+          <span class="meta-item">📊 2 Visualizations</span>
+          <span class="meta-item">💻 Interactive Calculator</span>
+          <span class="meta-item">✅ 5 Quiz Questions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+        <!-- Section 1: Why Should You Care? -->
+        <section class="content-section">
+            <h2>1. Why Should You Care? 🎯</h2>
+
+            <div class="key-concept">
+                <h3>The Power of Factorization</h3>
+                <p>Matrix decomposition is the Swiss Army knife of quantitative finance. Need to simulate correlated asset returns? Use Cholesky. Want to denoise a covariance matrix? Use SVD. Solving portfolio optimization? QR decomposition speeds it up 10x. These techniques are fundamental to every serious quant system.</p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🎲 Monte Carlo Simulation</h4>
+                    <p>Cholesky decomposition transforms independent random samples into correlated asset returns for realistic portfolio simulations.</p>
+                </div>
+                <div class="card">
+                    <h4>🔇 Covariance Denoising</h4>
+                    <p>SVD separates signal from noise in estimated covariance matrices, dramatically improving out-of-sample performance.</p>
+                </div>
+                <div class="card">
+                    <h4>⚡ Fast Optimization</h4>
+                    <p>QR decomposition enables efficient least squares solutions, making factor model estimation 10-100x faster.</p>
+                </div>
+                <div class="card">
+                    <h4>🛡️ Numerical Stability</h4>
+                    <p>Decompositions avoid matrix inversion, which is numerically unstable. Critical for robust trading systems.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Building Intuition -->
+        <section class="content-section">
+            <h2>2. Building Intuition 🧠</h2>
+
+            <div class="info-box info">
+                <h3>The Recipe Book Analogy</h3>
+                <p>Think of matrix decomposition like breaking a complex recipe into basic techniques. A fancy dish (covariance matrix) can be understood as a combination of fundamental cooking methods (simpler matrices). Once you know the building blocks, you can reconstruct the original - or modify it to make something better!</p>
+            </div>
+
+            <div class="decomp-card">
+                <h4>📊 SVD: Singular Value Decomposition</h4>
+                <div class="decomp-equation">A = UΣV'</div>
+                <div class="matrix-visual">
+                    <div class="matrix-box">
+                        <span>A</span>
+                        <p>Original<br>(m×n)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">=</span>
+                    <div class="matrix-box orthogonal">
+                        <span>U</span>
+                        <p>Left singular<br>(m×m)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">×</span>
+                    <div class="matrix-box sigma">
+                        <span>Σ</span>
+                        <p>Singular values<br>(m×n diagonal)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">×</span>
+                    <div class="matrix-box orthogonal">
+                        <span>V'</span>
+                        <p>Right singular<br>(n×n)</p>
+                    </div>
+                </div>
+                <p><strong>Use case:</strong> Dimensionality reduction, noise filtering, low-rank approximation of return matrices</p>
+            </div>
+
+            <div class="decomp-card">
+                <h4>📐 Cholesky Decomposition</h4>
+                <div class="decomp-equation">Σ = LL'</div>
+                <div class="matrix-visual">
+                    <div class="matrix-box">
+                        <span>Σ</span>
+                        <p>Covariance<br>(n×n, PD)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">=</span>
+                    <div class="matrix-box lower">
+                        <span>L</span>
+                        <p>Lower triangular<br>(n×n)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">×</span>
+                    <div class="matrix-box lower">
+                        <span>L'</span>
+                        <p>Upper triangular<br>(n×n)</p>
+                    </div>
+                </div>
+                <p><strong>Use case:</strong> Generating correlated random samples for Monte Carlo simulation</p>
+            </div>
+
+            <div class="decomp-card">
+                <h4>📏 QR Decomposition</h4>
+                <div class="decomp-equation">A = QR</div>
+                <div class="matrix-visual">
+                    <div class="matrix-box">
+                        <span>A</span>
+                        <p>Original<br>(m×n)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">=</span>
+                    <div class="matrix-box orthogonal">
+                        <span>Q</span>
+                        <p>Orthogonal<br>(m×m)</p>
+                    </div>
+                    <span style="font-size: 1.5rem; color: #94a3b8;">×</span>
+                    <div class="matrix-box">
+                        <span>R</span>
+                        <p>Upper triangular<br>(m×n)</p>
+                    </div>
+                </div>
+                <p><strong>Use case:</strong> Fast least squares regression, factor model estimation</p>
+            </div>
+
+            <svg viewBox="0 0 700 250" class="svg-diagram">
+                <!-- SVD visual representation -->
+                <text x="350" y="30" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="bold">SVD Geometric Interpretation</text>
+
+                <!-- Original data -->
+                <g transform="translate(100, 140)">
+                    <ellipse cx="0" cy="0" rx="60" ry="30" fill="none" stroke="#6366f1" stroke-width="2" transform="rotate(-30)"/>
+                    <circle cx="20" cy="-15" r="4" fill="#818cf8"/>
+                    <circle cx="-25" cy="10" r="4" fill="#818cf8"/>
+                    <circle cx="30" cy="5" r="4" fill="#818cf8"/>
+                    <circle cx="-10" cy="-20" r="4" fill="#818cf8"/>
+                    <circle cx="5" cy="18" r="4" fill="#818cf8"/>
+                    <text x="0" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">Original Data</text>
+                </g>
+
+                <!-- V' rotation -->
+                <text x="220" y="140" fill="#f59e0b" font-size="14">V' →</text>
+
+                <!-- Aligned data -->
+                <g transform="translate(300, 140)">
+                    <ellipse cx="0" cy="0" rx="60" ry="30" fill="none" stroke="#f59e0b" stroke-width="2"/>
+                    <line x1="-70" y1="0" x2="70" y2="0" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5,5"/>
+                    <line x1="0" y1="-40" x2="0" y2="40" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5,5"/>
+                    <circle cx="25" cy="-12" r="4" fill="#fbbf24"/>
+                    <circle cx="-30" cy="8" r="4" fill="#fbbf24"/>
+                    <circle cx="35" cy="3" r="4" fill="#fbbf24"/>
+                    <circle cx="-15" cy="-18" r="4" fill="#fbbf24"/>
+                    <circle cx="8" cy="15" r="4" fill="#fbbf24"/>
+                    <text x="0" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">Rotated to Axes</text>
+                </g>
+
+                <!-- Σ scaling -->
+                <text x="400" y="140" fill="#10b981" font-size="14">Σ →</text>
+
+                <!-- Scaled data -->
+                <g transform="translate(490, 140)">
+                    <ellipse cx="0" cy="0" rx="80" ry="20" fill="none" stroke="#10b981" stroke-width="2"/>
+                    <circle cx="35" cy="-8" r="4" fill="#34d399"/>
+                    <circle cx="-40" cy="5" r="4" fill="#34d399"/>
+                    <circle cx="50" cy="2" r="4" fill="#34d399"/>
+                    <circle cx="-20" cy="-12" r="4" fill="#34d399"/>
+                    <circle cx="10" cy="10" r="4" fill="#34d399"/>
+                    <text x="0" y="60" text-anchor="middle" fill="#94a3b8" font-size="12">Scaled by σ</text>
+                </g>
+
+                <!-- U rotation -->
+                <text x="590" y="140" fill="#6366f1" font-size="14">U →</text>
+
+                <!-- Final -->
+                <g transform="translate(650, 140)">
+                    <text x="0" y="5" text-anchor="middle" fill="#818cf8" font-size="12">Output</text>
+                </g>
+            </svg>
+        </section>
+
+        <!-- Section 3: The Mathematics -->
+        <section class="content-section">
+            <h2>3. The Mathematics 📐</h2>
+
+            <div class="formula-box">
+                <h3>SVD - Singular Value Decomposition</h3>
+                <div class="formula">
+                    A = UΣV' = Σᵢ σᵢ uᵢvᵢ'
+                </div>
+                <p>Any m×n matrix can be decomposed into orthogonal matrices U, V and diagonal Σ containing singular values</p>
+            </div>
+
+            <div class="info-box info">
+                <h3>SVD Properties</h3>
+                <ul>
+                    <li><strong>U'U = I</strong> and <strong>V'V = I</strong> (orthogonal matrices)</li>
+                    <li><strong>σ₁ ≥ σ₂ ≥ ... ≥ σᵣ > 0</strong> (singular values are non-negative and ordered)</li>
+                    <li><strong>rank(A) = r</strong> (number of non-zero singular values)</li>
+                    <li><strong>||A||₂ = σ₁</strong> (spectral norm is largest singular value)</li>
+                    <li><strong>||A||_F = √(Σσᵢ²)</strong> (Frobenius norm from singular values)</li>
+                </ul>
+            </div>
+
+            <div class="formula-box">
+                <h3>Cholesky Decomposition</h3>
+                <div class="formula">
+                    Σ = LL'
+                </div>
+                <p>For positive definite matrix Σ, L is unique lower triangular with positive diagonal</p>
+            </div>
+
+            <div class="info-box warning">
+                <h3>Cholesky Algorithm (Element-wise)</h3>
+                <div class="formula" style="font-size: 1rem; text-align: left;">
+                    L[i,j] = (Σ[i,j] - Σₖ₌₁ʲ⁻¹ L[i,k]L[j,k]) / L[j,j]  for i > j
+                    <br><br>
+                    L[i,i] = √(Σ[i,i] - Σₖ₌₁ⁱ⁻¹ L[i,k]²)  for diagonal
+                </div>
+                <p>Requires positive definite matrix (all eigenvalues > 0). Fails if matrix is only semi-definite!</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>QR Decomposition</h3>
+                <div class="formula">
+                    A = QR
+                </div>
+                <p>Q is orthogonal (Q'Q = I), R is upper triangular. Exists for any matrix.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Low-Rank Approximation via SVD</h3>
+                <div class="formula">
+                    Aₖ = Σᵢ₌₁ᵏ σᵢ uᵢvᵢ'
+                </div>
+                <p>Best rank-k approximation minimizing ||A - Aₖ||_F (Eckart-Young theorem)</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Key Properties -->
+        <section class="content-section">
+            <h2>4. Key Properties for Trading 📋</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Input Requirements</th>
+                        <th>Complexity</th>
+                        <th>Primary Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SVD</strong></td>
+                        <td>Any matrix</td>
+                        <td>O(mn²)</td>
+                        <td>Denoising, dimensionality reduction</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cholesky</strong></td>
+                        <td>Symmetric positive definite</td>
+                        <td>O(n³/3)</td>
+                        <td>Correlated sampling, solving Ax=b</td>
+                    </tr>
+                    <tr>
+                        <td><strong>QR</strong></td>
+                        <td>Any matrix</td>
+                        <td>O(mn²)</td>
+                        <td>Least squares, numerical stability</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Eigendecomp</strong></td>
+                        <td>Square matrix</td>
+                        <td>O(n³)</td>
+                        <td>PCA, spectral analysis</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LU</strong></td>
+                        <td>Square matrix</td>
+                        <td>O(n³/3)</td>
+                        <td>Solving linear systems</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">Cholesky is 2x faster</span>
+                    <span class="property-desc">Than eigendecomposition for positive definite matrices - prefer for covariance operations</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">SVD is most general</span>
+                    <span class="property-desc">Works on any matrix, always exists, provides condition number via σₘₐₓ/σₘᵢₙ</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">QR avoids normal equations</span>
+                    <span class="property-desc">Solving A'Ax = A'b via QR is more stable than forming A'A directly</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Truncated SVD for denoising</span>
+                    <span class="property-desc">Keep top k singular values, set rest to zero - optimal low-rank approximation</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section">
+            <h2>5. Python Implementation 🐍</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Cholesky Decomposition for Monte Carlo</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+import pandas as pd
+
+def generate_correlated_returns(cov_matrix, n_scenarios, mean_returns=None):
+    """
+    Generate correlated asset returns using Cholesky decomposition.
+
+    Parameters:
+    -----------
+    cov_matrix : np.array
+        Covariance matrix (n_assets x n_assets)
+    n_scenarios : int
+        Number of return scenarios to generate
+    mean_returns : np.array, optional
+        Expected returns for each asset
+
+    Returns:
+    --------
+    np.array : Correlated return scenarios (n_scenarios x n_assets)
+    """
+    n_assets = cov_matrix.shape[0]
+
+    if mean_returns is None:
+        mean_returns = np.zeros(n_assets)
+
+    # Cholesky decomposition: Σ = LL'
+    L = np.linalg.cholesky(cov_matrix)
+
+    # Generate independent standard normal samples
+    Z = np.random.standard_normal((n_scenarios, n_assets))
+
+    # Transform to correlated samples: X = μ + ZL'
+    # Since Cov(ZL') = L' Cov(Z) L = L' I L = L'L = Σ
+    correlated_returns = mean_returns + Z @ L.T
+
+    return correlated_returns
+
+# Example: 3-asset portfolio simulation
+np.random.seed(42)
+
+# Annual returns and covariance
+mean_returns = np.array([0.08, 0.12, 0.06])  # 8%, 12%, 6%
+volatilities = np.array([0.15, 0.25, 0.10])  # 15%, 25%, 10%
+
+# Correlation matrix
+corr = np.array([
+    [1.0, 0.6, 0.3],
+    [0.6, 1.0, 0.4],
+    [0.3, 0.4, 1.0]
+])
+
+# Convert to covariance: Σ = diag(σ) @ ρ @ diag(σ)
+cov_matrix = np.diag(volatilities) @ corr @ np.diag(volatilities)
+
+# Generate 10,000 scenarios
+n_scenarios = 10000
+simulated_returns = generate_correlated_returns(cov_matrix, n_scenarios, mean_returns)
+
+print("=" * 50)
+print("MONTE CARLO SIMULATION RESULTS")
+print("=" * 50)
+print(f"\nTarget mean returns: {mean_returns}")
+print(f"Simulated means:     {simulated_returns.mean(axis=0).round(4)}")
+print(f"\nTarget volatilities: {volatilities}")
+print(f"Simulated stdevs:    {simulated_returns.std(axis=0).round(4)}")
+print(f"\nTarget correlation matrix:")
+print(corr)
+print(f"\nSimulated correlation:")
+print(np.corrcoef(simulated_returns.T).round(4))</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>SVD for Covariance Matrix Denoising</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def denoise_covariance_svd(cov_matrix, n_factors=None, variance_threshold=0.95):
+    """
+    Denoise covariance matrix using truncated SVD.
+
+    Parameters:
+    -----------
+    cov_matrix : np.array
+        Noisy covariance matrix estimate
+    n_factors : int, optional
+        Number of factors to retain
+    variance_threshold : float
+        Retain factors explaining this much variance
+
+    Returns:
+    --------
+    np.array : Denoised covariance matrix
+    """
+    # SVD decomposition
+    U, S, Vt = np.linalg.svd(cov_matrix)
+
+    # Determine number of factors
+    if n_factors is None:
+        total_var = np.sum(S)
+        cumsum = np.cumsum(S) / total_var
+        n_factors = np.argmax(cumsum >= variance_threshold) + 1
+
+    # Truncated reconstruction
+    S_truncated = np.zeros_like(S)
+    S_truncated[:n_factors] = S[:n_factors]
+
+    # Reconstruct: A ≈ U @ diag(S_truncated) @ Vt
+    denoised = U @ np.diag(S_truncated) @ Vt
+
+    # Ensure symmetry (numerical precision)
+    denoised = (denoised + denoised.T) / 2
+
+    return denoised, n_factors, S
+
+# Example: Denoise a noisy covariance estimate
+np.random.seed(42)
+n_assets = 10
+n_samples = 60  # Only 60 days of data
+
+# True covariance (low-rank structure - 2 factors + idiosyncratic)
+factor_loadings = np.random.randn(n_assets, 2) * 0.5
+factor_cov = np.array([[0.04, 0.01], [0.01, 0.02]])
+true_cov = factor_loadings @ factor_cov @ factor_loadings.T
+true_cov += np.diag(np.random.uniform(0.001, 0.005, n_assets))  # Idiosyncratic
+
+# Generate returns and estimate noisy covariance
+true_L = np.linalg.cholesky(true_cov)
+returns = np.random.randn(n_samples, n_assets) @ true_L.T
+noisy_cov = np.cov(returns.T)
+
+# Denoise
+denoised_cov, n_factors_used, singular_values = denoise_covariance_svd(
+    noisy_cov, variance_threshold=0.90
+)
+
+print("\n" + "=" * 50)
+print("COVARIANCE DENOISING RESULTS")
+print("=" * 50)
+print(f"\nAssets: {n_assets}, Samples: {n_samples}")
+print(f"Factors retained: {n_factors_used}")
+print(f"\nSingular values: {singular_values.round(6)}")
+print(f"\nFrobenius error (noisy vs true):    {np.linalg.norm(noisy_cov - true_cov):.6f}")
+print(f"Frobenius error (denoised vs true): {np.linalg.norm(denoised_cov - true_cov):.6f}")
+print(f"\nImprovement: {(1 - np.linalg.norm(denoised_cov - true_cov)/np.linalg.norm(noisy_cov - true_cov))*100:.1f}%")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>QR Decomposition for Fast Regression</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def qr_regression(X, y):
+    """
+    Solve least squares regression using QR decomposition.
+    More numerically stable than normal equations.
+
+    Parameters:
+    -----------
+    X : np.array
+        Design matrix (n_samples x n_features)
+    y : np.array
+        Target variable (n_samples,)
+
+    Returns:
+    --------
+    np.array : Regression coefficients
+    """
+    # QR decomposition: X = QR
+    Q, R = np.linalg.qr(X)
+
+    # Solve Xβ = y → QRβ = y → Rβ = Q'y
+    # R is upper triangular, solve via back-substitution
+    Qty = Q.T @ y
+    beta = np.linalg.solve(R, Qty)
+
+    return beta
+
+def compare_regression_methods(X, y):
+    """Compare QR vs normal equations for stability."""
+
+    # Method 1: Normal equations (X'X)⁻¹X'y
+    # Can be unstable when X'X is ill-conditioned
+    try:
+        XtX = X.T @ X
+        Xty = X.T @ y
+        beta_normal = np.linalg.solve(XtX, Xty)
+        condition_normal = np.linalg.cond(XtX)
+    except np.linalg.LinAlgError:
+        beta_normal = np.full(X.shape[1], np.nan)
+        condition_normal = np.inf
+
+    # Method 2: QR decomposition
+    beta_qr = qr_regression(X, y)
+    Q, R = np.linalg.qr(X)
+    condition_qr = np.linalg.cond(R)
+
+    # Method 3: SVD (most stable, handles rank-deficient)
+    beta_svd, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
+
+    return {
+        'beta_normal': beta_normal,
+        'beta_qr': beta_qr,
+        'beta_svd': beta_svd,
+        'condition_normal': condition_normal,
+        'condition_qr': condition_qr,
+        'singular_values': s
+    }
+
+# Example: Factor regression
+np.random.seed(42)
+n_days = 252
+n_factors = 5
+
+# Factor returns (collinear factors for challenging case)
+factor_returns = np.random.randn(n_days, n_factors) * 0.01
+factor_returns[:, 4] = factor_returns[:, 0] * 0.95 + np.random.randn(n_days) * 0.001
+
+# Stock returns = factor exposure + noise
+true_betas = np.array([1.0, 0.5, -0.3, 0.2, 0.1])
+stock_returns = factor_returns @ true_betas + np.random.randn(n_days) * 0.005
+
+# Compare methods
+results = compare_regression_methods(factor_returns, stock_returns)
+
+print("\n" + "=" * 50)
+print("REGRESSION METHOD COMPARISON")
+print("=" * 50)
+print(f"\nTrue betas:      {true_betas}")
+print(f"Normal equations: {results['beta_normal'].round(4)}")
+print(f"QR method:        {results['beta_qr'].round(4)}")
+print(f"SVD method:       {results['beta_svd'].round(4)}")
+print(f"\nCondition number (X'X): {results['condition_normal']:.2e}")
+print(f"Condition number (R):   {results['condition_qr']:.2e}")
+print(f"\nNote: Lower condition number = more stable computation")</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Near-Singular Covariance Fix</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">def fix_near_singular_covariance(cov_matrix, min_eigenvalue=1e-8):
+    """
+    Fix near-singular covariance matrix to ensure positive definiteness.
+    Critical for Cholesky decomposition to work.
+
+    Parameters:
+    -----------
+    cov_matrix : np.array
+        Potentially ill-conditioned covariance matrix
+    min_eigenvalue : float
+        Minimum eigenvalue to enforce
+
+    Returns:
+    --------
+    np.array : Fixed positive definite covariance matrix
+    """
+    # Eigendecomposition
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+    # Check for negative or tiny eigenvalues
+    n_fixed = np.sum(eigenvalues < min_eigenvalue)
+
+    if n_fixed > 0:
+        print(f"Warning: Fixing {n_fixed} eigenvalues below {min_eigenvalue}")
+        eigenvalues = np.maximum(eigenvalues, min_eigenvalue)
+
+    # Reconstruct: Σ = V @ diag(λ) @ V'
+    fixed_cov = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T
+
+    # Ensure exact symmetry
+    fixed_cov = (fixed_cov + fixed_cov.T) / 2
+
+    return fixed_cov
+
+# Example: Rank-deficient covariance (common with more assets than observations)
+np.random.seed(42)
+n_assets = 20
+n_samples = 15  # Fewer samples than assets!
+
+returns = np.random.randn(n_samples, n_assets) * 0.02
+cov_estimate = np.cov(returns.T)
+
+print("\n" + "=" * 50)
+print("FIXING NEAR-SINGULAR COVARIANCE")
+print("=" * 50)
+print(f"\nAssets: {n_assets}, Samples: {n_samples}")
+
+# Check eigenvalues before fix
+eigenvalues_before = np.linalg.eigvalsh(cov_estimate)
+print(f"Min eigenvalue before: {eigenvalues_before.min():.2e}")
+print(f"Max eigenvalue before: {eigenvalues_before.max():.2e}")
+print(f"Negative eigenvalues:  {np.sum(eigenvalues_before < 0)}")
+
+# Try Cholesky before fix
+try:
+    L = np.linalg.cholesky(cov_estimate)
+    print("Cholesky succeeded (shouldn't happen)")
+except np.linalg.LinAlgError:
+    print("Cholesky FAILED (expected - matrix not positive definite)")
+
+# Fix the covariance matrix
+fixed_cov = fix_near_singular_covariance(cov_estimate)
+eigenvalues_after = np.linalg.eigvalsh(fixed_cov)
+
+print(f"\nMin eigenvalue after:  {eigenvalues_after.min():.2e}")
+print(f"Negative eigenvalues:  {np.sum(eigenvalues_after < 0)}")
+
+# Try Cholesky after fix
+try:
+    L = np.linalg.cholesky(fixed_cov)
+    print("Cholesky succeeded after fix ✓")
+except np.linalg.LinAlgError:
+    print("Cholesky still failed")</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section">
+            <h2>6. Interactive Decomposition Calculator 🔢</h2>
+
+            <div class="calculator">
+                <h3>2x2 Matrix Decomposition</h3>
+                <p style="color: #94a3b8; margin-bottom: 20px;">Enter a symmetric positive definite matrix to see its decompositions</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 400px;">
+                    <div class="input-group">
+                        <label for="m11">a₁₁</label>
+                        <input type="number" id="m11" value="4" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="m12">a₁₂ = a₂₁</label>
+                        <input type="number" id="m12" value="2" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="m21" style="visibility: hidden;">a₂₁</label>
+                        <input type="number" id="m21" value="2" step="0.1" disabled style="opacity: 0.5;">
+                    </div>
+                    <div class="input-group">
+                        <label for="m22">a₂₂</label>
+                        <input type="number" id="m22" value="5" step="0.1">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="computeDecompositions()">Compute Decompositions</button>
+
+                <div class="result" id="decompResult">
+                    <!-- Results appear here -->
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Singular Values Comparison</h3>
+                <canvas id="singularChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 7: Trading Applications -->
+        <section class="content-section">
+            <h2>7. Trading Applications 💹</h2>
+
+            <div class="use-case-list">
+                <div class="use-case-item">
+                    <div class="icon">🎲</div>
+                    <div>
+                        <h4>Portfolio VaR via Monte Carlo</h4>
+                        <p>Use Cholesky to generate thousands of correlated return scenarios. Calculate portfolio P&L distribution to estimate VaR and CVaR with proper correlation structure.</p>
+                    </div>
+                </div>
+                <div class="use-case-item">
+                    <div class="icon">📊</div>
+                    <div>
+                        <h4>Covariance Shrinkage Alternative</h4>
+                        <p>Instead of Ledoit-Wolf shrinkage, use SVD to remove noise components directly. Often more effective for short sample periods.</p>
+                    </div>
+                </div>
+                <div class="use-case-item">
+                    <div class="icon">⚡</div>
+                    <div>
+                        <h4>Real-time Factor Exposure</h4>
+                        <p>Pre-compute QR decomposition of factor return matrix once per day. Use for instant beta estimation as new data arrives.</p>
+                    </div>
+                </div>
+                <div class="use-case-item">
+                    <div class="icon">🔍</div>
+                    <div>
+                        <h4>Anomaly Detection via Reconstruction Error</h4>
+                        <p>Project returns onto SVD basis and reconstruct. High reconstruction error signals unusual market behavior or data errors.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🎯 Optimal Execution</h4>
+                    <p>Cholesky decomposition of market impact matrix enables efficient order splitting that minimizes total trading cost.</p>
+                    <div class="highlight">Square root impact: cost = √(shares × volatility)</div>
+                </div>
+                <div class="card">
+                    <h4>📈 Factor Model Estimation</h4>
+                    <p>QR decomposition enables stable regression of 1000+ stocks against factors simultaneously without numerical overflow.</p>
+                    <div class="highlight">Process entire universe in &lt;1 second</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Monte Carlo VaR Distribution</h3>
+                <canvas id="varChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 8: Common Mistakes -->
+        <section class="content-section">
+            <h2>8. Common Mistakes to Avoid ⚠️</h2>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 1: Cholesky on Semi-Definite Matrix</h3>
+                <p>Cholesky requires POSITIVE DEFINITE (all eigenvalues > 0), not just positive semi-definite. Sample covariance with n_assets > n_samples will fail!</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Always Check Before Cholesky</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python"># Check positive definiteness
+eigenvalues = np.linalg.eigvalsh(cov_matrix)
+if np.min(eigenvalues) <= 0:
+    cov_matrix = fix_near_singular_covariance(cov_matrix)
+
+L = np.linalg.cholesky(cov_matrix)  # Now safe</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 2: Wrong Correlation Generation</h3>
+                <p>Common error: multiplying independent normals by correlation matrix instead of Cholesky factor.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Wrong vs Right</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python"># WRONG: This doesn't give correct correlation!
+Z = np.random.randn(1000, 3)
+wrong_returns = Z @ corr_matrix  # Cov = ρ @ ρ' ≠ ρ
+
+# RIGHT: Use Cholesky factor
+L = np.linalg.cholesky(cov_matrix)
+correct_returns = Z @ L.T  # Cov = L' @ I @ L = L'L = Σ ✓</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 3: Ignoring Matrix Dimensions in SVD</h3>
+                <p>Full SVD returns U as m×m and V as n×n. For efficiency with tall/wide matrices, use truncated SVD.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Use Truncated for Large Matrices</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python"># Full SVD (memory intensive for large matrices)
+U, S, Vt = np.linalg.svd(X)  # U is m×m!
+
+# Truncated SVD (efficient)
+from scipy.sparse.linalg import svds
+U, S, Vt = svds(X, k=10)  # Only top 10 components</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>❌ Mistake 4: Assuming SVD Ordering</h3>
+                <p>scipy.sparse.linalg.svds returns singular values in ASCENDING order (opposite of numpy). Always verify!</p>
+            </div>
+        </section>
+
+        <!-- Section 9: Summary -->
+        <section class="content-section">
+            <h2>9. Summary 📝</h2>
+
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>SVD (A = UΣV')</strong>: Universal decomposition for denoising, compression, and rank analysis</li>
+                    <li><strong>Cholesky (Σ = LL')</strong>: Fastest for positive definite matrices, essential for Monte Carlo</li>
+                    <li><strong>QR (A = QR)</strong>: Numerically stable regression without forming X'X</li>
+                    <li><strong>Truncated SVD</strong>: Optimal low-rank approximation for noise filtering</li>
+                    <li><strong>Always fix</strong> near-singular covariance before Cholesky</li>
+                </ul>
+            </div>
+
+            <div class="formula-box">
+                <h3>Quick Reference</h3>
+                <table class="comparison-table" style="margin: 0;">
+                    <tr>
+                        <td><strong>Generate correlated returns</strong></td>
+                        <td>X = Z @ cholesky(Σ).T</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Denoise covariance</strong></td>
+                        <td>Truncate small singular values</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stable regression</strong></td>
+                        <td>β = solve(R, Q'y) from QR</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Condition number</strong></td>
+                        <td>κ = σₘₐₓ / σₘᵢₙ</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="nav-buttons">
+                <a href="2.2_eigenvalues_eigenvectors.html" class="nav-btn">← Previous: Eigenvalues & Eigenvectors</a>
+                <a href="2.4_linear_systems.html" class="nav-btn">Next: Solving Linear Systems →</a>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section class="content-section">
+            <h2>Test Your Knowledge 🧪</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Question 1: Which decomposition is used to generate correlated random samples for Monte Carlo simulation?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> SVD</label>
+                        <label><input type="radio" name="q1" value="b"> QR</label>
+                        <label><input type="radio" name="q1" value="c"> Cholesky</label>
+                        <label><input type="radio" name="q1" value="d"> LU</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 2: What happens when you try Cholesky decomposition on a matrix with a negative eigenvalue?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> Returns complex numbers</label>
+                        <label><input type="radio" name="q2" value="b"> Fails with LinAlgError</label>
+                        <label><input type="radio" name="q2" value="c"> Returns zeros</label>
+                        <label><input type="radio" name="q2" value="d"> Automatically fixes the matrix</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 3: For denoising a covariance matrix estimated from limited data, which approach is most effective?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> Use QR decomposition</label>
+                        <label><input type="radio" name="q3" value="b"> Truncated SVD keeping top components</label>
+                        <label><input type="radio" name="q3" value="c"> Cholesky then reconstruct</label>
+                        <label><input type="radio" name="q3" value="d"> Add random noise</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 4: Why is QR decomposition preferred over normal equations (X'X)⁻¹X'y for regression?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> QR is faster</label>
+                        <label><input type="radio" name="q4" value="b"> QR avoids computing X'X which can be ill-conditioned</label>
+                        <label><input type="radio" name="q4" value="c"> Normal equations don't work</label>
+                        <label><input type="radio" name="q4" value="d"> QR gives different results</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>Question 5: In SVD A = UΣV', what is the relationship between singular values and eigenvalues of A'A?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> They are equal</label>
+                        <label><input type="radio" name="q5" value="b"> Singular values are square roots of eigenvalues of A'A</label>
+                        <label><input type="radio" name="q5" value="c"> Eigenvalues are square roots of singular values</label>
+                        <label><input type="radio" name="q5" value="d"> No relationship</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <button class="calculate-btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let singularChart, varChart;
+
+        function initializeCharts() {
+            // Singular values chart
+            const singularCtx = document.getElementById('singularChart').getContext('2d');
+            singularChart = new Chart(singularCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['σ₁', 'σ₂'],
+                    datasets: [{
+                        label: 'Singular Values',
+                        data: [6.5, 2.5],
+                        backgroundColor: ['rgba(99, 102, 241, 0.8)', 'rgba(139, 92, 246, 0.8)'],
+                        borderColor: ['rgb(99, 102, 241)', 'rgb(139, 92, 246)'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Value', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // VaR distribution chart
+            const varCtx = document.getElementById('varChart').getContext('2d');
+
+            // Generate sample VaR distribution
+            const returns = [];
+            for (let i = 0; i < 1000; i++) {
+                returns.push((Math.random() + Math.random() + Math.random() - 1.5) * 0.03);
+            }
+            returns.sort((a, b) => a - b);
+
+            const bins = [];
+            const binCounts = [];
+            const binSize = 0.005;
+            for (let b = -0.05; b <= 0.05; b += binSize) {
+                bins.push((b * 100).toFixed(1) + '%');
+                const count = returns.filter(r => r >= b && r < b + binSize).length;
+                binCounts.push(count);
+            }
+
+            varChart = new Chart(varCtx, {
+                type: 'bar',
+                data: {
+                    labels: bins,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: binCounts,
+                        backgroundColor: binCounts.map((_, i) =>
+                            i < 3 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(99, 102, 241, 0.5)'
+                        ),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Portfolio Return Distribution (VaR region in red)',
+                            color: '#e2e8f0'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Scenarios', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Return', color: '#94a3b8' },
+                            ticks: {
+                                color: '#94a3b8',
+                                maxTicksLimit: 10
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function computeDecompositions() {
+            const a11 = parseFloat(document.getElementById('m11').value);
+            const a12 = parseFloat(document.getElementById('m12').value);
+            const a22 = parseFloat(document.getElementById('m22').value);
+
+            // Update symmetric element
+            document.getElementById('m21').value = a12;
+
+            // Check positive definiteness
+            const det = a11 * a22 - a12 * a12;
+            const trace = a11 + a22;
+
+            if (det <= 0 || a11 <= 0) {
+                document.getElementById('decompResult').innerHTML = `
+                    <div style="color: #f87171;">
+                        <strong>Error:</strong> Matrix is not positive definite.<br>
+                        Determinant = ${det.toFixed(4)} (must be > 0)<br>
+                        a₁₁ = ${a11} (must be > 0)
+                    </div>
+                `;
+                return;
+            }
+
+            // Cholesky: L such that LL' = A
+            const l11 = Math.sqrt(a11);
+            const l21 = a12 / l11;
+            const l22 = Math.sqrt(a22 - l21 * l21);
+
+            // Eigenvalues
+            const discriminant = Math.sqrt((a11 - a22) ** 2 + 4 * a12 * a12);
+            const lambda1 = (trace + discriminant) / 2;
+            const lambda2 = (trace - discriminant) / 2;
+
+            // Singular values (for symmetric PD, same as eigenvalues)
+            const sigma1 = lambda1;
+            const sigma2 = lambda2;
+
+            // Eigenvectors
+            const v1_x = a12;
+            const v1_y = lambda1 - a11;
+            const v1_norm = Math.sqrt(v1_x ** 2 + v1_y ** 2);
+
+            let resultHTML = `
+                <h4>Input Matrix A:</h4>
+                <div class="decomp-equation" style="font-size: 1.1rem;">
+                    [${a11.toFixed(2)}  ${a12.toFixed(2)}]<br>
+                    [${a12.toFixed(2)}  ${a22.toFixed(2)}]
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div class="decomp-card" style="margin: 0;">
+                        <h4 style="font-size: 1.1rem;">Cholesky (A = LL')</h4>
+                        <div class="decomp-equation" style="font-size: 1rem;">
+                            L = [${l11.toFixed(3)}  0]<br>
+                                [${l21.toFixed(3)}  ${l22.toFixed(3)}]
+                        </div>
+                    </div>
+
+                    <div class="decomp-card" style="margin: 0;">
+                        <h4 style="font-size: 1.1rem;">Eigenvalues</h4>
+                        <div class="decomp-equation" style="font-size: 1rem;">
+                            λ₁ = ${lambda1.toFixed(4)}<br>
+                            λ₂ = ${lambda2.toFixed(4)}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <strong>Condition Number:</strong> κ = ${(sigma1 / sigma2).toFixed(2)}
+                    ${sigma1 / sigma2 > 10 ? '<span style="color: #f59e0b;"> (moderately ill-conditioned)</span>' : '<span style="color: #10b981;"> (well-conditioned)</span>'}
+                </div>
+                <div>
+                    <strong>Determinant:</strong> ${det.toFixed(4)} = λ₁ × λ₂ = ${(lambda1 * lambda2).toFixed(4)}
+                </div>
+                <div>
+                    <strong>Trace:</strong> ${trace.toFixed(4)} = λ₁ + λ₂ = ${(lambda1 + lambda2).toFixed(4)}
+                </div>
+            `;
+
+            document.getElementById('decompResult').innerHTML = resultHTML;
+
+            // Update chart
+            singularChart.data.datasets[0].data = [sigma1, sigma2];
+            singularChart.update();
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'c', explanation: 'Cholesky decomposes Σ = LL\', allowing us to transform independent normals Z into correlated samples via ZL\'.' },
+                q2: { correct: 'b', explanation: 'Cholesky requires positive definite matrices. Negative eigenvalues mean the matrix is not PD, causing LinAlgError.' },
+                q3: { correct: 'b', explanation: 'Truncated SVD keeps only the largest singular values, effectively removing noise components while preserving signal.' },
+                q4: { correct: 'b', explanation: 'Computing X\'X squares the condition number. QR decomposition works directly on X, avoiding this numerical instability.' },
+                q5: { correct: 'b', explanation: 'If A = UΣV\', then A\'A = VΣ²V\'. The eigenvalues of A\'A are σᵢ², so singular values are their square roots.' }
+            };
+
+            let score = 0;
+            const total = Object.keys(answers).length;
+
+            for (const [question, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const feedback = document.getElementById(`feedback${question.slice(1)}`);
+
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #f87171;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+
+            const percentage = (score / total * 100).toFixed(0);
+            let message = '';
+            if (percentage >= 80) message = 'Excellent! You understand matrix decompositions well!';
+            else if (percentage >= 60) message = 'Good progress! Review SVD and Cholesky applications.';
+            else message = 'Keep studying! Focus on when to use each decomposition type.';
+
+            document.getElementById('quizScore').innerHTML = `
+                <h3>Score: ${score}/${total} (${percentage}%)</h3>
+                <p>${message}</p>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            computeDecompositions();
+        });
+    </script>
+</body>
+</html>

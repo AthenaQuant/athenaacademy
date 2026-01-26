@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Bayesian statistics for quantitative trading. Learn Bayes theorem, priors, posteriors, and Bayesian A/B testing.">
+    <title>5.8 Bayesian Statistics | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .data-table { width: 100%; margin: 1rem 0; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .result-value.positive { color: var(--success); }
+        .result-value.negative { color: var(--error); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); background: var(--bg-tertiary); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; }
+        .score-container h3 { color: white; margin: 0; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.8</span>
+                    <span class="nav-module-title">Bayesian Statistics</span>
+                </div>
+                <a href="5.9_resampling_methods.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.8 Bayesian Statistics</span>
+                </div>
+                <h1>Bayesian Statistics</h1>
+                <p class="module-subtitle">
+                    Update beliefs with evidence: From prior knowledge to posterior insights.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 55 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Interactive Lab</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Section 1: Introduction -->
+        <section class="content-section fade-in">
+            <h2>1. Introduction to Bayesian Thinking</h2>
+
+            <p>Bayesian statistics offers a fundamentally different approach to inference than classical (frequentist) methods. Instead of asking "What's the probability of this data given my hypothesis?", Bayesians ask: <strong>"What's the probability of my hypothesis given this data?"</strong></p>
+
+            <div class="key-concept">
+                <h3>Why Bayesian Methods in Quant Finance?</h3>
+                <ul>
+                    <li><strong>Small Sample Inference:</strong> Extract insights from limited data using prior knowledge</li>
+                    <li><strong>Strategy Evaluation:</strong> Update beliefs about strategy performance as trades accumulate</li>
+                    <li><strong>Parameter Estimation:</strong> Obtain full distributions, not just point estimates</li>
+                    <li><strong>Model Comparison:</strong> Quantify evidence for competing trading models</li>
+                    <li><strong>Risk Management:</strong> Incorporate expert judgment into risk models</li>
+                </ul>
+            </div>
+
+            <div class="important-note">
+                <h3>Frequentist vs Bayesian</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Frequentist</th>
+                            <th>Bayesian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Probability</td>
+                            <td>Long-run frequency</td>
+                            <td>Degree of belief</td>
+                        </tr>
+                        <tr>
+                            <td>Parameters</td>
+                            <td>Fixed, unknown constants</td>
+                            <td>Random variables with distributions</td>
+                        </tr>
+                        <tr>
+                            <td>Inference</td>
+                            <td>p-values, confidence intervals</td>
+                            <td>Posterior distributions, credible intervals</td>
+                        </tr>
+                        <tr>
+                            <td>Prior Knowledge</td>
+                            <td>Not formally incorporated</td>
+                            <td>Explicitly included via prior</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 2: Bayes' Theorem -->
+        <section class="content-section fade-in">
+            <h2>2. Bayes' Theorem: The Foundation</h2>
+
+            <h3>The Mathematical Statement</h3>
+            <p>Bayes' theorem relates conditional probabilities and allows us to update beliefs:</p>
+
+            <div class="formula-box">
+                <h4>Bayes' Theorem</h4>
+                <p>\[P(\theta | D) = \frac{P(D | \theta) \cdot P(\theta)}{P(D)}\]</p>
+                <p>In words:</p>
+                <p>\[\text{Posterior} = \frac{\text{Likelihood} \times \text{Prior}}{\text{Evidence}}\]</p>
+                <p>Where:</p>
+                <ul>
+                    <li>\(P(\theta | D)\) = <strong>Posterior</strong>: Probability of hypothesis given data</li>
+                    <li>\(P(D | \theta)\) = <strong>Likelihood</strong>: Probability of data given hypothesis</li>
+                    <li>\(P(\theta)\) = <strong>Prior</strong>: Initial belief before seeing data</li>
+                    <li>\(P(D)\) = <strong>Evidence</strong>: Total probability of data (normalizing constant)</li>
+                </ul>
+            </div>
+
+            <h3>Practical Form</h3>
+            <p>Since the evidence \(P(D)\) is constant for all hypotheses, we often write:</p>
+
+            <div class="formula-box">
+                <h4>Proportional Form</h4>
+                <p>\[P(\theta | D) \propto P(D | \theta) \cdot P(\theta)\]</p>
+                <p><strong>Posterior ∝ Likelihood × Prior</strong></p>
+            </div>
+
+            <h3>A Trading Example</h3>
+            <p>Suppose you're evaluating a new trading strategy. You believe there's a 30% chance it's profitable (prior). After 20 trades, 14 are winners. What's the updated probability it's a good strategy?</p>
+
+            <div class="key-concept">
+                <h3>Intuition</h3>
+                <p>The data (14/20 wins) strongly supports profitability. Bayes' theorem will update our 30% prior to a much higher posterior probability. The stronger the evidence, the more the posterior shifts from the prior.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Priors and Conjugate Families -->
+        <section class="content-section fade-in">
+            <h2>3. Prior Distributions and Conjugacy</h2>
+
+            <h3>Choosing a Prior</h3>
+            <p>The prior encodes our beliefs before seeing data. Common approaches:</p>
+
+            <div class="key-concept">
+                <h3>Types of Priors</h3>
+                <ul>
+                    <li><strong>Informative Prior:</strong> Based on expert knowledge or historical data</li>
+                    <li><strong>Weakly Informative Prior:</strong> Regularizes estimates without strong assumptions</li>
+                    <li><strong>Non-informative (Flat) Prior:</strong> Lets data speak for itself</li>
+                    <li><strong>Conjugate Prior:</strong> Mathematical convenience—posterior is same family as prior</li>
+                </ul>
+            </div>
+
+            <h3>Conjugate Priors</h3>
+            <p>A conjugate prior produces a posterior in the same distributional family, making calculations tractable:</p>
+
+            <div class="formula-box">
+                <h4>Common Conjugate Pairs</h4>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Likelihood</th>
+                            <th>Conjugate Prior</th>
+                            <th>Posterior</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Binomial</td>
+                            <td>Beta(α, β)</td>
+                            <td>Beta(α+s, β+f)</td>
+                            <td>Win rate estimation</td>
+                        </tr>
+                        <tr>
+                            <td>Normal (known σ)</td>
+                            <td>Normal(μ₀, σ₀)</td>
+                            <td>Normal(μ', σ')</td>
+                            <td>Return estimation</td>
+                        </tr>
+                        <tr>
+                            <td>Poisson</td>
+                            <td>Gamma(α, β)</td>
+                            <td>Gamma(α+Σx, β+n)</td>
+                            <td>Trade frequency</td>
+                        </tr>
+                        <tr>
+                            <td>Normal (unknown σ²)</td>
+                            <td>Inverse-Gamma</td>
+                            <td>Inverse-Gamma</td>
+                            <td>Volatility estimation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Beta-Binomial Model for Win Rate</h3>
+            <p>The most common model for strategy win rate estimation:</p>
+
+            <div class="formula-box">
+                <h4>Beta-Binomial Update</h4>
+                <p><strong>Prior:</strong> \(\theta \sim \text{Beta}(\alpha, \beta)\)</p>
+                <p><strong>Likelihood:</strong> \(k \text{ successes in } n \text{ trials} \sim \text{Binomial}(n, \theta)\)</p>
+                <p><strong>Posterior:</strong> \(\theta | k \sim \text{Beta}(\alpha + k, \beta + n - k)\)</p>
+                <p>Where:</p>
+                <ul>
+                    <li>\(\alpha\) = prior successes (pseudo-observations)</li>
+                    <li>\(\beta\) = prior failures (pseudo-observations)</li>
+                    <li>\(k\) = observed successes</li>
+                    <li>\(n - k\) = observed failures</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Bayesian Updating -->
+        <section class="content-section fade-in">
+            <h2>4. Bayesian Updating in Practice</h2>
+
+            <h3>Sequential Updating</h3>
+            <p>One powerful feature of Bayesian inference is sequential updating—today's posterior becomes tomorrow's prior:</p>
+
+            <div class="formula-box">
+                <h4>Sequential Update Formula</h4>
+                <p>\[P(\theta | D_1, D_2) = \frac{P(D_2 | \theta) \cdot P(\theta | D_1)}{P(D_2 | D_1)}\]</p>
+                <p>After seeing \(D_1\), the posterior \(P(\theta | D_1)\) becomes the new prior for \(D_2\).</p>
+            </div>
+
+            <h3>Credible Intervals</h3>
+            <p>Unlike frequentist confidence intervals, Bayesian credible intervals have a direct probability interpretation:</p>
+
+            <div class="formula-box">
+                <h4>95% Credible Interval</h4>
+                <p>\[P(a < \theta < b | D) = 0.95\]</p>
+                <p>"There is a 95% probability that the true parameter lies between a and b, given the data."</p>
+                <p><strong>Highest Density Interval (HDI):</strong> The narrowest interval containing 95% of the posterior mass.</p>
+            </div>
+
+            <h3>Bayesian Point Estimates</h3>
+            <div class="key-concept">
+                <h3>Common Point Estimates</h3>
+                <ul>
+                    <li><strong>Posterior Mean:</strong> \(E[\theta | D]\) - Minimizes squared error loss</li>
+                    <li><strong>Posterior Median:</strong> Minimizes absolute error loss</li>
+                    <li><strong>Posterior Mode (MAP):</strong> Maximum a posteriori - Most probable value</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>5. Python Implementation</h2>
+
+            <div class="code-block">
+                <h3>Complete Bayesian Analysis Framework</h3>
+                <pre><code class="language-python">"""
+Bayesian Statistics for Quantitative Trading
+Covers: Beta-Binomial, Normal-Normal, Strategy Evaluation
+"""
+
+import numpy as np
+from dataclasses import dataclass
+from typing import Tuple, Optional, List, Dict
+from scipy import stats
+from scipy.special import beta as beta_func
+
+
+@dataclass
+class BetaPosterior:
+    """Beta distribution posterior for binomial data."""
+    alpha: float
+    beta: float
+
+    @property
+    def mean(self) -> float:
+        return self.alpha / (self.alpha + self.beta)
+
+    @property
+    def mode(self) -> float:
+        if self.alpha > 1 and self.beta > 1:
+            return (self.alpha - 1) / (self.alpha + self.beta - 2)
+        return self.mean
+
+    @property
+    def variance(self) -> float:
+        ab = self.alpha + self.beta
+        return (self.alpha * self.beta) / (ab ** 2 * (ab + 1))
+
+    @property
+    def std(self) -> float:
+        return np.sqrt(self.variance)
+
+    def credible_interval(self, prob: float = 0.95) -> Tuple[float, float]:
+        """Calculate equal-tailed credible interval."""
+        alpha_level = (1 - prob) / 2
+        lower = stats.beta.ppf(alpha_level, self.alpha, self.beta)
+        upper = stats.beta.ppf(1 - alpha_level, self.alpha, self.beta)
+        return (lower, upper)
+
+    def pdf(self, x: np.ndarray) -> np.ndarray:
+        """Probability density function."""
+        return stats.beta.pdf(x, self.alpha, self.beta)
+
+    def prob_greater_than(self, threshold: float) -> float:
+        """P(theta > threshold)."""
+        return 1 - stats.beta.cdf(threshold, self.alpha, self.beta)
+
+    def __str__(self) -> str:
+        ci = self.credible_interval()
+        return (f"Beta({self.alpha:.1f}, {self.beta:.1f}): "
+                f"Mean={self.mean:.3f}, 95% CI=[{ci[0]:.3f}, {ci[1]:.3f}]")
+
+
+@dataclass
+class NormalPosterior:
+    """Normal distribution posterior for normal data with known variance."""
+    mu: float
+    sigma: float
+
+    @property
+    def mean(self) -> float:
+        return self.mu
+
+    @property
+    def variance(self) -> float:
+        return self.sigma ** 2
+
+    @property
+    def std(self) -> float:
+        return self.sigma
+
+    def credible_interval(self, prob: float = 0.95) -> Tuple[float, float]:
+        """Calculate credible interval."""
+        z = stats.norm.ppf((1 + prob) / 2)
+        return (self.mu - z * self.sigma, self.mu + z * self.sigma)
+
+    def pdf(self, x: np.ndarray) -> np.ndarray:
+        """Probability density function."""
+        return stats.norm.pdf(x, self.mu, self.sigma)
+
+    def prob_greater_than(self, threshold: float) -> float:
+        """P(mu > threshold)."""
+        return 1 - stats.norm.cdf(threshold, self.mu, self.sigma)
+
+
+class BayesianWinRateEstimator:
+    """
+    Bayesian estimation of strategy win rate using Beta-Binomial model.
+    """
+
+    def __init__(self, prior_alpha: float = 1, prior_beta: float = 1):
+        """
+        Initialize with Beta prior.
+
+        Args:
+            prior_alpha: Prior successes (α=1, β=1 is uniform/uninformative)
+            prior_beta: Prior failures
+        """
+        self.prior_alpha = prior_alpha
+        self.prior_beta = prior_beta
+        self.wins = 0
+        self.losses = 0
+
+    def update(self, wins: int, losses: int) -> BetaPosterior:
+        """
+        Update posterior with new observations.
+
+        Args:
+            wins: Number of winning trades
+            losses: Number of losing trades
+
+        Returns:
+            Updated BetaPosterior
+        """
+        self.wins += wins
+        self.losses += losses
+
+        post_alpha = self.prior_alpha + self.wins
+        post_beta = self.prior_beta + self.losses
+
+        return BetaPosterior(post_alpha, post_beta)
+
+    def get_posterior(self) -> BetaPosterior:
+        """Get current posterior distribution."""
+        return BetaPosterior(
+            self.prior_alpha + self.wins,
+            self.prior_beta + self.losses
+        )
+
+    def reset(self) -> None:
+        """Reset to prior."""
+        self.wins = 0
+        self.losses = 0
+
+
+class BayesianReturnEstimator:
+    """
+    Bayesian estimation of strategy returns using Normal-Normal model.
+    Assumes known population variance (or uses sample variance as plug-in).
+    """
+
+    def __init__(self, prior_mu: float = 0.0, prior_sigma: float = 0.10,
+                 known_sigma: Optional[float] = None):
+        """
+        Initialize with Normal prior on mean return.
+
+        Args:
+            prior_mu: Prior mean return
+            prior_sigma: Prior standard deviation of mean
+            known_sigma: Known population std (if None, uses sample std)
+        """
+        self.prior_mu = prior_mu
+        self.prior_sigma = prior_sigma
+        self.known_sigma = known_sigma
+        self.returns = []
+
+    def update(self, returns: List[float]) -> NormalPosterior:
+        """
+        Update posterior with observed returns.
+
+        Args:
+            returns: List of observed returns
+
+        Returns:
+            Updated NormalPosterior
+        """
+        self.returns.extend(returns)
+        return self.get_posterior()
+
+    def get_posterior(self) -> NormalPosterior:
+        """Calculate posterior distribution for mean return."""
+        if len(self.returns) == 0:
+            return NormalPosterior(self.prior_mu, self.prior_sigma)
+
+        n = len(self.returns)
+        sample_mean = np.mean(self.returns)
+
+        # Use known sigma or estimate from data
+        if self.known_sigma is not None:
+            sigma = self.known_sigma
+        else:
+            sigma = np.std(self.returns, ddof=1) if n > 1 else self.prior_sigma
+
+        # Prior precision (1/variance)
+        prior_precision = 1 / (self.prior_sigma ** 2)
+
+        # Likelihood precision
+        likelihood_precision = n / (sigma ** 2)
+
+        # Posterior precision
+        post_precision = prior_precision + likelihood_precision
+
+        # Posterior parameters
+        post_mu = (prior_precision * self.prior_mu +
+                   likelihood_precision * sample_mean) / post_precision
+        post_sigma = np.sqrt(1 / post_precision)
+
+        return NormalPosterior(post_mu, post_sigma)
+
+
+def bayesian_ab_test(wins_a: int, losses_a: int,
+                     wins_b: int, losses_b: int,
+                     prior_alpha: float = 1, prior_beta: float = 1,
+                     n_samples: int = 100000) -> Dict:
+    """
+    Bayesian A/B test comparing two strategies.
+
+    Args:
+        wins_a, losses_a: Results for strategy A
+        wins_b, losses_b: Results for strategy B
+        prior_alpha, prior_beta: Beta prior parameters
+        n_samples: Monte Carlo samples for comparison
+
+    Returns:
+        Dictionary with comparison results
+    """
+    # Posterior distributions
+    post_a = BetaPosterior(prior_alpha + wins_a, prior_beta + losses_a)
+    post_b = BetaPosterior(prior_alpha + wins_b, prior_beta + losses_b)
+
+    # Sample from posteriors
+    samples_a = stats.beta.rvs(post_a.alpha, post_a.beta, size=n_samples)
+    samples_b = stats.beta.rvs(post_b.alpha, post_b.beta, size=n_samples)
+
+    # P(A > B)
+    prob_a_better = np.mean(samples_a > samples_b)
+
+    # Expected lift
+    lift = samples_a - samples_b
+    expected_lift = np.mean(lift)
+    lift_ci = (np.percentile(lift, 2.5), np.percentile(lift, 97.5))
+
+    # Risk of choosing A
+    risk_a = np.mean(np.maximum(samples_b - samples_a, 0))
+    risk_b = np.mean(np.maximum(samples_a - samples_b, 0))
+
+    return {
+        'posterior_a': post_a,
+        'posterior_b': post_b,
+        'prob_a_better': prob_a_better,
+        'prob_b_better': 1 - prob_a_better,
+        'expected_lift': expected_lift,
+        'lift_95_ci': lift_ci,
+        'risk_choosing_a': risk_a,
+        'risk_choosing_b': risk_b,
+        'recommended': 'A' if prob_a_better > 0.5 else 'B'
+    }
+
+
+def compute_bayes_factor(wins: int, total: int,
+                        h0_prob: float = 0.5,
+                        prior_alpha: float = 1,
+                        prior_beta: float = 1) -> float:
+    """
+    Compute Bayes Factor for hypothesis testing.
+
+    H0: θ = h0_prob (e.g., fair coin / random strategy)
+    H1: θ ~ Beta(α, β)
+
+    Args:
+        wins: Number of successes
+        total: Total trials
+        h0_prob: Probability under null hypothesis
+        prior_alpha, prior_beta: Beta prior under alternative
+
+    Returns:
+        Bayes Factor (BF10) - evidence for H1 vs H0
+    """
+    losses = total - wins
+
+    # Likelihood under H0 (point hypothesis)
+    likelihood_h0 = stats.binom.pmf(wins, total, h0_prob)
+
+    # Marginal likelihood under H1 (Beta-Binomial)
+    # P(data | H1) = B(α + wins, β + losses) / B(α, β) * C(n, wins)
+    # Using the Beta-Binomial formula
+    likelihood_h1 = (beta_func(prior_alpha + wins, prior_beta + losses) /
+                     beta_func(prior_alpha, prior_beta))
+
+    # Bayes Factor
+    bf_10 = likelihood_h1 / likelihood_h0 if likelihood_h0 > 0 else np.inf
+
+    return bf_10
+
+
+def interpret_bayes_factor(bf: float) -> str:
+    """Interpret Bayes Factor according to Jeffreys' scale."""
+    if bf < 1:
+        return f"BF={bf:.2f}: Evidence supports H0 (null)"
+    elif bf < 3:
+        return f"BF={bf:.2f}: Anecdotal evidence for H1"
+    elif bf < 10:
+        return f"BF={bf:.2f}: Moderate evidence for H1"
+    elif bf < 30:
+        return f"BF={bf:.2f}: Strong evidence for H1"
+    elif bf < 100:
+        return f"BF={bf:.2f}: Very strong evidence for H1"
+    else:
+        return f"BF={bf:.2f}: Extreme evidence for H1"
+
+
+class BayesianStrategyEvaluator:
+    """
+    Complete Bayesian strategy evaluation system.
+    """
+
+    def __init__(self, prior_win_rate: Tuple[float, float] = (1, 1),
+                 prior_return: Tuple[float, float] = (0, 0.05)):
+        """
+        Args:
+            prior_win_rate: (α, β) for Beta prior on win rate
+            prior_return: (μ, σ) for Normal prior on mean return
+        """
+        self.win_rate_estimator = BayesianWinRateEstimator(
+            prior_win_rate[0], prior_win_rate[1]
+        )
+        self.return_estimator = BayesianReturnEstimator(
+            prior_return[0], prior_return[1]
+        )
+        self.trades = []
+
+    def add_trade(self, pnl: float) -> Dict:
+        """
+        Add a trade and update beliefs.
+
+        Args:
+            pnl: Trade profit/loss
+
+        Returns:
+            Updated beliefs
+        """
+        self.trades.append(pnl)
+
+        # Update win rate
+        if pnl > 0:
+            win_rate_post = self.win_rate_estimator.update(1, 0)
+        else:
+            win_rate_post = self.win_rate_estimator.update(0, 1)
+
+        # Update return estimate
+        return_post = self.return_estimator.update([pnl])
+
+        return {
+            'n_trades': len(self.trades),
+            'win_rate_posterior': win_rate_post,
+            'return_posterior': return_post,
+            'prob_profitable': return_post.prob_greater_than(0),
+            'prob_win_rate_above_50': win_rate_post.prob_greater_than(0.5)
+        }
+
+    def evaluate(self) -> Dict:
+        """Get full evaluation report."""
+        win_rate_post = self.win_rate_estimator.get_posterior()
+        return_post = self.return_estimator.get_posterior()
+
+        n_wins = sum(1 for t in self.trades if t > 0)
+        n_losses = len(self.trades) - n_wins
+
+        # Bayes factor vs random (50% win rate)
+        bf = compute_bayes_factor(
+            n_wins, len(self.trades), h0_prob=0.5,
+            prior_alpha=self.win_rate_estimator.prior_alpha,
+            prior_beta=self.win_rate_estimator.prior_beta
+        )
+
+        return {
+            'n_trades': len(self.trades),
+            'n_wins': n_wins,
+            'n_losses': n_losses,
+            'sample_win_rate': n_wins / len(self.trades) if self.trades else 0,
+            'sample_mean_return': np.mean(self.trades) if self.trades else 0,
+            'win_rate_posterior': win_rate_post,
+            'return_posterior': return_post,
+            'prob_profitable': return_post.prob_greater_than(0),
+            'prob_win_rate_above_50': win_rate_post.prob_greater_than(0.5),
+            'bayes_factor_vs_random': bf,
+            'bf_interpretation': interpret_bayes_factor(bf)
+        }
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("BAYESIAN WIN RATE ESTIMATION")
+    print("=" * 60)
+
+    # Simulate a strategy with 55% win rate
+    estimator = BayesianWinRateEstimator(prior_alpha=1, prior_beta=1)  # Uniform prior
+
+    # Sequential updating
+    true_win_rate = 0.55
+    n_trades = 100
+    outcomes = np.random.binomial(1, true_win_rate, n_trades)
+
+    print("\nSequential Bayesian Updates:")
+    for i, batch_size in enumerate([10, 20, 30, 40]):
+        start = sum([10, 20, 30, 40][:i])
+        end = start + batch_size
+        batch = outcomes[start:end]
+        wins = sum(batch)
+        losses = batch_size - wins
+
+        posterior = estimator.update(wins, losses)
+        print(f"After {end} trades: {posterior}")
+
+    # Final evaluation
+    final = estimator.get_posterior()
+    print(f"\nTrue win rate: {true_win_rate}")
+    print(f"Sample win rate: {sum(outcomes)/len(outcomes):.3f}")
+    print(f"Bayesian estimate: {final.mean:.3f} (95% CI: {final.credible_interval()})")
+
+    print("\n" + "=" * 60)
+    print("BAYESIAN A/B TEST")
+    print("=" * 60)
+
+    # Compare two strategies
+    result = bayesian_ab_test(
+        wins_a=55, losses_a=45,  # Strategy A: 55/100
+        wins_b=48, losses_b=52   # Strategy B: 48/100
+    )
+
+    print(f"\nStrategy A: {result['posterior_a']}")
+    print(f"Strategy B: {result['posterior_b']}")
+    print(f"\nP(A > B): {result['prob_a_better']:.3f}")
+    print(f"Expected lift (A - B): {result['expected_lift']:.4f}")
+    print(f"95% CI for lift: [{result['lift_95_ci'][0]:.4f}, {result['lift_95_ci'][1]:.4f}]")
+    print(f"Risk of choosing A: {result['risk_choosing_a']:.4f}")
+    print(f"Risk of choosing B: {result['risk_choosing_b']:.4f}")
+    print(f"Recommendation: Strategy {result['recommended']}")
+
+    print("\n" + "=" * 60)
+    print("BAYES FACTOR")
+    print("=" * 60)
+
+    # Test if strategy beats random (50%)
+    bf = compute_bayes_factor(wins=55, total=100, h0_prob=0.5)
+    print(f"\n{interpret_bayes_factor(bf)}")
+
+    print("\n" + "=" * 60)
+    print("FULL STRATEGY EVALUATION")
+    print("=" * 60)
+
+    evaluator = BayesianStrategyEvaluator(
+        prior_win_rate=(5, 5),  # Slightly informative: expect ~50%
+        prior_return=(0, 0.02)  # Prior: mean return 0, sd 2%
+    )
+
+    # Simulate trades
+    for _ in range(50):
+        # Simulated P&L: slight edge
+        pnl = np.random.normal(0.002, 0.03)  # 0.2% expected return
+        evaluator.add_trade(pnl)
+
+    report = evaluator.evaluate()
+    print(f"\n{report['n_trades']} trades: {report['n_wins']} wins, {report['n_losses']} losses")
+    print(f"Win Rate Posterior: {report['win_rate_posterior']}")
+    print(f"Return Posterior: Mean={report['return_posterior'].mean:.4f}, "
+          f"95% CI={report['return_posterior'].credible_interval()}")
+    print(f"P(profitable): {report['prob_profitable']:.3f}")
+    print(f"P(win rate > 50%): {report['prob_win_rate_above_50']:.3f}")
+    print(f"{report['bf_interpretation']}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>6. Interactive Bayesian Lab</h2>
+
+            <div class="calculator-container">
+                <h3>Bayesian Win Rate Estimator</h3>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="priorAlpha">Prior α (pseudo-wins):</label>
+                        <input type="number" id="priorAlpha" value="1" min="0.1" max="100" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="priorBeta">Prior β (pseudo-losses):</label>
+                        <input type="number" id="priorBeta" value="1" min="0.1" max="100" step="0.5">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="observedWins">Observed Wins:</label>
+                        <input type="number" id="observedWins" value="55" min="0" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="observedLosses">Observed Losses:</label>
+                        <input type="number" id="observedLosses" value="45" min="0" max="1000">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="updateBayesianAnalysis()">Update Beliefs</button>
+
+                <div class="results-container" id="bayesResults">
+                    <h4>Bayesian Analysis</h4>
+                    <div id="bayesOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="priorPosteriorChart"></canvas>
+                </div>
+            </div>
+
+            <div class="calculator-container" style="margin-top: 30px;">
+                <h3>Bayesian A/B Test</h3>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="stratAWins">Strategy A Wins:</label>
+                        <input type="number" id="stratAWins" value="60" min="0" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="stratALosses">Strategy A Losses:</label>
+                        <input type="number" id="stratALosses" value="40" min="0" max="1000">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="stratBWins">Strategy B Wins:</label>
+                        <input type="number" id="stratBWins" value="52" min="0" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="stratBLosses">Strategy B Losses:</label>
+                        <input type="number" id="stratBLosses" value="48" min="0" max="1000">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="runABTest()">Compare Strategies</button>
+
+                <div class="results-container" id="abResults">
+                    <h4>A/B Test Results</h4>
+                    <div id="abOutput"></div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="abChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="liftChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Practical Application -->
+        <section class="content-section fade-in">
+            <h2>7. Practical Application: Strategy Deployment Decision</h2>
+
+            <div class="code-block">
+                <h3>Bayesian Strategy Deployment Framework</h3>
+                <pre><code class="language-python">"""
+Bayesian Framework for Strategy Deployment Decisions
+"""
+
+import numpy as np
+from typing import Dict, List, Tuple
+from scipy import stats
+
+
+class StrategyDeploymentDecision:
+    """
+    Use Bayesian analysis to decide if a strategy should be deployed.
+    """
+
+    def __init__(self,
+                 min_win_rate: float = 0.50,
+                 min_expected_return: float = 0.001,
+                 confidence_threshold: float = 0.90,
+                 max_acceptable_risk: float = 0.10):
+        """
+        Args:
+            min_win_rate: Minimum acceptable win rate
+            min_expected_return: Minimum acceptable daily return
+            confidence_threshold: Required P(meets criteria)
+            max_acceptable_risk: Maximum P(criteria not met) to accept
+        """
+        self.min_win_rate = min_win_rate
+        self.min_expected_return = min_expected_return
+        self.confidence_threshold = confidence_threshold
+        self.max_acceptable_risk = max_acceptable_risk
+
+    def evaluate_strategy(self, trades: List[float],
+                         prior_win_rate: Tuple[float, float] = (1, 1),
+                         prior_return: Tuple[float, float] = (0, 0.02)) -> Dict:
+        """
+        Evaluate a strategy for deployment using Bayesian analysis.
+
+        Args:
+            trades: List of trade P&L
+            prior_win_rate: (α, β) Beta prior
+            prior_return: (μ, σ) Normal prior
+
+        Returns:
+            Deployment recommendation with full analysis
+        """
+        n = len(trades)
+        if n == 0:
+            return {'recommendation': 'INSUFFICIENT_DATA', 'reason': 'No trades'}
+
+        # Calculate statistics
+        wins = sum(1 for t in trades if t > 0)
+        losses = n - wins
+
+        # Win rate posterior
+        post_alpha = prior_win_rate[0] + wins
+        post_beta = prior_win_rate[1] + losses
+        win_rate_mean = post_alpha / (post_alpha + post_beta)
+
+        # P(win rate > min)
+        prob_win_rate_ok = 1 - stats.beta.cdf(
+            self.min_win_rate, post_alpha, post_beta
+        )
+
+        # Return posterior
+        sample_mean = np.mean(trades)
+        sample_std = np.std(trades, ddof=1) if n > 1 else prior_return[1]
+
+        prior_precision = 1 / prior_return[1] ** 2
+        likelihood_precision = n / sample_std ** 2
+        post_precision = prior_precision + likelihood_precision
+
+        post_mu = (prior_precision * prior_return[0] +
+                   likelihood_precision * sample_mean) / post_precision
+        post_sigma = np.sqrt(1 / post_precision)
+
+        # P(return > min)
+        prob_return_ok = 1 - stats.norm.cdf(
+            self.min_expected_return, post_mu, post_sigma
+        )
+
+        # Joint probability (assuming independence for simplicity)
+        prob_both_ok = prob_win_rate_ok * prob_return_ok
+
+        # Bayes Factor vs random
+        likelihood_h0 = stats.binom.pmf(wins, n, 0.5)
+        likelihood_h1 = (stats.beta.pdf(win_rate_mean, prior_win_rate[0], prior_win_rate[1]) *
+                        stats.binom.pmf(wins, n, win_rate_mean))
+
+        # Value of information: expected improvement from more data
+        # Simulate what might happen with N more trades
+        n_future = 50
+        future_scenarios = []
+        for _ in range(1000):
+            # Sample from current posterior
+            sampled_win_rate = stats.beta.rvs(post_alpha, post_beta)
+            sampled_return = stats.norm.rvs(post_mu, post_sigma)
+
+            # Simulate future trades
+            future_wins = np.random.binomial(n_future, sampled_win_rate)
+            future_returns = np.random.normal(sampled_return, sample_std, n_future)
+
+            # Update posteriors
+            new_alpha = post_alpha + future_wins
+            new_beta = post_beta + n_future - future_wins
+            new_prob_ok = 1 - stats.beta.cdf(self.min_win_rate, new_alpha, new_beta)
+
+            future_scenarios.append(new_prob_ok)
+
+        expected_confidence_improvement = np.mean(future_scenarios) - prob_win_rate_ok
+
+        # Make decision
+        if prob_both_ok >= self.confidence_threshold:
+            recommendation = 'DEPLOY'
+            reason = f'High confidence ({prob_both_ok:.1%}) strategy meets criteria'
+        elif prob_both_ok < 1 - self.max_acceptable_risk:
+            recommendation = 'REJECT'
+            reason = f'Low probability ({prob_both_ok:.1%}) of meeting criteria'
+        else:
+            recommendation = 'CONTINUE_TESTING'
+            reason = f'Inconclusive ({prob_both_ok:.1%}). Expected improvement with {n_future} more trades: {expected_confidence_improvement:.1%}'
+
+        return {
+            'recommendation': recommendation,
+            'reason': reason,
+            'n_trades': n,
+            'n_wins': wins,
+            'sample_win_rate': wins / n,
+            'sample_mean_return': sample_mean,
+            'posterior_win_rate_mean': win_rate_mean,
+            'posterior_win_rate_ci': (
+                stats.beta.ppf(0.025, post_alpha, post_beta),
+                stats.beta.ppf(0.975, post_alpha, post_beta)
+            ),
+            'posterior_return_mean': post_mu,
+            'posterior_return_ci': (
+                post_mu - 1.96 * post_sigma,
+                post_mu + 1.96 * post_sigma
+            ),
+            'prob_win_rate_acceptable': prob_win_rate_ok,
+            'prob_return_acceptable': prob_return_ok,
+            'prob_both_acceptable': prob_both_ok,
+            'expected_confidence_with_more_data': np.mean(future_scenarios)
+        }
+
+
+# Example usage
+if __name__ == "__main__":
+    np.random.seed(42)
+
+    print("=" * 60)
+    print("STRATEGY DEPLOYMENT DECISION FRAMEWORK")
+    print("=" * 60)
+
+    decision_maker = StrategyDeploymentDecision(
+        min_win_rate=0.52,
+        min_expected_return=0.0005,  # 0.05% per trade
+        confidence_threshold=0.85,
+        max_acceptable_risk=0.20
+    )
+
+    # Scenario 1: Promising strategy, limited data
+    print("\n--- Scenario 1: New Strategy (30 trades) ---")
+    trades_1 = np.random.normal(0.002, 0.02, 30).tolist()
+    result_1 = decision_maker.evaluate_strategy(trades_1)
+    print(f"Recommendation: {result_1['recommendation']}")
+    print(f"Reason: {result_1['reason']}")
+    print(f"Win Rate: {result_1['sample_win_rate']:.1%} -> Posterior: {result_1['posterior_win_rate_mean']:.1%}")
+    print(f"P(acceptable): {result_1['prob_both_acceptable']:.1%}")
+
+    # Scenario 2: More data, clearer signal
+    print("\n--- Scenario 2: More Data (100 trades) ---")
+    trades_2 = np.random.normal(0.003, 0.02, 100).tolist()
+    result_2 = decision_maker.evaluate_strategy(trades_2)
+    print(f"Recommendation: {result_2['recommendation']}")
+    print(f"Reason: {result_2['reason']}")
+    print(f"Win Rate: {result_2['sample_win_rate']:.1%} -> Posterior: {result_2['posterior_win_rate_mean']:.1%}")
+    print(f"P(acceptable): {result_2['prob_both_acceptable']:.1%}")
+
+    # Scenario 3: Poor strategy
+    print("\n--- Scenario 3: Poor Strategy (50 trades) ---")
+    trades_3 = np.random.normal(-0.001, 0.02, 50).tolist()
+    result_3 = decision_maker.evaluate_strategy(trades_3)
+    print(f"Recommendation: {result_3['recommendation']}")
+    print(f"Reason: {result_3['reason']}")
+    print(f"Win Rate: {result_3['sample_win_rate']:.1%} -> Posterior: {result_3['posterior_win_rate_mean']:.1%}")
+    print(f"P(acceptable): {result_3['prob_both_acceptable']:.1%}")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 8: Quiz -->
+        <section class="content-section fade-in">
+            <h2>8. Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>Question 1: In Bayes' theorem, what does the "likelihood" represent?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'A')">A) P(hypothesis) - prior probability</button>
+                        <button onclick="checkAnswer(1, 'B')">B) P(data | hypothesis) - probability of data given hypothesis</button>
+                        <button onclick="checkAnswer(1, 'C')">C) P(hypothesis | data) - posterior probability</button>
+                        <button onclick="checkAnswer(1, 'D')">D) P(data) - marginal probability</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>Question 2: Why use a Beta distribution as a prior for win rate estimation?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'A')">A) It's the only valid distribution for probabilities</button>
+                        <button onclick="checkAnswer(2, 'B')">B) It's conjugate to the Binomial likelihood, making updates easy</button>
+                        <button onclick="checkAnswer(2, 'C')">C) It always produces a uniform prior</button>
+                        <button onclick="checkAnswer(2, 'D')">D) It guarantees positive expected returns</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>Question 3: What is a 95% credible interval?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'A')">A) The interval that would contain the true parameter 95% of the time in repeated sampling</button>
+                        <button onclick="checkAnswer(3, 'B')">B) The interval with 95% posterior probability of containing the parameter</button>
+                        <button onclick="checkAnswer(3, 'C')">C) The range of 95% of the data</button>
+                        <button onclick="checkAnswer(3, 'D')">D) A confidence interval computed using Bayes' theorem</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>Question 4: A Bayes Factor of 15 indicates:</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'A')">A) The null hypothesis is true</button>
+                        <button onclick="checkAnswer(4, 'B')">B) Strong evidence for the alternative hypothesis</button>
+                        <button onclick="checkAnswer(4, 'C')">C) A 15% probability the alternative is true</button>
+                        <button onclick="checkAnswer(4, 'D')">D) The data is 15 times more likely under the null</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>Question 5: In sequential Bayesian updating, what becomes the new prior?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'A')">A) The original prior</button>
+                        <button onclick="checkAnswer(5, 'B')">B) The likelihood</button>
+                        <button onclick="checkAnswer(5, 'C')">C) The previous posterior</button>
+                        <button onclick="checkAnswer(5, 'D')">D) The sample mean</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+            </div>
+
+            <div class="score-container" id="scoreContainer" style="display:none;">
+                <h3>Your Score: <span id="finalScore"></span>/5</h3>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script>
+        let priorPosteriorChart, abChart, liftChart;
+        let quizAnswers = {};
+        const correctAnswers = {
+            1: 'B',
+            2: 'B',
+            3: 'B',
+            4: 'B',
+            5: 'C'
+        };
+
+        const explanations = {
+            1: {
+                'A': 'Incorrect. That\'s the prior P(θ), not the likelihood.',
+                'B': 'Correct! The likelihood P(D|θ) is the probability of observing the data given a specific hypothesis/parameter value.',
+                'C': 'Incorrect. That\'s the posterior, which is what we\'re trying to compute.',
+                'D': 'Incorrect. That\'s the evidence or marginal likelihood P(D).'
+            },
+            2: {
+                'A': 'Incorrect. Other distributions (like truncated Normal) can also model probabilities.',
+                'B': 'Correct! The Beta is conjugate to Binomial, meaning the posterior is also Beta. This allows closed-form updates: Beta(α,β) + k wins, n-k losses → Beta(α+k, β+n-k).',
+                'C': 'Incorrect. Beta(1,1) is uniform, but other parameters give different shapes.',
+                'D': 'Incorrect. The prior doesn\'t guarantee anything about returns.'
+            },
+            3: {
+                'A': 'Incorrect. That\'s the frequentist interpretation of a confidence interval.',
+                'B': 'Correct! A Bayesian credible interval has a direct probability interpretation: given the data, there\'s a 95% probability the parameter lies within this interval.',
+                'C': 'Incorrect. That would describe a range of the sample distribution, not a parameter interval.',
+                'D': 'Incorrect. Credible intervals and confidence intervals have fundamentally different interpretations.'
+            },
+            4: {
+                'A': 'Incorrect. BF > 1 indicates evidence against the null.',
+                'B': 'Correct! A Bayes Factor of 15 means the data is 15 times more likely under the alternative than the null. On Jeffreys\' scale, this is "strong evidence."',
+                'C': 'Incorrect. BF is not a probability but a likelihood ratio.',
+                'D': 'Incorrect. BF = 15 means data is 15x more likely under the alternative.'
+            },
+            5: {
+                'A': 'Incorrect. Using the original prior ignores information from previous data.',
+                'B': 'Incorrect. The likelihood is data-dependent, not a prior.',
+                'C': 'Correct! In sequential updating, yesterday\'s posterior becomes today\'s prior. This allows beliefs to update continuously as new data arrives.',
+                'D': 'Incorrect. The sample mean is a summary statistic, not a prior distribution.'
+            }
+        };
+
+        // Beta distribution PDF
+        function betaPDF(x, alpha, beta) {
+            if (x <= 0 || x >= 1) return 0;
+            const B = gammaFunc(alpha) * gammaFunc(beta) / gammaFunc(alpha + beta);
+            return Math.pow(x, alpha - 1) * Math.pow(1 - x, beta - 1) / B;
+        }
+
+        // Approximate gamma function using Stirling
+        function gammaFunc(n) {
+            if (n <= 0) return Infinity;
+            if (n < 1) {
+                return gammaFunc(n + 1) / n;
+            }
+            // Stirling's approximation for n >= 1
+            return Math.sqrt(2 * Math.PI / n) * Math.pow((n + 1 / (12 * n - 1 / (10 * n))) / Math.E, n);
+        }
+
+        // Better gamma using Lanczos approximation
+        function gamma(z) {
+            const g = 7;
+            const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                      771.32342877765313, -176.61502916214059, 12.507343278686905,
+                      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+
+            if (z < 0.5) {
+                return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+            }
+
+            z -= 1;
+            let x = c[0];
+            for (let i = 1; i < g + 2; i++) {
+                x += c[i] / (z + i);
+            }
+
+            const t = z + g + 0.5;
+            return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+        }
+
+        function betaPDFAccurate(x, alpha, beta) {
+            if (x <= 0 || x >= 1) return 0;
+            const logB = Math.log(gamma(alpha)) + Math.log(gamma(beta)) - Math.log(gamma(alpha + beta));
+            const logPDF = (alpha - 1) * Math.log(x) + (beta - 1) * Math.log(1 - x) - logB;
+            return Math.exp(logPDF);
+        }
+
+        // Incomplete beta function (simplified)
+        function betaCDF(x, alpha, beta) {
+            if (x <= 0) return 0;
+            if (x >= 1) return 1;
+
+            // Numerical integration using Simpson's rule
+            const n = 1000;
+            const h = x / n;
+            let sum = betaPDFAccurate(0.0001, alpha, beta) + betaPDFAccurate(x, alpha, beta);
+
+            for (let i = 1; i < n; i++) {
+                const xi = i * h;
+                sum += (i % 2 === 0 ? 2 : 4) * betaPDFAccurate(xi, alpha, beta);
+            }
+
+            return sum * h / 3;
+        }
+
+        function updateBayesianAnalysis() {
+            const priorAlpha = parseFloat(document.getElementById('priorAlpha').value);
+            const priorBeta = parseFloat(document.getElementById('priorBeta').value);
+            const wins = parseInt(document.getElementById('observedWins').value);
+            const losses = parseInt(document.getElementById('observedLosses').value);
+
+            // Posterior parameters
+            const postAlpha = priorAlpha + wins;
+            const postBeta = priorBeta + losses;
+
+            // Statistics
+            const priorMean = priorAlpha / (priorAlpha + priorBeta);
+            const postMean = postAlpha / (postAlpha + postBeta);
+            const sampleWinRate = wins / (wins + losses);
+
+            // Credible interval (approximate using numerical CDF)
+            const ci = findCredibleInterval(postAlpha, postBeta, 0.95);
+
+            // P(win rate > 50%)
+            const probAbove50 = 1 - betaCDF(0.5, postAlpha, postBeta);
+
+            // Display results
+            let html = '<div class="result-grid">';
+            html += `<div class="result-item"><span class="result-label">Prior Mean:</span><span class="result-value">${(priorMean * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Sample Win Rate:</span><span class="result-value">${(sampleWinRate * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Posterior Mean:</span><span class="result-value">${(postMean * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">95% Credible Interval:</span><span class="result-value">[${(ci[0] * 100).toFixed(1)}%, ${(ci[1] * 100).toFixed(1)}%]</span></div>`;
+            html += `<div class="result-item"><span class="result-label">P(Win Rate > 50%):</span><span class="result-value ${probAbove50 > 0.5 ? 'positive' : 'negative'}">${(probAbove50 * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Effective Sample Size:</span><span class="result-value">${(postAlpha + postBeta - priorAlpha - priorBeta).toFixed(0)} trades</span></div>`;
+            html += '</div>';
+            document.getElementById('bayesOutput').innerHTML = html;
+
+            // Update chart
+            updatePriorPosteriorChart(priorAlpha, priorBeta, postAlpha, postBeta);
+        }
+
+        function findCredibleInterval(alpha, beta, prob) {
+            // Simple grid search for equal-tailed interval
+            const lower = findQuantile(alpha, beta, (1 - prob) / 2);
+            const upper = findQuantile(alpha, beta, 1 - (1 - prob) / 2);
+            return [lower, upper];
+        }
+
+        function findQuantile(alpha, beta, p) {
+            // Binary search for quantile
+            let low = 0, high = 1;
+            for (let i = 0; i < 50; i++) {
+                const mid = (low + high) / 2;
+                if (betaCDF(mid, alpha, beta) < p) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+            return (low + high) / 2;
+        }
+
+        function updatePriorPosteriorChart(priorAlpha, priorBeta, postAlpha, postBeta) {
+            const ctx = document.getElementById('priorPosteriorChart').getContext('2d');
+            if (priorPosteriorChart) priorPosteriorChart.destroy();
+
+            const x = [];
+            const priorY = [];
+            const postY = [];
+
+            for (let i = 1; i <= 99; i++) {
+                const xi = i / 100;
+                x.push((xi * 100).toFixed(0) + '%');
+                priorY.push(betaPDFAccurate(xi, priorAlpha, priorBeta));
+                postY.push(betaPDFAccurate(xi, postAlpha, postBeta));
+            }
+
+            priorPosteriorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [
+                        {
+                            label: `Prior: Beta(${priorAlpha}, ${priorBeta})`,
+                            data: priorY,
+                            borderColor: 'rgba(156, 39, 176, 0.8)',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: `Posterior: Beta(${postAlpha.toFixed(1)}, ${postBeta.toFixed(1)})`,
+                            data: postY,
+                            borderColor: 'rgba(255, 193, 7, 1)',
+                            backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Prior vs Posterior Distribution', color: '#e0e0e0' },
+                        legend: { labels: { color: '#b0b0b0' } }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Win Rate', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Density', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function runABTest() {
+            const winsA = parseInt(document.getElementById('stratAWins').value);
+            const lossesA = parseInt(document.getElementById('stratALosses').value);
+            const winsB = parseInt(document.getElementById('stratBWins').value);
+            const lossesB = parseInt(document.getElementById('stratBLosses').value);
+
+            // Posteriors
+            const alphaA = 1 + winsA, betaA = 1 + lossesA;
+            const alphaB = 1 + winsB, betaB = 1 + lossesB;
+
+            const meanA = alphaA / (alphaA + betaA);
+            const meanB = alphaB / (alphaB + betaB);
+
+            // Monte Carlo comparison
+            const nSamples = 50000;
+            let aWins = 0;
+            const lifts = [];
+
+            for (let i = 0; i < nSamples; i++) {
+                const sampleA = sampleBeta(alphaA, betaA);
+                const sampleB = sampleBeta(alphaB, betaB);
+                if (sampleA > sampleB) aWins++;
+                lifts.push(sampleA - sampleB);
+            }
+
+            const probABetter = aWins / nSamples;
+            const meanLift = lifts.reduce((a, b) => a + b, 0) / lifts.length;
+            lifts.sort((a, b) => a - b);
+            const liftCI = [lifts[Math.floor(0.025 * nSamples)], lifts[Math.floor(0.975 * nSamples)]];
+
+            // Display results
+            let html = '<div class="result-grid">';
+            html += `<div class="result-item"><span class="result-label">Strategy A Win Rate:</span><span class="result-value">${(meanA * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Strategy B Win Rate:</span><span class="result-value">${(meanB * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">P(A > B):</span><span class="result-value ${probABetter > 0.5 ? 'positive' : 'negative'}">${(probABetter * 100).toFixed(1)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Expected Lift (A - B):</span><span class="result-value">${(meanLift * 100).toFixed(2)}%</span></div>`;
+            html += `<div class="result-item"><span class="result-label">95% CI for Lift:</span><span class="result-value">[${(liftCI[0] * 100).toFixed(2)}%, ${(liftCI[1] * 100).toFixed(2)}%]</span></div>`;
+            html += `<div class="result-item"><span class="result-label">Recommendation:</span><span class="result-value">${probABetter > 0.5 ? 'Strategy A' : 'Strategy B'}</span></div>`;
+            html += '</div>';
+            document.getElementById('abOutput').innerHTML = html;
+
+            // Update charts
+            updateABChart(alphaA, betaA, alphaB, betaB);
+            updateLiftChart(lifts);
+        }
+
+        function sampleBeta(alpha, beta) {
+            // Generate beta sample using gamma samples
+            const x = sampleGamma(alpha);
+            const y = sampleGamma(beta);
+            return x / (x + y);
+        }
+
+        function sampleGamma(shape) {
+            // Marsaglia and Tsang's method
+            if (shape < 1) {
+                return sampleGamma(1 + shape) * Math.pow(Math.random(), 1 / shape);
+            }
+
+            const d = shape - 1/3;
+            const c = 1 / Math.sqrt(9 * d);
+
+            while (true) {
+                let x, v;
+                do {
+                    x = randn();
+                    v = 1 + c * x;
+                } while (v <= 0);
+
+                v = v * v * v;
+                const u = Math.random();
+
+                if (u < 1 - 0.0331 * (x * x) * (x * x)) return d * v;
+                if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+            }
+        }
+
+        function randn() {
+            const u1 = Math.random();
+            const u2 = Math.random();
+            return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        function updateABChart(alphaA, betaA, alphaB, betaB) {
+            const ctx = document.getElementById('abChart').getContext('2d');
+            if (abChart) abChart.destroy();
+
+            const x = [];
+            const yA = [];
+            const yB = [];
+
+            for (let i = 1; i <= 99; i++) {
+                const xi = i / 100;
+                x.push((xi * 100).toFixed(0) + '%');
+                yA.push(betaPDFAccurate(xi, alphaA, betaA));
+                yB.push(betaPDFAccurate(xi, alphaB, betaB));
+            }
+
+            abChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [
+                        {
+                            label: 'Strategy A',
+                            data: yA,
+                            borderColor: 'rgba(76, 175, 80, 1)',
+                            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Strategy B',
+                            data: yB,
+                            borderColor: 'rgba(244, 67, 54, 1)',
+                            backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Strategy Win Rate Posteriors', color: '#e0e0e0' },
+                        legend: { labels: { color: '#b0b0b0' } }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Win Rate', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Density', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLiftChart(lifts) {
+            const ctx = document.getElementById('liftChart').getContext('2d');
+            if (liftChart) liftChart.destroy();
+
+            // Create histogram
+            const nBins = 50;
+            const minLift = Math.min(...lifts);
+            const maxLift = Math.max(...lifts);
+            const binWidth = (maxLift - minLift) / nBins;
+            const bins = Array(nBins).fill(0);
+            const binCenters = [];
+
+            for (let i = 0; i < nBins; i++) {
+                binCenters.push(((minLift + (i + 0.5) * binWidth) * 100).toFixed(1) + '%');
+            }
+
+            lifts.forEach(l => {
+                const binIdx = Math.min(Math.floor((l - minLift) / binWidth), nBins - 1);
+                bins[binIdx]++;
+            });
+
+            const normalizedBins = bins.map(b => b / lifts.length);
+            const colors = binCenters.map((_, i) => {
+                const binCenter = minLift + (i + 0.5) * binWidth;
+                return binCenter > 0 ? 'rgba(76, 175, 80, 0.7)' : 'rgba(244, 67, 54, 0.7)';
+            });
+
+            liftChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binCenters,
+                    datasets: [{
+                        label: 'Lift Distribution (A - B)',
+                        data: normalizedBins,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Distribution of Lift (Strategy A - Strategy B)', color: '#e0e0e0' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Lift (A - B)', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Probability', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function checkAnswer(questionNum, answer) {
+            const feedback = document.getElementById(`feedback${questionNum}`);
+            const isCorrect = answer === correctAnswers[questionNum];
+
+            quizAnswers[questionNum] = answer;
+
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[questionNum][answer]}
+            </div>`;
+            feedback.style.display = 'block';
+
+            const buttons = document.querySelectorAll(`#q${questionNum} button`);
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (Object.keys(quizAnswers).length === 5) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const score = Object.keys(quizAnswers).reduce((sum, q) =>
+                sum + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('scoreContainer').style.display = 'block';
+        }
+
+        window.onload = function() {
+            updateBayesianAnalysis();
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

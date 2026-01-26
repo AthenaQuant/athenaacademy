@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master the Kelly Criterion for optimal position sizing in quantitative trading. Learn full Kelly, fractional Kelly, and risk of ruin management.">
+    <title>6.2 Kelly Criterion | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
+    <style>
+        .key-concept { background: var(--bg-card); border-left: 4px solid var(--accent-cyan); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .key-concept h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
+        .important-note { background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1.5rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 1.5rem 0; }
+        .important-note h3 { color: var(--warning); margin-bottom: 0.5rem; }
+        .calculator-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        .calculator-container h3 { color: var(--accent-purple); margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .calculate-btn { background: var(--gradient-secondary); color: white; border: none; padding: 1rem 2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .results-container { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+        .result-item { text-align: center; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+        .result-label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .result-value.positive { color: var(--success); }
+        .result-value.negative { color: var(--error); }
+        .quiz-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; margin: 2rem 0; }
+        .quiz-question { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-question:last-child { border-bottom: none; }
+        .quiz-question h4 { color: var(--text-primary); margin-bottom: 1rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-options button { background: var(--bg-secondary); border: 2px solid transparent; padding: 1rem; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.2s; }
+        .quiz-options button:hover:not(:disabled) { border-color: var(--accent-blue); }
+        .quiz-options button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); display: none; }
+        .quiz-feedback .correct { background: var(--success-bg); color: var(--success); }
+        .quiz-feedback .incorrect { background: var(--error-bg); color: var(--error); }
+        .score-container { text-align: center; padding: 2rem; background: var(--gradient-secondary); border-radius: var(--radius-lg); margin-top: 2rem; display: none; }
+        .code-block { background: #1a1f2e; border-radius: var(--radius-lg); overflow: hidden; margin: 1.5rem 0; }
+        .code-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--bg-tertiary); }
+        .code-header span { color: var(--text-muted); font-size: 0.85rem; }
+        .code-block pre { margin: 0; padding: 1.5rem; overflow-x: auto; }
+        .code-block code { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; }
+        .chart-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 1.5rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        .kelly-formula { font-size: 2rem; color: var(--accent-purple); text-align: center; padding: 2rem; background: var(--bg-secondary); border-radius: var(--radius-lg); margin: 2rem 0; font-family: var(--font-mono); }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 6.2</span>
+                    <span class="nav-module-title">Kelly Criterion</span>
+                </div>
+                <a href="6.3_risk_parity.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 6: Optimization & Portfolio Theory</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>6.2 Kelly Criterion</span>
+                </div>
+                <h1>Kelly Criterion for Position Sizing</h1>
+                <p class="module-subtitle">
+                    The mathematically optimal bet size that maximizes long-term wealth growth.
+                    Used by legendary investors from Ed Thorp to Warren Buffett.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 40 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Kelly Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="important-note">
+                <h3>⚠️ The Gambler's Ruin</h3>
+                <p>
+                    Even with a <strong>positive edge</strong>, you can go bankrupt by betting too much.
+                    Imagine a coin flip paying 2:1 with 50% win rate—positive expected value! But betting 100%
+                    of your bankroll means one loss wipes you out. <strong>Position sizing is survival.</strong>
+                </p>
+            </div>
+
+            <div class="key-concept">
+                <h3>The Kelly Insight</h3>
+                <p>
+                    John Kelly (Bell Labs, 1956) discovered the <strong>exact fraction</strong> to bet that maximizes
+                    the long-term growth rate of your wealth. Bet less = leave money on the table. Bet more = risk
+                    of ruin increases dramatically.
+                </p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">🎰 Ed Thorp</h4>
+                    <p>Beat casinos at blackjack using Kelly. Later averaged 20%+ annual returns at Princeton Newport Partners for 20 years using Kelly-based sizing.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-purple);">💼 Warren Buffett</h4>
+                    <p>"I'm a Kelly bettor." When he has high conviction, he bets big. Coca-Cola was 40% of his portfolio at one point.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color: var(--accent-cyan);">📈 Renaissance Technologies</h4>
+                    <p>The most successful hedge fund ever uses sophisticated Kelly variants for position sizing across thousands of positions.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 2: The Kelly Formula -->
+        <section class="content-section fade-in">
+            <h2>Part 2: The Kelly Formula</h2>
+
+            <div class="kelly-formula">
+                f* = (p × b - q) / b
+            </div>
+
+            <div class="info-box info-box-info">
+                <div class="info-box-title">📐 Variable Definitions</div>
+                <table class="data-table">
+                    <tbody>
+                        <tr><td><strong>f*</strong></td><td>Optimal fraction of bankroll to bet</td></tr>
+                        <tr><td><strong>p</strong></td><td>Probability of winning</td></tr>
+                        <tr><td><strong>q</strong></td><td>Probability of losing (q = 1 - p)</td></tr>
+                        <tr><td><strong>b</strong></td><td>Odds received on the bet (profit/loss ratio)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Alternative Forms</h3>
+
+            <div class="formula-box">
+                <h4>Edge / Odds Form</h4>
+                <div class="formula" style="text-align: center; font-size: 1.3rem; padding: 1rem;">
+                    f* = Edge / Odds = (p × b - q) / b
+                </div>
+            </div>
+
+            <div class="formula-box">
+                <h4>Continuous Kelly (for investments)</h4>
+                <div class="formula" style="text-align: center; font-size: 1.3rem; padding: 1rem;">
+                    f* = (μ - r) / σ²
+                </div>
+                <p style="text-align: center; color: var(--text-muted);">
+                    Where μ = expected return, r = risk-free rate, σ² = variance
+                </p>
+            </div>
+
+            <h3>Numerical Example</h3>
+
+            <div class="key-concept">
+                <h3>Example: Biased Coin Flip</h3>
+                <p><strong>Setup:</strong> 60% chance to win, 2:1 payout (win $2, lose $1)</p>
+                <ul style="margin-top: 1rem; color: var(--text-secondary);">
+                    <li>p = 0.60, q = 0.40, b = 2</li>
+                    <li>f* = (0.60 × 2 - 0.40) / 2 = (1.20 - 0.40) / 2 = <strong>0.40 (40%)</strong></li>
+                </ul>
+                <p style="margin-top: 1rem;">
+                    Bet 40% of your bankroll each time to maximize long-term growth.
+                </p>
+            </div>
+        </section>
+
+        <!-- Part 3: Why Kelly Works -->
+        <section class="content-section fade-in">
+            <h2>Part 3: Why Kelly Maximizes Growth</h2>
+
+            <p>Kelly maximizes the <strong>expected logarithm</strong> of wealth, which is equivalent to maximizing the geometric growth rate.</p>
+
+            <div class="formula-box">
+                <h4>Growth Rate Formula</h4>
+                <div class="formula" style="text-align: center; font-size: 1.2rem; padding: 1rem;">
+                    G(f) = p × log(1 + f × b) + q × log(1 - f)
+                </div>
+                <p style="text-align: center; color: var(--text-muted);">
+                    Kelly finds f* that maximizes G(f)
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h4 style="margin-bottom: 1rem;">Growth Rate vs. Bet Fraction</h4>
+                <canvas id="growthChart" height="300"></canvas>
+            </div>
+
+            <div class="important-note">
+                <h3>⚠️ Over-betting Destroys Wealth</h3>
+                <p>
+                    Notice the curve: betting <em>more</em> than Kelly quickly becomes <strong>negative growth</strong>.
+                    Betting 2× Kelly is especially dangerous—it has the same growth rate as betting 0 (doing nothing)!
+                    Beyond that, you're mathematically guaranteed to lose money over time.
+                </p>
+            </div>
+        </section>
+
+        <!-- Part 4: Fractional Kelly -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Fractional Kelly (Risk Management)</h2>
+
+            <p>Full Kelly is optimal mathematically but has significant drawdowns. Most practitioners use <strong>fractional Kelly</strong>.</p>
+
+            <div class="card-grid">
+                <div class="card" style="border-left: 4px solid var(--error);">
+                    <h4>Full Kelly (100%)</h4>
+                    <p>Maximum growth rate but <strong>volatile</strong>. Drawdowns of 50%+ are common. Psychologically brutal.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid var(--warning);">
+                    <h4>Half Kelly (50%)</h4>
+                    <p><strong>Most popular choice.</strong> 75% of the growth rate with significantly reduced volatility and drawdowns.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid var(--success);">
+                    <h4>Quarter Kelly (25%)</h4>
+                    <p>Conservative. Lower returns but much smoother equity curve. Good for risk-averse investors.</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h4 style="margin-bottom: 1rem;">Equity Curves: Full vs Fractional Kelly</h4>
+                <canvas id="equityChart" height="300"></canvas>
+            </div>
+
+            <div class="key-concept">
+                <h3>The Fractional Kelly Tradeoff</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Kelly Fraction</th><th>% of Max Growth</th><th>Typical Max Drawdown</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>100% (Full)</td><td>100%</td><td>50-80%</td></tr>
+                        <tr><td>50% (Half)</td><td>75%</td><td>25-40%</td></tr>
+                        <tr><td>25% (Quarter)</td><td>56%</td><td>12-20%</td></tr>
+                        <tr><td>10%</td><td>36%</td><td>5-10%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Part 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>kelly_criterion.py</span>
+                    <button onclick="copyCode(this)" style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer;">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Kelly Criterion for Position Sizing
+====================================
+Optimal bet sizing for maximum long-term growth.
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def kelly_fraction(win_prob: float, win_loss_ratio: float) -> float:
+    """
+    Calculate optimal Kelly fraction.
+
+    Parameters
+    ----------
+    win_prob : float
+        Probability of winning (0 to 1)
+    win_loss_ratio : float
+        Ratio of win amount to loss amount (b in formula)
+
+    Returns
+    -------
+    float
+        Optimal fraction of bankroll to bet
+    """
+    q = 1 - win_prob
+    kelly = (win_prob * win_loss_ratio - q) / win_loss_ratio
+    return max(0, kelly)  # Never bet negative
+
+
+def kelly_continuous(expected_return: float, variance: float,
+                     risk_free: float = 0) -> float:
+    """
+    Kelly for continuous investments (stocks, portfolios).
+
+    Parameters
+    ----------
+    expected_return : float
+        Expected return of the investment
+    variance : float
+        Variance of returns
+    risk_free : float
+        Risk-free rate
+
+    Returns
+    -------
+    float
+        Optimal leverage/allocation
+    """
+    if variance == 0:
+        return 0
+    return (expected_return - risk_free) / variance
+
+
+def simulate_kelly(win_prob: float, win_loss_ratio: float,
+                   bet_fraction: float, n_bets: int = 1000,
+                   initial_bankroll: float = 100) -> np.ndarray:
+    """
+    Simulate bankroll evolution with given bet fraction.
+
+    Returns
+    -------
+    np.ndarray
+        Bankroll at each step
+    """
+    bankroll = [initial_bankroll]
+
+    for _ in range(n_bets):
+        if np.random.random() < win_prob:
+            # Win
+            bankroll.append(bankroll[-1] * (1 + bet_fraction * win_loss_ratio))
+        else:
+            # Lose
+            bankroll.append(bankroll[-1] * (1 - bet_fraction))
+
+    return np.array(bankroll)
+
+
+def growth_rate(win_prob: float, win_loss_ratio: float,
+                bet_fraction: float) -> float:
+    """
+    Calculate expected log growth rate for given fraction.
+
+    G(f) = p * log(1 + f*b) + q * log(1 - f)
+    """
+    if bet_fraction >= 1 or bet_fraction <= 0:
+        return -np.inf
+
+    q = 1 - win_prob
+    return (win_prob * np.log(1 + bet_fraction * win_loss_ratio) +
+            q * np.log(1 - bet_fraction))
+
+
+def find_optimal_fraction(win_prob: float, win_loss_ratio: float,
+                          precision: float = 0.001) -> float:
+    """
+    Numerically find optimal Kelly fraction.
+    """
+    fractions = np.arange(0.001, 0.999, precision)
+    growth_rates = [growth_rate(win_prob, win_loss_ratio, f) for f in fractions]
+    return fractions[np.argmax(growth_rates)]
+
+
+# Example usage
+if __name__ == "__main__":
+    # Parameters: 55% win rate, 1:1 payout
+    win_prob = 0.55
+    win_loss = 1.0
+
+    # Calculate Kelly
+    optimal_f = kelly_fraction(win_prob, win_loss)
+    print(f"Win probability: {win_prob:.0%}")
+    print(f"Win/Loss ratio: {win_loss}")
+    print(f"Optimal Kelly fraction: {optimal_f:.1%}")
+
+    # Compare different fractions
+    print("\n--- Growth Rate Comparison ---")
+    for fraction in [0.05, 0.10, optimal_f, 0.20, 0.30]:
+        g = growth_rate(win_prob, win_loss, fraction)
+        print(f"f = {fraction:.1%}: Growth rate = {g:.4f}")
+
+    # Simulate
+    np.random.seed(42)
+    full_kelly = simulate_kelly(win_prob, win_loss, optimal_f, n_bets=500)
+    half_kelly = simulate_kelly(win_prob, win_loss, optimal_f/2, n_bets=500)
+    over_bet = simulate_kelly(win_prob, win_loss, optimal_f*2, n_bets=500)
+
+    print(f"\n--- Simulation Results (500 bets) ---")
+    print(f"Full Kelly final: ${full_kelly[-1]:.2f}")
+    print(f"Half Kelly final: ${half_kelly[-1]:.2f}")
+    print(f"2x Kelly final: ${over_bet[-1]:.2f}")</code></pre>
+            </div>
+        </section>
+
+        <!-- Part 6: Interactive Calculator -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Kelly Calculator</h2>
+
+            <div class="calculator-container">
+                <h3>🎯 Kelly Criterion Calculator</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Enter your win probability and payout ratio to find optimal bet size.
+                </p>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="winProb">Win Probability (%)</label>
+                        <input type="number" id="winProb" value="55" min="1" max="99" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="winLoss">Win/Loss Ratio</label>
+                        <input type="number" id="winLoss" value="1.5" min="0.1" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="kellyFrac">Kelly Fraction to Use</label>
+                        <select id="kellyFrac">
+                            <option value="1">Full Kelly (100%)</option>
+                            <option value="0.5" selected>Half Kelly (50%)</option>
+                            <option value="0.25">Quarter Kelly (25%)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="calculateKelly()">Calculate Optimal Bet Size</button>
+
+                <div class="results-container" id="resultsContainer" style="display: none;">
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <span class="result-label">Edge</span>
+                            <span class="result-value" id="edgeResult">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Full Kelly</span>
+                            <span class="result-value" id="fullKelly">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Your Bet Size</span>
+                            <span class="result-value positive" id="yourBet">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Expected Growth</span>
+                            <span class="result-value" id="growthResult">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 7: Key Takeaways -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Key Takeaways</h2>
+
+            <div class="card" style="padding: 2rem;">
+                <div style="display: grid; gap: 1.5rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Kelly maximizes long-term geometric growth</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">No other sizing strategy grows wealth faster over time.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Over-betting is catastrophic</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">Betting more than Kelly leads to negative growth. 2× Kelly = zero growth!</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">3</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Half Kelly is the practitioner's choice</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">75% of growth with much lower volatility and drawdowns.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <span style="background: var(--accent-blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">4</span>
+                        <div>
+                            <strong style="color: var(--text-primary);">Accurate edge estimation is crucial</strong>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 0;">Over-estimating your edge leads to over-betting. Be conservative.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 8: Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Knowledge Check</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-question" id="q1">
+                    <h4>1. With 60% win probability and 1:1 payout, what is the Kelly fraction?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(1, 'a')">a) 60%</button>
+                        <button onclick="checkAnswer(1, 'b')">b) 20%</button>
+                        <button onclick="checkAnswer(1, 'c')">c) 10%</button>
+                        <button onclick="checkAnswer(1, 'd')">d) 40%</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <h4>2. What happens if you consistently bet 2× the Kelly fraction?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(2, 'a')">a) Double the growth rate</button>
+                        <button onclick="checkAnswer(2, 'b')">b) Same growth as betting nothing</button>
+                        <button onclick="checkAnswer(2, 'c')">c) Slightly lower growth</button>
+                        <button onclick="checkAnswer(2, 'd')">d) Guaranteed bankruptcy</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <h4>3. Why do most practitioners use half Kelly instead of full Kelly?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(3, 'a')">a) Full Kelly is mathematically wrong</button>
+                        <button onclick="checkAnswer(3, 'b')">b) Half Kelly has lower volatility with 75% of growth</button>
+                        <button onclick="checkAnswer(3, 'c')">c) Full Kelly is illegal</button>
+                        <button onclick="checkAnswer(3, 'd')">d) Half Kelly is faster</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <h4>4. If Kelly calculates a negative fraction, what should you do?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(4, 'a')">a) Bet the absolute value</button>
+                        <button onclick="checkAnswer(4, 'b')">b) Don't bet—you have negative edge</button>
+                        <button onclick="checkAnswer(4, 'c')">c) Bet 10% anyway</button>
+                        <button onclick="checkAnswer(4, 'd')">d) Double your bet</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <h4>5. The continuous Kelly formula f* = (μ - r) / σ² suggests what about high-volatility assets?</h4>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(5, 'a')">a) Allocate more to them</button>
+                        <button onclick="checkAnswer(5, 'b')">b) Allocate less to them</button>
+                        <button onclick="checkAnswer(5, 'c')">c) Volatility doesn't matter</button>
+                        <button onclick="checkAnswer(5, 'd')">d) Always avoid them</button>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+
+                <div class="score-container" id="scoreContainer">
+                    <h3>Quiz Complete! Score: <span id="finalScore">0</span>/5</h3>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Quiz
+        const correctAnswers = { 1: 'b', 2: 'b', 3: 'b', 4: 'b', 5: 'b' };
+        const explanations = {
+            1: { 'a': 'That\'s the win probability, not Kelly.', 'b': 'Correct! f* = (0.6×1 - 0.4)/1 = 0.20 = 20%', 'c': 'Too low.', 'd': 'That would be for a 2:1 payout.' },
+            2: { 'a': 'Growth is concave—doubling fraction doesn\'t double growth.', 'b': 'Correct! 2× Kelly has the same growth as 0 (the curve is symmetric).', 'c': 'It\'s much worse than "slightly lower."', 'd': 'Not guaranteed, but likely eventual ruin.' },
+            3: { 'a': 'Full Kelly is mathematically optimal for growth.', 'b': 'Correct! Half Kelly is a practical tradeoff of growth for lower risk.', 'c': 'Kelly isn\'t regulated.', 'd': 'Speed isn\'t relevant.' },
+            4: { 'a': 'No—negative means no bet.', 'b': 'Correct! Negative Kelly means negative expected value—don\'t bet.', 'c': 'Betting with negative edge loses money.', 'd': 'That\'s the opposite of what you should do.' },
+            5: { 'a': 'Variance is in denominator—higher variance = lower allocation.', 'b': 'Correct! σ² in the denominator means higher volatility = smaller optimal position.', 'c': 'Volatility is critical in the formula.', 'd': 'Not always—depends on expected return too.' }
+        };
+        let quizAnswers = {};
+
+        function checkAnswer(q, a) {
+            const feedback = document.getElementById(`feedback${q}`);
+            const isCorrect = a === correctAnswers[q];
+            quizAnswers[q] = a;
+            feedback.innerHTML = `<div class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? '✓ Correct!' : '✗ Incorrect.'} ${explanations[q][a]}</div>`;
+            feedback.style.display = 'block';
+            document.querySelectorAll(`#q${q} button`).forEach(btn => btn.disabled = true);
+            if (Object.keys(quizAnswers).length === 5) {
+                const score = Object.keys(quizAnswers).reduce((s, q) => s + (quizAnswers[q] === correctAnswers[q] ? 1 : 0), 0);
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('scoreContainer').style.display = 'block';
+            }
+        }
+
+        // Calculator
+        function calculateKelly() {
+            const p = parseFloat(document.getElementById('winProb').value) / 100;
+            const b = parseFloat(document.getElementById('winLoss').value);
+            const fraction = parseFloat(document.getElementById('kellyFrac').value);
+
+            const q = 1 - p;
+            const edge = p * b - q;
+            const fullKelly = Math.max(0, (p * b - q) / b);
+            const yourBet = fullKelly * fraction;
+
+            // Growth rate
+            const g = yourBet > 0 && yourBet < 1 ?
+                p * Math.log(1 + yourBet * b) + q * Math.log(1 - yourBet) : 0;
+
+            document.getElementById('resultsContainer').style.display = 'block';
+            document.getElementById('edgeResult').textContent = (edge * 100).toFixed(1) + '%';
+            document.getElementById('edgeResult').className = `result-value ${edge > 0 ? 'positive' : 'negative'}`;
+            document.getElementById('fullKelly').textContent = (fullKelly * 100).toFixed(1) + '%';
+            document.getElementById('yourBet').textContent = (yourBet * 100).toFixed(1) + '%';
+            document.getElementById('growthResult').textContent = (g * 100).toFixed(3) + '%/bet';
+        }
+
+        // Charts
+        function initCharts() {
+            // Growth rate chart
+            const growthCtx = document.getElementById('growthChart').getContext('2d');
+            const fractions = [], growthRates = [];
+            const p = 0.55, b = 1.5;
+            for (let f = 0.01; f < 0.99; f += 0.01) {
+                fractions.push((f * 100).toFixed(0));
+                const g = p * Math.log(1 + f * b) + (1-p) * Math.log(1 - f);
+                growthRates.push(g * 100);
+            }
+            const kellyF = (p * b - (1-p)) / b;
+
+            new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: fractions,
+                    datasets: [{
+                        label: 'Growth Rate (%)',
+                        data: growthRates,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        annotation: { annotations: { kelly: { type: 'line', xMin: kellyF*100, xMax: kellyF*100, borderColor: '#22c55e', borderWidth: 2 } } }
+                    },
+                    scales: {
+                        x: { min: 0, max: 100, title: { display: true, text: 'Bet Fraction (%)', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', maxTicksLimit: 10 } },
+                        y: { min: -60, max: 20, title: { display: true, text: 'Growth Rate (%)', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
+                    }
+                }
+            });
+
+            // Equity chart
+            const equityCtx = document.getElementById('equityChart').getContext('2d');
+            const n = 200;
+            const simulate = (f) => {
+                let equity = [100];
+                for (let i = 0; i < n; i++) {
+                    if (Math.random() < p) equity.push(equity[equity.length-1] * (1 + f * b));
+                    else equity.push(equity[equity.length-1] * (1 - f));
+                }
+                return equity;
+            };
+
+            Math.seedrandom && Math.seedrandom(42);
+            const full = simulate(kellyF);
+            const half = simulate(kellyF/2);
+            const quarter = simulate(kellyF/4);
+
+            new Chart(equityCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: n+1}, (_, i) => i),
+                    datasets: [
+                        { label: 'Full Kelly', data: full, borderColor: '#ef4444', fill: false, tension: 0.1, pointRadius: 0 },
+                        { label: 'Half Kelly', data: half, borderColor: '#3b82f6', fill: false, tension: 0.1, pointRadius: 0 },
+                        { label: 'Quarter Kelly', data: quarter, borderColor: '#22c55e', fill: false, tension: 0.1, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { min: 0, max: 200, title: { display: true, text: 'Number of Bets', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', maxTicksLimit: 10 } },
+                        y: { type: 'logarithmic', min: 10, max: 100000, title: { display: true, text: 'Bankroll ($)', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
+                    }
+                }
+            });
+        }
+
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('code').textContent;
+            navigator.clipboard.writeText(code);
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() { initCharts(); calculateKelly(); });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

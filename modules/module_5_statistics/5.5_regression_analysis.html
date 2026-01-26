@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master regression analysis for quantitative trading. Learn linear regression, beta calculation, factor models, and R-squared interpretation.">
+    <title>5.5 Regression Analysis | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
+    <style>
+        .regression-eq { font-size: 1.5rem; color: #6366f1; text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; margin: 20px 0; }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 5.5</span>
+                    <span class="nav-module-title">Regression Analysis</span>
+                </div>
+                <a href="5.6_time_series_analysis.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 5: Statistics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>5.5 Regression Analysis</span>
+                </div>
+                <h1>Regression Analysis</h1>
+                <p class="module-subtitle">
+                    Model relationships between variables. Calculate beta, build factor models, and predict returns.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 35 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 Regression Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">From Correlation to Prediction</div>
+                <p>
+                    Correlation tells you IF variables are related. Regression tells you HOW—the equation that
+                    predicts Y from X. In finance: predict stock returns from factors, calculate beta, measure alpha.
+                </p>
+            </div>
+
+            <div class="regression-eq">Y = β₀ + β₁X + ε</div>
+            <p style="text-align: center; color: #94a3b8;">Stock Return = Alpha + Beta × Market Return + Noise</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>β₀ (Intercept/Alpha)</h4>
+                    <p>Expected Y when X = 0. In CAPM: alpha = return not explained by market.</p>
+                    <div class="highlight">Positive alpha = outperformance</div>
+                </div>
+                <div class="card">
+                    <h4>β₁ (Slope/Beta)</h4>
+                    <p>Change in Y for 1-unit change in X. Market beta = sensitivity to market moves.</p>
+                    <div class="highlight">β > 1 = aggressive, β < 1 = defensive</div>
+                </div>
+                <div class="card">
+                    <h4>R² (R-Squared)</h4>
+                    <p>Proportion of variance explained. R² = 0.7 means 70% of returns explained by model.</p>
+                    <div class="highlight">Higher = better fit</div>
+                </div>
+                <div class="card">
+                    <h4>Residuals (ε)</h4>
+                    <p>Unexplained variation. Should be random, mean zero, constant variance.</p>
+                    <div class="highlight">Patterns in residuals = model problems</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>OLS Estimators</h3>
+                <div class="formula">β₁ = Cov(X,Y) / Var(X) = Σ(xᵢ - x̄)(yᵢ - ȳ) / Σ(xᵢ - x̄)²</div>
+                <div class="formula">β₀ = ȳ - β₁x̄</div>
+            </div>
+
+            <div class="formula-box">
+                <h3>R-Squared</h3>
+                <div class="formula">R² = 1 - SS_res / SS_tot = 1 - Σ(yᵢ - ŷᵢ)² / Σ(yᵢ - ȳ)²</div>
+            </div>
+
+            <div class="formula-box">
+                <h3>CAPM Regression</h3>
+                <div class="formula">Rᵢ - Rᶠ = α + β(Rₘ - Rᶠ) + ε</div>
+                <p>Excess return = alpha + beta × market excess return</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Standard Error of β₁</h3>
+                <div class="formula">SE(β₁) = s / √(Σ(xᵢ - x̄)²)</div>
+                <p>Where s = √(SS_res / (n-2))</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Key Properties</h2>
+            <div class="properties-list">
+                <div class="property-item">
+                    <span class="property-name">OLS is BLUE</span>
+                    <span class="property-desc">Best Linear Unbiased Estimator under Gauss-Markov assumptions.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Beta Interpretation</span>
+                    <span class="property-desc">β = 1.5 means stock moves 1.5% for every 1% market move.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Adjusted R²</span>
+                    <span class="property-desc">Penalizes for adding variables. Better for comparing models.</span>
+                </div>
+                <div class="property-item">
+                    <span class="property-name">Residual Assumptions</span>
+                    <span class="property-desc">Normal, mean zero, constant variance, independent. Check these!</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Beta Calculation and Factor Models</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import numpy as np
+from scipy import stats
+from typing import Dict
+
+
+def calculate_beta(
+    stock_returns: np.ndarray,
+    market_returns: np.ndarray,
+    risk_free: float = 0.0
+) -> Dict:
+    """
+    Calculate CAPM beta and alpha.
+
+    Regression: R_stock - Rf = alpha + beta * (R_market - Rf)
+    """
+    excess_stock = stock_returns - risk_free
+    excess_market = market_returns - risk_free
+
+    # OLS regression
+    slope, intercept, r_value, p_value, std_err = stats.linregress(
+        excess_market, excess_stock
+    )
+
+    return {
+        'beta': slope,
+        'alpha': intercept,
+        'alpha_annualized': intercept * 252,
+        'r_squared': r_value ** 2,
+        'p_value_beta': p_value,
+        'std_err_beta': std_err
+    }
+
+
+def multiple_regression(
+    y: np.ndarray,
+    X: np.ndarray
+) -> Dict:
+    """Simple multiple regression using normal equations."""
+    # Add intercept column
+    X_with_intercept = np.column_stack([np.ones(len(X)), X])
+
+    # Normal equations: β = (X'X)^(-1) X'y
+    XtX = X_with_intercept.T @ X_with_intercept
+    Xty = X_with_intercept.T @ y
+    betas = np.linalg.solve(XtX, Xty)
+
+    # Predictions and residuals
+    y_pred = X_with_intercept @ betas
+    residuals = y - y_pred
+
+    # R-squared
+    ss_res = np.sum(residuals ** 2)
+    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    r_squared = 1 - ss_res / ss_tot
+
+    # Adjusted R-squared
+    n, k = len(y), X.shape[1] if X.ndim > 1 else 1
+    adj_r_squared = 1 - (1 - r_squared) * (n - 1) / (n - k - 1)
+
+    return {
+        'intercept': betas[0],
+        'coefficients': betas[1:],
+        'r_squared': r_squared,
+        'adj_r_squared': adj_r_squared,
+        'residuals': residuals
+    }
+
+
+# Example: Calculate Beta
+if __name__ == "__main__":
+    np.random.seed(42)
+    n = 252
+
+    # Simulate market and stock
+    market = np.random.randn(n) * 0.01
+    stock = 0.0002 + 1.2 * market + np.random.randn(n) * 0.005  # Beta=1.2, alpha=0.02%
+
+    result = calculate_beta(stock, market)
+
+    print("=" * 40)
+    print("CAPM BETA ANALYSIS")
+    print("=" * 40)
+    print(f"Beta: {result['beta']:.3f}")
+    print(f"Alpha (daily): {result['alpha']*100:.4f}%")
+    print(f"Alpha (annual): {result['alpha_annualized']*100:.2f}%")
+    print(f"R²: {result['r_squared']:.3f}")</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Interactive Regression Calculator</h2>
+            <div class="calculator">
+                <h3>Calculate Beta and R²</h3>
+                <div class="input-group">
+                    <label for="stockReturns">Stock Returns (%, comma-separated):</label>
+                    <input type="text" id="stockReturns" value="1.2, -0.8, 2.1, -1.5, 0.9, 1.8, -0.3, 1.1, -2.0, 0.5">
+                </div>
+                <div class="input-group">
+                    <label for="marketReturns">Market Returns (%, comma-separated):</label>
+                    <input type="text" id="marketReturns" value="1.0, -0.5, 1.8, -1.2, 0.6, 1.5, -0.1, 0.8, -1.5, 0.3">
+                </div>
+                <button class="btn" onclick="runRegression()">Run Regression</button>
+                <div id="regResults" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Scatter Plot with Regression Line</h3>
+                <canvas id="regressionChart"></canvas>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Trading Applications</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Beta Hedging</h4>
+                    <p>Use beta to determine hedge ratio. Short $β worth of index per $1 stock.</p>
+                </div>
+                <div class="card">
+                    <h4>Factor Models</h4>
+                    <p>Fama-French 3-factor: market, size, value. Explain returns with multiple factors.</p>
+                </div>
+                <div class="card">
+                    <h4>Alpha Generation</h4>
+                    <p>Positive alpha after accounting for market = stock picker skill or factor exposure.</p>
+                </div>
+                <div class="card">
+                    <h4>Risk Attribution</h4>
+                    <p>Decompose portfolio risk into systematic (beta) and idiosyncratic components.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Common Mistakes</h2>
+            <div class="warning-box">
+                <h3>Mistake 1: High R² = Good Model</h3>
+                <p>High R² doesn't guarantee predictive power. In-sample fit ≠ out-of-sample performance.</p>
+            </div>
+            <div class="warning-box">
+                <h3>Mistake 2: Ignoring Residuals</h3>
+                <p>Always check residual plots. Patterns indicate model misspecification.</p>
+            </div>
+            <div class="warning-box">
+                <h3>Mistake 3: Beta is Constant</h3>
+                <p>Beta changes over time. Use rolling windows or conditional models.</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Summary</h2>
+            <div class="key-concept">
+                <h3>Key Takeaways</h3>
+                <ul>
+                    <li><strong>Regression:</strong> Y = β₀ + β₁X + ε — predict Y from X</li>
+                    <li><strong>Beta:</strong> Sensitivity to market (β > 1 = aggressive)</li>
+                    <li><strong>Alpha:</strong> Return not explained by factors (manager skill)</li>
+                    <li><strong>R²:</strong> Variance explained (but beware overfitting)</li>
+                </ul>
+            </div>
+            <div class="nav-buttons">
+                <a href="5.4_correlation_analysis.html" class="nav-btn">← Previous: Correlation</a>
+                <a href="5.6_time_series_analysis.html" class="nav-btn">Next: Time Series →</a>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Test Your Knowledge</h2>
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question">
+                    <h4>Q1: A stock with β = 1.5 and market up 2%—expected stock move?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q1" value="a"> 1.5%</label>
+                        <label><input type="radio" name="q1" value="b"> 2%</label>
+                        <label><input type="radio" name="q1" value="c"> 3%</label>
+                        <label><input type="radio" name="q1" value="d"> 0.75%</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q2: R² = 0.25 means:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q2" value="a"> Model explains 75% of variance</label>
+                        <label><input type="radio" name="q2" value="b"> Model explains 25% of variance</label>
+                        <label><input type="radio" name="q2" value="c"> Correlation is 0.25</label>
+                        <label><input type="radio" name="q2" value="d"> Beta is 0.25</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q3: Positive alpha in CAPM regression indicates:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q3" value="a"> High beta</label>
+                        <label><input type="radio" name="q3" value="b"> Returns beyond what beta predicts (outperformance)</label>
+                        <label><input type="radio" name="q3" value="c"> Perfect fit</label>
+                        <label><input type="radio" name="q3" value="d"> High volatility</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q4: β < 1 is called:</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q4" value="a"> Aggressive</label>
+                        <label><input type="radio" name="q4" value="b"> Defensive</label>
+                        <label><input type="radio" name="q4" value="c"> Market neutral</label>
+                        <label><input type="radio" name="q4" value="d"> High alpha</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback4"></div>
+                </div>
+                <div class="quiz-question">
+                    <h4>Q5: Why use adjusted R² instead of R²?</h4>
+                    <div class="quiz-options">
+                        <label><input type="radio" name="q5" value="a"> It's always higher</label>
+                        <label><input type="radio" name="q5" value="b"> It penalizes adding unnecessary variables</label>
+                        <label><input type="radio" name="q5" value="c"> It's easier to calculate</label>
+                        <label><input type="radio" name="q5" value="d"> It measures causation</label>
+                    </div>
+                    <div class="quiz-feedback" id="feedback5"></div>
+                </div>
+                <button class="btn" onclick="checkQuiz()">Submit Answers</button>
+                <div class="quiz-score" id="quizScore"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        let regressionChart;
+
+        function linearRegression(x, y) {
+            const n = x.length;
+            const meanX = x.reduce((a, b) => a + b) / n;
+            const meanY = y.reduce((a, b) => a + b) / n;
+
+            let num = 0, den = 0;
+            for (let i = 0; i < n; i++) {
+                num += (x[i] - meanX) * (y[i] - meanY);
+                den += (x[i] - meanX) ** 2;
+            }
+
+            const slope = num / den;
+            const intercept = meanY - slope * meanX;
+
+            // R-squared
+            let ssRes = 0, ssTot = 0;
+            for (let i = 0; i < n; i++) {
+                const pred = intercept + slope * x[i];
+                ssRes += (y[i] - pred) ** 2;
+                ssTot += (y[i] - meanY) ** 2;
+            }
+            const rSquared = 1 - ssRes / ssTot;
+
+            return { slope, intercept, rSquared };
+        }
+
+        function runRegression() {
+            const stock = document.getElementById('stockReturns').value.split(',').map(v => parseFloat(v.trim()));
+            const market = document.getElementById('marketReturns').value.split(',').map(v => parseFloat(v.trim()));
+
+            if (stock.length !== market.length) {
+                alert('Series must have same length');
+                return;
+            }
+
+            const result = linearRegression(market, stock);
+
+            document.getElementById('regResults').innerHTML = `
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">${result.slope.toFixed(3)}</div>
+                        <div>Beta (β)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${result.intercept.toFixed(4)}%</div>
+                        <div>Alpha (daily)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${(result.intercept * 252).toFixed(2)}%</div>
+                        <div>Alpha (annual)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${(result.rSquared * 100).toFixed(1)}%</div>
+                        <div>R²</div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #94a3b8;">Stock = ${result.intercept.toFixed(4)} + ${result.slope.toFixed(3)} × Market</p>
+            `;
+
+            updateRegressionChart(market, stock, result);
+        }
+
+        function updateRegressionChart(x, y, result) {
+            const ctx = document.getElementById('regressionChart').getContext('2d');
+            if (regressionChart) regressionChart.destroy();
+
+            const scatter = x.map((xi, i) => ({ x: xi, y: y[i] }));
+            const minX = Math.min(...x), maxX = Math.max(...x);
+            const line = [
+                { x: minX, y: result.intercept + result.slope * minX },
+                { x: maxX, y: result.intercept + result.slope * maxX }
+            ];
+
+            regressionChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Data', data: scatter, backgroundColor: 'rgba(99, 102, 241, 0.6)' },
+                        { label: 'Regression Line', data: line, type: 'line', borderColor: '#10b981', pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { title: { display: true, text: 'Market Return (%)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                        y: { title: { display: true, text: 'Stock Return (%)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: { correct: 'c', explanation: 'β × market = 1.5 × 2% = 3% expected move.' },
+                q2: { correct: 'b', explanation: 'R² = proportion of variance explained by the model.' },
+                q3: { correct: 'b', explanation: 'Alpha = returns beyond what systematic risk (beta) predicts.' },
+                q4: { correct: 'b', explanation: 'β < 1 means less volatile than market—defensive stock.' },
+                q5: { correct: 'b', explanation: 'Adjusted R² penalizes model complexity to prevent overfitting.' }
+            };
+
+            let score = 0;
+            for (const [q, data] of Object.entries(answers)) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const feedback = document.getElementById(`feedback${q.slice(1)}`);
+                if (selected && selected.value === data.correct) {
+                    score++;
+                    feedback.innerHTML = `<span style="color: #10b981;">✓ Correct!</span> ${data.explanation}`;
+                } else {
+                    feedback.innerHTML = `<span style="color: #ef4444;">✗ Incorrect.</span> ${data.explanation}`;
+                }
+                feedback.style.display = 'block';
+            }
+            document.getElementById('quizScore').innerHTML = `<h3>Score: ${score}/5 (${score * 20}%)</h3>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', runRegression);
+    </script>
+</body>
+</html>
