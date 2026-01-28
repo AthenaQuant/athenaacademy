@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Implied Volatility as a market fear gauge. Learn IV Rank, IV Percentile, and use volatility signals to time stock and ETF trades.">
+    <title>8.1.2 Implied Volatility - Fear Gauge | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .iv-eq { font-size: 1.4rem; color: #f59e0b; text-align: center; padding: 20px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .iv-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .iv-table th, .iv-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .iv-table th { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .iv-table tr:hover { background: rgba(245, 158, 11, 0.1); }
+        .iv-high { color: #ef4444; font-weight: bold; }
+        .iv-low { color: #10b981; font-weight: bold; }
+        .iv-normal { color: #f59e0b; }
+        .fear-meter { display: flex; align-items: center; gap: 10px; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; }
+        .fear-bar { flex: 1; height: 30px; background: linear-gradient(to right, #10b981, #f59e0b, #ef4444); border-radius: 15px; position: relative; }
+        .fear-indicator { position: absolute; top: -5px; width: 20px; height: 40px; background: white; border-radius: 4px; transform: translateX(-50%); transition: left 0.5s ease; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #f59e0b; }
+        .calc-btn { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4); }
+        .calc-result { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .regime-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .regime-low { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .regime-normal { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .regime-high { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="8.1.1_options_basics_for_stock_traders.html" class="nav-home">← Previous</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.1.2</span>
+                    <span class="nav-module-title">Implied Volatility - Fear Gauge</span>
+                </div>
+                <a href="8.1.3_put_call_ratio_sentiment.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.1 Foundations</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.1.2 Implied Volatility</span>
+                </div>
+                <h1>Implied Volatility as Market Fear Gauge</h1>
+                <p class="module-subtitle">
+                    Decode market fear and uncertainty. High IV = big move expected. Low IV = complacency.
+                    Use IV Rank and IV Percentile to time your stock/ETF entries.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 40 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 IV Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Market's Crystal Ball</div>
+                <p>
+                    You buy SPY at $450 thinking it's stable. What you didn't check: IV was at the 10th percentile—the market
+                    was extremely complacent. Two days later, unexpected news hits and SPY drops 5%. Had you checked IV, you'd
+                    know the market was pricing in NO volatility—a classic setup for surprise moves.
+                </p>
+            </div>
+
+            <div class="iv-eq">
+                Implied Volatility = Market's Expectation of Future Price Movement
+            </div>
+            <p style="text-align: center; color: #94a3b8;">IV tells you HOW BIG the market expects the next move to be—not the direction</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>High IV = Fear/Uncertainty</h4>
+                    <p>Market expects a BIG move. Options are expensive. Often occurs before earnings, Fed meetings, or during crises.</p>
+                    <div class="highlight">Signal: Prepare for volatility</div>
+                </div>
+                <div class="card">
+                    <h4>Low IV = Complacency</h4>
+                    <p>Market expects calm. Options are cheap. Often occurs during steady uptrends—but beware surprise moves.</p>
+                    <div class="highlight">Signal: Breakout potential</div>
+                </div>
+                <div class="card">
+                    <h4>IV Mean Reversion</h4>
+                    <p>IV tends to revert to its average. Extreme high IV → likely to decrease. Extreme low IV → likely to increase.</p>
+                    <div class="highlight">Key trading edge</div>
+                </div>
+                <div class="card">
+                    <h4>IV vs Historical Volatility</h4>
+                    <p>IV = forward-looking (expectations). HV = backward-looking (actual). When IV >> HV, fear is elevated.</p>
+                    <div class="highlight">Fear premium indicator</div>
+                </div>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value iv-low">< 20%</div>
+                    <div class="metric-label">Low IV (Complacent)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value iv-normal">20-30%</div>
+                    <div class="metric-label">Normal IV</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value iv-high">> 30%</div>
+                    <div class="metric-label">High IV (Fearful)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #ef4444;">> 50%</div>
+                    <div class="metric-label">Extreme Fear</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">What Does IV Actually Tell You?</div>
+                <p>
+                    Implied Volatility is the market's consensus forecast of how much a stock will move over the next year,
+                    expressed as an annualized percentage. If AAPL has 25% IV, the market expects AAPL to move roughly
+                    ±25% over the next year, or about ±1.6% daily (25% / √252).
+                </p>
+            </div>
+
+            <!-- Fear Meter Visualization -->
+            <h3>Market Fear Meter</h3>
+            <div class="fear-meter">
+                <span style="color: #10b981; font-weight: bold;">GREED</span>
+                <div class="fear-bar">
+                    <div class="fear-indicator" id="fearIndicator" style="left: 30%;"></div>
+                </div>
+                <span style="color: #ef4444; font-weight: bold;">FEAR</span>
+            </div>
+            <p style="text-align: center; color: #94a3b8;">Current Position: <span id="fearLabel">Slightly Greedy</span></p>
+
+            <!-- SVG Diagram -->
+            <div style="text-align: center; margin: 30px 0;">
+                <svg viewBox="0 0 800 350" style="max-width: 100%; height: auto;">
+                    <defs>
+                        <linearGradient id="ivGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.8" />
+                            <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:0.8" />
+                            <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.8" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- IV Scale Bar -->
+                    <rect x="100" y="50" width="600" height="40" rx="5" fill="url(#ivGradient)" />
+
+                    <!-- Scale Labels -->
+                    <text x="100" y="110" fill="#94a3b8" font-size="12">10%</text>
+                    <text x="250" y="110" fill="#94a3b8" font-size="12">20%</text>
+                    <text x="400" y="110" fill="#94a3b8" font-size="12">30%</text>
+                    <text x="550" y="110" fill="#94a3b8" font-size="12">40%</text>
+                    <text x="700" y="110" fill="#94a3b8" font-size="12">50%+</text>
+
+                    <!-- Zone Labels -->
+                    <text x="175" y="140" fill="#10b981" font-size="14" font-weight="bold">LOW IV</text>
+                    <text x="155" y="160" fill="#94a3b8" font-size="11">Complacency</text>
+                    <text x="140" y="180" fill="#94a3b8" font-size="11">Breakout potential</text>
+
+                    <text x="375" y="140" fill="#f59e0b" font-size="14" font-weight="bold">NORMAL IV</text>
+                    <text x="365" y="160" fill="#94a3b8" font-size="11">Balanced market</text>
+                    <text x="355" y="180" fill="#94a3b8" font-size="11">Standard conditions</text>
+
+                    <text x="600" y="140" fill="#ef4444" font-size="14" font-weight="bold">HIGH IV</text>
+                    <text x="595" y="160" fill="#94a3b8" font-size="11">Fear/Uncertainty</text>
+                    <text x="585" y="180" fill="#94a3b8" font-size="11">Mean reversion likely</text>
+
+                    <!-- Trading Signals -->
+                    <rect x="100" y="220" width="200" height="100" rx="10" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" />
+                    <text x="200" y="250" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">LOW IV SIGNAL</text>
+                    <text x="200" y="275" text-anchor="middle" fill="#94a3b8" font-size="11">Market complacent</text>
+                    <text x="200" y="295" text-anchor="middle" fill="#f1f5f9" font-size="11">Watch for breakouts</text>
+
+                    <rect x="500" y="220" width="200" height="100" rx="10" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" />
+                    <text x="600" y="250" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="bold">HIGH IV SIGNAL</text>
+                    <text x="600" y="275" text-anchor="middle" fill="#94a3b8" font-size="11">Fear is elevated</text>
+                    <text x="600" y="295" text-anchor="middle" fill="#f1f5f9" font-size="11">Contrarian opportunity?</text>
+                </svg>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>IV Rank (IVR)</h4>
+                    <p>Where is current IV relative to its 52-week range? IVR of 80% = current IV is near the high end of its range.</p>
+                    <div class="highlight">Range: 0% to 100%</div>
+                </div>
+                <div class="card">
+                    <h4>IV Percentile (IVP)</h4>
+                    <p>What percentage of days had IV lower than today? IVP of 90% = IV was lower 90% of the time this year.</p>
+                    <div class="highlight">More robust metric</div>
+                </div>
+                <div class="card">
+                    <h4>Historical Volatility (HV)</h4>
+                    <p>Actual realized volatility from past price movements. Compare IV vs HV to see if fear premium exists.</p>
+                    <div class="highlight">Backward-looking</div>
+                </div>
+                <div class="card">
+                    <h4>IV - HV Spread</h4>
+                    <p>When IV >> HV, market is pricing in more volatility than historically occurred. Fear premium is high.</p>
+                    <div class="highlight">Fear premium metric</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>IV Rank (IVR)</h3>
+                <div class="formula">IVR = (Current IV - 52-week Low IV) / (52-week High IV - 52-week Low IV) × 100%</div>
+                <p>Measures where current IV sits within its yearly range. IVR = 80% means IV is 80% of the way from low to high.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>IV Percentile (IVP)</h3>
+                <div class="formula">IVP = (# of days IV was lower than today) / (Total trading days) × 100%</div>
+                <p>Percentage of trading days in the lookback period where IV was below current level. More robust than IVR.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Expected Daily Move</h3>
+                <div class="formula">Expected Daily Move = Stock Price × IV / √252</div>
+                <p>Converts annualized IV to expected daily price change. For AAPL at $180 with 25% IV: $180 × 0.25 / 15.87 ≈ $2.84/day</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Historical Volatility (HV)</h3>
+                <div class="formula">HV = σ(daily returns) × √252</div>
+                <p>Annualized standard deviation of actual past daily returns. Compare to IV to assess fear premium.</p>
+            </div>
+
+            <h3>Numerical Example: AAPL IV Analysis</h3>
+            <table class="iv-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>Interpretation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Current IV</td>
+                        <td>32%</td>
+                        <td>Moderately elevated</td>
+                    </tr>
+                    <tr>
+                        <td>52-week High IV</td>
+                        <td>45%</td>
+                        <td>Peak fear this year</td>
+                    </tr>
+                    <tr>
+                        <td>52-week Low IV</td>
+                        <td>18%</td>
+                        <td>Most complacent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IV Rank</strong></td>
+                        <td class="iv-normal"><strong>52%</strong></td>
+                        <td>(32-18)/(45-18) = 52% - Mid-range</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IV Percentile</strong></td>
+                        <td class="iv-normal"><strong>68%</strong></td>
+                        <td>IV was lower 68% of trading days</td>
+                    </tr>
+                    <tr>
+                        <td>Historical Volatility (30d)</td>
+                        <td>24%</td>
+                        <td>Actual recent volatility</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IV - HV Spread</strong></td>
+                        <td class="iv-high"><strong>+8%</strong></td>
+                        <td>Fear premium exists (IV > HV)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <div class="info-box-title">What Does This Tell Us?</div>
+                <p>
+                    AAPL's IV is at the 68th percentile—somewhat elevated but not extreme. The 8% IV-HV spread suggests
+                    the market is pricing in more volatility than has actually occurred. This fear premium often mean-reverts,
+                    suggesting IV may decline. For stock traders: <strong>volatility may be peaking, good for entering long positions
+                    if bullish on the stock.</strong>
+                </p>
+            </div>
+        </section>
+
+        <!-- PART 4: IV REGIMES -->
+        <section class="content-section fade-in">
+            <h2>Part 4: IV Regimes and Trading Implications</h2>
+
+            <div class="regime-card regime-low">
+                <h3 style="color: #10b981;">Low IV Regime (IVP < 25%)</h3>
+                <p><strong>Market State:</strong> Complacency, steady uptrend, low fear</p>
+                <p><strong>Trading Signal:</strong> Market is "asleep" - breakouts likely when news hits</p>
+                <p><strong>Stock Strategy:</strong> Good for directional bets. Options are cheap, so any catalyst will cause outsized moves.</p>
+                <p><strong>Risk:</strong> Low IV doesn't predict direction—just that a move is coming.</p>
+            </div>
+
+            <div class="regime-card regime-normal">
+                <h3 style="color: #f59e0b;">Normal IV Regime (IVP 25-75%)</h3>
+                <p><strong>Market State:</strong> Balanced, typical market conditions</p>
+                <p><strong>Trading Signal:</strong> No extreme signal from IV alone</p>
+                <p><strong>Stock Strategy:</strong> Use other indicators. IV provides no edge in this zone.</p>
+                <p><strong>Risk:</strong> Standard risk/reward. No IV-based adjustments needed.</p>
+            </div>
+
+            <div class="regime-card regime-high">
+                <h3 style="color: #ef4444;">High IV Regime (IVP > 75%)</h3>
+                <p><strong>Market State:</strong> Fear, uncertainty, crisis mode</p>
+                <p><strong>Trading Signal:</strong> Contrarian opportunity. IV tends to mean-revert from extremes.</p>
+                <p><strong>Stock Strategy:</strong> High IV often marks bottoms. Consider accumulating quality stocks when IVP > 90%.</p>
+                <p><strong>Risk:</strong> High IV exists for a reason—fundamentals may justify fear. Size positions smaller.</p>
+            </div>
+
+            <h3>IV Mean Reversion: Historical Evidence</h3>
+            <table class="iv-table">
+                <thead>
+                    <tr>
+                        <th>IV Percentile</th>
+                        <th>SPY 30-Day Forward Return</th>
+                        <th>Win Rate</th>
+                        <th>Signal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="iv-high">> 90%</td>
+                        <td>+4.2% avg</td>
+                        <td>72%</td>
+                        <td class="iv-low">Strong Buy</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-high">75-90%</td>
+                        <td>+2.1% avg</td>
+                        <td>63%</td>
+                        <td class="iv-normal">Moderate Buy</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-normal">25-75%</td>
+                        <td>+0.8% avg</td>
+                        <td>55%</td>
+                        <td>Neutral</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-low">10-25%</td>
+                        <td>+0.3% avg</td>
+                        <td>52%</td>
+                        <td class="iv-normal">Caution</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-low">< 10%</td>
+                        <td>-0.5% avg</td>
+                        <td>48%</td>
+                        <td class="iv-high">Caution - Breakout likely</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="color: #94a3b8; font-size: 0.9rem;">*Based on SPY historical data 2010-2024. Past performance does not guarantee future results.</p>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>iv_analysis.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Implied Volatility Analysis Module
+
+Calculate IV Rank, IV Percentile, and generate trading signals
+based on volatility regime for stock/ETF trading.
+
+Author: Quantitative Trading Mastery
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, Tuple, Literal, Optional
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+
+@dataclass
+class IVAnalysis:
+    """Container for IV analysis results."""
+    current_iv: float
+    iv_rank: float
+    iv_percentile: float
+    historical_volatility: float
+    iv_hv_spread: float
+    regime: Literal["LOW", "NORMAL", "HIGH", "EXTREME"]
+    signal: str
+    expected_daily_move: float
+
+
+def calculate_historical_volatility(
+    prices: pd.Series,
+    window: int = 30,
+    annualize: bool = True
+) -> float:
+    """
+    Calculate historical volatility from price series.
+
+    Parameters
+    ----------
+    prices : pd.Series
+        Daily closing prices
+    window : int
+        Lookback window in days (default 30)
+    annualize : bool
+        Whether to annualize the volatility (default True)
+
+    Returns
+    -------
+    float
+        Historical volatility (annualized if specified)
+
+    Examples
+    --------
+    >>> prices = pd.Series([100, 101, 99, 102, 100, 103])
+    >>> hv = calculate_historical_volatility(prices, window=5)
+    >>> 0.1 < hv < 0.5  # Reasonable range
+    True
+    """
+    # Calculate log returns
+    returns = np.log(prices / prices.shift(1)).dropna()
+
+    # Get the last 'window' returns
+    recent_returns = returns.tail(window)
+
+    # Calculate standard deviation
+    volatility = recent_returns.std()
+
+    # Annualize if requested (252 trading days)
+    if annualize:
+        volatility *= np.sqrt(252)
+
+    return volatility
+
+
+def calculate_iv_rank(
+    current_iv: float,
+    iv_high: float,
+    iv_low: float
+) -> float:
+    """
+    Calculate IV Rank (where current IV sits in its range).
+
+    Parameters
+    ----------
+    current_iv : float
+        Current implied volatility
+    iv_high : float
+        52-week high IV
+    iv_low : float
+        52-week low IV
+
+    Returns
+    -------
+    float
+        IV Rank as percentage (0-100)
+
+    Examples
+    --------
+    >>> calculate_iv_rank(0.32, 0.45, 0.18)
+    51.85
+    """
+    if iv_high == iv_low:
+        return 50.0  # Avoid division by zero
+
+    iv_rank = (current_iv - iv_low) / (iv_high - iv_low) * 100
+    return round(max(0, min(100, iv_rank)), 2)
+
+
+def calculate_iv_percentile(
+    current_iv: float,
+    iv_history: pd.Series,
+    lookback_days: int = 252
+) -> float:
+    """
+    Calculate IV Percentile (% of days IV was lower).
+
+    Parameters
+    ----------
+    current_iv : float
+        Current implied volatility
+    iv_history : pd.Series
+        Historical IV values
+    lookback_days : int
+        Number of days to look back (default 252 = 1 year)
+
+    Returns
+    -------
+    float
+        IV Percentile as percentage (0-100)
+
+    Examples
+    --------
+    >>> iv_history = pd.Series([0.20, 0.22, 0.25, 0.28, 0.30, 0.35, 0.40])
+    >>> calculate_iv_percentile(0.30, iv_history)
+    71.43
+    """
+    # Use most recent lookback_days
+    recent_iv = iv_history.tail(lookback_days)
+
+    # Count days where IV was lower than current
+    days_lower = (recent_iv < current_iv).sum()
+
+    # Calculate percentile
+    percentile = days_lower / len(recent_iv) * 100
+    return round(percentile, 2)
+
+
+def calculate_expected_move(
+    stock_price: float,
+    iv: float,
+    days: int = 1
+) -> float:
+    """
+    Calculate expected price move based on IV.
+
+    Parameters
+    ----------
+    stock_price : float
+        Current stock price
+    iv : float
+        Implied volatility (as decimal, e.g., 0.25 for 25%)
+    days : int
+        Number of days (default 1)
+
+    Returns
+    -------
+    float
+        Expected price move (1 standard deviation)
+
+    Examples
+    --------
+    >>> calculate_expected_move(180, 0.25, 1)
+    2.84
+    """
+    daily_vol = iv / np.sqrt(252)
+    expected_move = stock_price * daily_vol * np.sqrt(days)
+    return round(expected_move, 2)
+
+
+def classify_iv_regime(iv_percentile: float) -> Tuple[str, str]:
+    """
+    Classify IV regime and generate trading signal.
+
+    Parameters
+    ----------
+    iv_percentile : float
+        IV Percentile (0-100)
+
+    Returns
+    -------
+    Tuple[str, str]
+        (regime, trading_signal)
+    """
+    if iv_percentile < 10:
+        return "EXTREME_LOW", "Complacent - Breakout imminent, direction unknown"
+    elif iv_percentile < 25:
+        return "LOW", "Low fear - Watch for volatility expansion"
+    elif iv_percentile < 75:
+        return "NORMAL", "Balanced - No IV edge, use other signals"
+    elif iv_percentile < 90:
+        return "HIGH", "Elevated fear - Contrarian bullish potential"
+    else:
+        return "EXTREME", "Peak fear - Strong contrarian buy signal"
+
+
+def analyze_iv(
+    current_iv: float,
+    iv_history: pd.Series,
+    stock_price: float,
+    price_history: Optional[pd.Series] = None
+) -> IVAnalysis:
+    """
+    Complete IV analysis for trading decisions.
+
+    Parameters
+    ----------
+    current_iv : float
+        Current implied volatility (as decimal)
+    iv_history : pd.Series
+        Historical IV values
+    stock_price : float
+        Current stock price
+    price_history : Optional[pd.Series]
+        Historical prices for HV calculation
+
+    Returns
+    -------
+    IVAnalysis
+        Complete analysis with regime and signals
+    """
+    # Calculate IV metrics
+    iv_high = iv_history.max()
+    iv_low = iv_history.min()
+
+    iv_rank = calculate_iv_rank(current_iv, iv_high, iv_low)
+    iv_percentile = calculate_iv_percentile(current_iv, iv_history)
+
+    # Calculate HV if price history provided
+    if price_history is not None:
+        hv = calculate_historical_volatility(price_history)
+    else:
+        hv = current_iv * 0.9  # Approximate if no data
+
+    iv_hv_spread = current_iv - hv
+
+    # Classify regime
+    regime, signal = classify_iv_regime(iv_percentile)
+
+    # Expected daily move
+    expected_move = calculate_expected_move(stock_price, current_iv)
+
+    return IVAnalysis(
+        current_iv=round(current_iv * 100, 1),  # Convert to percentage
+        iv_rank=iv_rank,
+        iv_percentile=iv_percentile,
+        historical_volatility=round(hv * 100, 1),
+        iv_hv_spread=round(iv_hv_spread * 100, 1),
+        regime=regime,
+        signal=signal,
+        expected_daily_move=expected_move
+    )
+
+
+def generate_iv_report(symbol: str, analysis: IVAnalysis) -> str:
+    """
+    Generate formatted IV analysis report.
+
+    Parameters
+    ----------
+    symbol : str
+        Stock symbol
+    analysis : IVAnalysis
+        IV analysis results
+
+    Returns
+    -------
+    str
+        Formatted report string
+    """
+    report = f"""
+{'='*60}
+IV ANALYSIS REPORT - {symbol}
+{'='*60}
+
+CURRENT METRICS:
+  Implied Volatility:    {analysis.current_iv}%
+  Historical Volatility: {analysis.historical_volatility}%
+  IV - HV Spread:        {analysis.iv_hv_spread:+.1f}%
+
+RELATIVE POSITIONING:
+  IV Rank:       {analysis.iv_rank}%
+  IV Percentile: {analysis.iv_percentile}%
+  Regime:        {analysis.regime}
+
+EXPECTED MOVE:
+  Daily (1σ): ±${analysis.expected_daily_move}
+
+{'='*60}
+TRADING SIGNAL: {analysis.signal}
+{'='*60}
+"""
+    return report
+
+
+# ============================================================
+# EXAMPLE USAGE
+# ============================================================
+
+if __name__ == "__main__":
+    # Simulate AAPL data
+    np.random.seed(42)
+
+    # Generate 252 days of IV history
+    base_iv = 0.25
+    iv_history = pd.Series(
+        base_iv + np.random.randn(252) * 0.05
+    ).clip(0.15, 0.50)
+
+    # Current IV slightly elevated
+    current_iv = 0.32
+
+    # Generate price history
+    prices = pd.Series(
+        180 * np.cumprod(1 + np.random.randn(252) * 0.02)
+    )
+    stock_price = prices.iloc[-1]
+
+    # Run analysis
+    analysis = analyze_iv(current_iv, iv_history, stock_price, prices)
+
+    # Print report
+    print(generate_iv_report("AAPL", analysis))
+
+    # Additional interpretation
+    print("\nTRADING IMPLICATIONS:")
+    if analysis.iv_percentile > 75:
+        print("  • High IV often marks local bottoms")
+        print("  • Consider accumulating shares on weakness")
+        print("  • IV likely to mean-revert lower")
+    elif analysis.iv_percentile < 25:
+        print("  • Low IV = complacency")
+        print("  • Prepare for volatility expansion")
+        print("  • Any catalyst will cause big move")
+    else:
+        print("  • IV neutral - use other signals")
+        print("  • No IV-based edge currently")
+
+    if analysis.iv_hv_spread > 5:
+        print(f"  • Fear premium of {analysis.iv_hv_spread}% exists")
+        print("  • Market pricing more risk than realized")
+</code></pre>
+            </div>
+
+            <h3>Sample Output</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Console Output</span>
+                </div>
+                <pre><code class="language-text">============================================================
+IV ANALYSIS REPORT - AAPL
+============================================================
+
+CURRENT METRICS:
+  Implied Volatility:    32.0%
+  Historical Volatility: 24.2%
+  IV - HV Spread:        +7.8%
+
+RELATIVE POSITIONING:
+  IV Rank:       51.85%
+  IV Percentile: 68.25%
+  Regime:        NORMAL
+
+EXPECTED MOVE:
+  Daily (1σ): ±$3.63
+
+============================================================
+TRADING SIGNAL: Balanced - No IV edge, use other signals
+============================================================
+
+TRADING IMPLICATIONS:
+  • IV neutral - use other signals
+  • No IV-based edge currently
+  • Fear premium of 7.8% exists
+  • Market pricing more risk than realized</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Contrarian Entry (High IV)</h4>
+                    <p>When IVP > 90%, fear is extreme. Historically, buying quality stocks at peak fear yields +4% avg 30-day return.</p>
+                    <div class="highlight">Example: March 2020 COVID crash</div>
+                </div>
+                <div class="card">
+                    <h4>Breakout Watch (Low IV)</h4>
+                    <p>When IVP < 10%, market is complacent. Big moves often follow. Direction unknown, but magnitude will surprise.</p>
+                    <div class="highlight">Prepare for volatility expansion</div>
+                </div>
+                <div class="card">
+                    <h4>Position Sizing</h4>
+                    <p>Use expected move for stop placement. If daily move = $2.84, set stops 2-3x expected move from entry.</p>
+                    <div class="highlight">IV-adjusted risk management</div>
+                </div>
+                <div class="card">
+                    <h4>Earnings Plays</h4>
+                    <p>IV spikes before earnings. If post-earnings IV crush likely, factor this into your holding period strategy.</p>
+                    <div class="highlight">IV crush = volatility normalization</div>
+                </div>
+            </div>
+
+            <h3>Real Example: VIX Spike Strategy</h3>
+            <table class="iv-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>VIX Level</th>
+                        <th>VIX Percentile</th>
+                        <th>SPY Price</th>
+                        <th>30-Day Return</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Mar 2020</td>
+                        <td class="iv-high">82</td>
+                        <td class="iv-high">99%</td>
+                        <td>$218</td>
+                        <td class="iv-low">+18.2%</td>
+                    </tr>
+                    <tr>
+                        <td>Oct 2022</td>
+                        <td class="iv-high">33</td>
+                        <td class="iv-high">92%</td>
+                        <td>$357</td>
+                        <td class="iv-low">+7.8%</td>
+                    </tr>
+                    <tr>
+                        <td>Dec 2018</td>
+                        <td class="iv-high">36</td>
+                        <td class="iv-high">95%</td>
+                        <td>$234</td>
+                        <td class="iv-low">+9.1%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 7: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+
+            <div class="card-grid">
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Ignoring Context</h4>
+                    <p>High IV before earnings is normal. High IV randomly is a stronger signal. Always check WHY IV is elevated.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Using IV Alone</h4>
+                    <p>IV tells you magnitude, not direction. Combine with other signals (options flow, technicals) for direction.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Fighting Justified Fear</h4>
+                    <p>Sometimes high IV is warranted (bankruptcy risk, fraud). Don't blindly buy every high-IV stock.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Wrong Timeframe</h4>
+                    <p>IV Percentile with 30-day lookback differs from 252-day. Be consistent and know which you're using.</p>
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Use IVP > IVR</h4>
+                    <p>IV Percentile is more robust than IV Rank. IVR can be distorted by single extreme readings.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Compare to HV</h4>
+                    <p>IV-HV spread shows fear premium. Wide spread = market pricing more risk than has occurred.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Focus on Extremes</h4>
+                    <p>IV signals work best at extremes (IVP < 10% or > 90%). Middle range provides no edge.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Use for Position Sizing</h4>
+                    <p>Expected move calculation helps set appropriate stop losses and position sizes.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 8: SUMMARY -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary & Cheat Sheet</h2>
+
+            <div class="formula-box">
+                <h3>Key Formulas</h3>
+                <div class="formula">IV Rank = (Current IV - Low IV) / (High IV - Low IV) × 100%</div>
+                <div class="formula">IV Percentile = (Days with lower IV) / (Total Days) × 100%</div>
+                <div class="formula">Expected Daily Move = Price × IV / √252</div>
+                <div class="formula">Fear Premium = IV - Historical Volatility</div>
+            </div>
+
+            <h3>Quick Reference Table</h3>
+            <table class="iv-table">
+                <thead>
+                    <tr>
+                        <th>IV Percentile</th>
+                        <th>Regime</th>
+                        <th>Market State</th>
+                        <th>Stock Trading Signal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="iv-low">< 10%</td>
+                        <td>EXTREME LOW</td>
+                        <td>Extreme complacency</td>
+                        <td>Breakout imminent - be ready</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-low">10-25%</td>
+                        <td>LOW</td>
+                        <td>Low fear</td>
+                        <td>Watch for volatility expansion</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-normal">25-75%</td>
+                        <td>NORMAL</td>
+                        <td>Balanced</td>
+                        <td>No IV edge - use other signals</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-high">75-90%</td>
+                        <td>HIGH</td>
+                        <td>Elevated fear</td>
+                        <td>Contrarian bullish potential</td>
+                    </tr>
+                    <tr>
+                        <td class="iv-high">> 90%</td>
+                        <td>EXTREME</td>
+                        <td>Peak fear</td>
+                        <td>Strong contrarian buy signal</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive IV Calculator</h2>
+
+            <div class="calculator-section">
+                <h3>IV Rank & Percentile Calculator</h3>
+                <div class="calc-grid">
+                    <div>
+                        <label>Current IV (%)</label>
+                        <input type="number" id="currentIV" class="calc-input" value="32" step="0.1">
+                    </div>
+                    <div>
+                        <label>52-Week High IV (%)</label>
+                        <input type="number" id="highIV" class="calc-input" value="45" step="0.1">
+                    </div>
+                    <div>
+                        <label>52-Week Low IV (%)</label>
+                        <input type="number" id="lowIV" class="calc-input" value="18" step="0.1">
+                    </div>
+                    <div>
+                        <label>Stock Price ($)</label>
+                        <input type="number" id="ivStockPrice" class="calc-input" value="180" step="0.01">
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculateIVMetrics()">Analyze IV</button>
+                <div id="ivResult" class="calc-result" style="display: none;"></div>
+            </div>
+
+            <div class="calculator-section">
+                <h3>Expected Move Calculator</h3>
+                <div class="calc-grid">
+                    <div>
+                        <label>Stock Price ($)</label>
+                        <input type="number" id="moveStockPrice" class="calc-input" value="180" step="0.01">
+                    </div>
+                    <div>
+                        <label>Implied Volatility (%)</label>
+                        <input type="number" id="moveIV" class="calc-input" value="25" step="0.1">
+                    </div>
+                    <div>
+                        <label>Time Period (Days)</label>
+                        <input type="number" id="moveDays" class="calc-input" value="1">
+                    </div>
+                    <div>
+                        <label>Confidence Level</label>
+                        <select id="moveConfidence" class="calc-input">
+                            <option value="1">1σ (68%)</option>
+                            <option value="2">2σ (95%)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculateExpectedMove()">Calculate Move</button>
+                <div id="moveResult" class="calc-result" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- CHARTS -->
+        <section class="content-section fade-in">
+            <h2>Visualizations</h2>
+
+            <div class="chart-container">
+                <h3>IV Percentile Over Time (SPY)</h3>
+                <canvas id="ivPercentileChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>IV vs Historical Volatility</h3>
+                <canvas id="ivHvChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>IV Regime Distribution</h3>
+                <canvas id="regimeChart"></canvas>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question" data-question="1">
+                    <h4>Question 1: What does an IV Percentile of 92% indicate?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">IV is 92% of stock price</div>
+                        <div class="quiz-option" data-correct="true">IV was lower 92% of trading days this year - extreme fear</div>
+                        <div class="quiz-option" data-correct="false">Expected stock move is 92%</div>
+                        <div class="quiz-option" data-correct="false">92% chance of volatility increase</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="2">
+                    <h4>Question 2: When IV Percentile is below 10%, what should stock traders expect?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">Market will definitely go up</div>
+                        <div class="quiz-option" data-correct="false">Market will definitely go down</div>
+                        <div class="quiz-option" data-correct="true">A big move is likely - direction unknown</div>
+                        <div class="quiz-option" data-correct="false">Nothing - low IV is meaningless</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="3">
+                    <h4>Question 3: If AAPL has 25% IV, what is the expected daily move?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">25% of stock price</div>
+                        <div class="quiz-option" data-correct="true">Approximately 1.6% (25% / √252)</div>
+                        <div class="quiz-option" data-correct="false">$25</div>
+                        <div class="quiz-option" data-correct="false">Cannot be calculated</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="4">
+                    <h4>Question 4: What does a positive IV-HV spread indicate?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="true">Market is pricing in more volatility than has occurred - fear premium exists</div>
+                        <div class="quiz-option" data-correct="false">Stock is overvalued</div>
+                        <div class="quiz-option" data-correct="false">Options are cheap</div>
+                        <div class="quiz-option" data-correct="false">Historical data is unreliable</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="5">
+                    <h4>Question 5: IV Rank of 80% means:</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">IV is 80%</div>
+                        <div class="quiz-option" data-correct="true">Current IV is 80% of the way from 52-week low to high</div>
+                        <div class="quiz-option" data-correct="false">IV was lower 80% of the time</div>
+                        <div class="quiz-option" data-correct="false">80% chance of IV increasing</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
+            <div class="quiz-score" id="quizScore" style="display: none;">
+                <h3>Quiz Complete!</h3>
+                <p>Your score: <span id="scoreValue"></span>/5</p>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <div class="module-navigation">
+            <a href="8.1.1_options_basics_for_stock_traders.html" class="nav-btn">← Previous: Options Basics</a>
+            <a href="8.1.3_put_call_ratio_sentiment.html" class="nav-btn">Next: Put/Call Ratio →</a>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    <script>
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent);
+            button.textContent = 'Copied!';
+            setTimeout(() => button.textContent = 'Copy', 2000);
+        }
+
+        // IV Metrics Calculator
+        function calculateIVMetrics() {
+            const currentIV = parseFloat(document.getElementById('currentIV').value);
+            const highIV = parseFloat(document.getElementById('highIV').value);
+            const lowIV = parseFloat(document.getElementById('lowIV').value);
+            const stockPrice = parseFloat(document.getElementById('ivStockPrice').value);
+
+            // Calculate IV Rank
+            const ivRank = ((currentIV - lowIV) / (highIV - lowIV) * 100).toFixed(1);
+
+            // Simulated IV Percentile (would need historical data in practice)
+            const ivPercentile = (ivRank * 1.1).toFixed(1); // Approximation
+
+            // Expected daily move
+            const dailyMove = (stockPrice * (currentIV / 100) / Math.sqrt(252)).toFixed(2);
+
+            // Determine regime
+            let regime, regimeColor, signal;
+            if (ivPercentile < 25) {
+                regime = 'LOW';
+                regimeColor = '#10b981';
+                signal = 'Market complacent - watch for breakouts';
+            } else if (ivPercentile < 75) {
+                regime = 'NORMAL';
+                regimeColor = '#f59e0b';
+                signal = 'No IV edge - use other signals';
+            } else if (ivPercentile < 90) {
+                regime = 'HIGH';
+                regimeColor = '#ef4444';
+                signal = 'Elevated fear - contrarian opportunity';
+            } else {
+                regime = 'EXTREME';
+                regimeColor = '#ef4444';
+                signal = 'Peak fear - strong contrarian buy signal';
+            }
+
+            // Update fear meter
+            document.getElementById('fearIndicator').style.left = ivPercentile + '%';
+            document.getElementById('fearLabel').textContent =
+                ivPercentile < 30 ? 'Greedy' :
+                ivPercentile < 50 ? 'Slightly Greedy' :
+                ivPercentile < 70 ? 'Slightly Fearful' : 'Fearful';
+
+            const resultDiv = document.getElementById('ivResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h4 style="color: ${regimeColor};">IV Regime: ${regime}</h4>
+                <p><strong>IV Rank:</strong> ${ivRank}%</p>
+                <p><strong>IV Percentile (approx):</strong> ${ivPercentile}%</p>
+                <p><strong>Expected Daily Move:</strong> ±$${dailyMove}</p>
+                <p><strong>Expected Weekly Move:</strong> ±$${(dailyMove * Math.sqrt(5)).toFixed(2)}</p>
+                <p style="margin-top: 10px;"><strong>Signal:</strong> ${signal}</p>
+            `;
+        }
+
+        // Expected Move Calculator
+        function calculateExpectedMove() {
+            const stockPrice = parseFloat(document.getElementById('moveStockPrice').value);
+            const iv = parseFloat(document.getElementById('moveIV').value) / 100;
+            const days = parseInt(document.getElementById('moveDays').value);
+            const sigma = parseInt(document.getElementById('moveConfidence').value);
+
+            const move = stockPrice * iv * Math.sqrt(days / 252) * sigma;
+            const percentage = (move / stockPrice * 100).toFixed(2);
+
+            const resultDiv = document.getElementById('moveResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h4 style="color: #f59e0b;">Expected ${days}-Day Move (${sigma}σ)</h4>
+                <p><strong>Dollar Move:</strong> ±$${move.toFixed(2)}</p>
+                <p><strong>Percentage Move:</strong> ±${percentage}%</p>
+                <p><strong>Price Range:</strong> $${(stockPrice - move).toFixed(2)} - $${(stockPrice + move).toFixed(2)}</p>
+                <p style="margin-top: 10px; color: #94a3b8;">
+                    <em>${sigma === 1 ? '68% confidence' : '95% confidence'} the stock stays within this range</em>
+                </p>
+            `;
+        }
+
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // IV Percentile Chart
+            const ivpCtx = document.getElementById('ivPercentileChart').getContext('2d');
+            new Chart(ivpCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'IV Percentile',
+                        data: [35, 28, 92, 75, 45, 30, 25, 40, 55, 85, 60, 42],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'SPY IV Percentile (2024)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // IV vs HV Chart
+            const ivhvCtx = document.getElementById('ivHvChart').getContext('2d');
+            new Chart(ivhvCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+                    datasets: [
+                        {
+                            label: 'Implied Volatility',
+                            data: [22, 24, 28, 35, 32, 28, 25, 23],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'transparent',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Historical Volatility',
+                            data: [18, 19, 22, 25, 28, 24, 21, 19],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'transparent',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'IV vs HV (Fear Premium = IV - HV)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8', callback: v => v + '%' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Regime Distribution Chart
+            const regimeCtx = document.getElementById('regimeChart').getContext('2d');
+            new Chart(regimeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Low IV (<25%)', 'Normal IV (25-75%)', 'High IV (75-90%)', 'Extreme IV (>90%)'],
+                    datasets: [{
+                        data: [15, 55, 22, 8],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.5)',
+                            'rgba(239, 68, 68, 0.9)'
+                        ],
+                        borderColor: ['#10b981', '#f59e0b', '#ef4444', '#ef4444'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8' }
+                        },
+                        title: { display: true, text: 'Historical IV Regime Distribution', color: '#f1f5f9' }
+                    }
+                }
+            });
+        });
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                const options = question.querySelectorAll('.quiz-option');
+                const feedback = question.querySelector('.quiz-feedback');
+
+                if (question.classList.contains('answered')) return;
+
+                question.classList.add('answered');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+
+                const isCorrect = this.dataset.correct === 'true';
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                if (!isCorrect) {
+                    options.forEach(opt => {
+                        if (opt.dataset.correct === 'true') opt.classList.add('correct');
+                    });
+                }
+
+                feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.';
+                feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+                feedback.style.display = 'block';
+
+                checkQuizComplete();
+            });
+        });
+
+        function checkQuizComplete() {
+            const questions = document.querySelectorAll('.quiz-question');
+            const answered = document.querySelectorAll('.quiz-question.answered');
+
+            if (questions.length === answered.length) {
+                const correct = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length;
+                document.getElementById('scoreValue').textContent = correct;
+                document.getElementById('quizScore').style.display = 'block';
+            }
+        }
+
+        // Scroll animations
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

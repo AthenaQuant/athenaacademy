@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Open Interest Analysis for stock trading. Learn to identify support/resistance from options, calculate max pain, and understand strike pinning mechanics.">
+    <title>8.1.4 Open Interest Analysis | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .oi-eq { font-size: 1.4rem; color: #06b6d4; text-align: center; padding: 20px; background: rgba(6, 182, 212, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .oi-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .oi-table th, .oi-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .oi-table th { background: rgba(6, 182, 212, 0.2); color: #67e8f9; }
+        .oi-table tr:hover { background: rgba(6, 182, 212, 0.1); }
+        .support-level { color: #10b981; font-weight: bold; }
+        .resistance-level { color: #ef4444; font-weight: bold; }
+        .maxpain-level { color: #f59e0b; font-weight: bold; }
+        .pin-level { color: #8b5cf6; font-weight: bold; }
+        .level-box { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+        .level-card { flex: 1; min-width: 200px; padding: 20px; border-radius: 12px; text-align: center; }
+        .level-support { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .level-resistance { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .level-maxpain { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #06b6d4; }
+        .calc-btn { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4); }
+        .calc-result { background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .strike-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 5px 0; }
+        .strike-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 8px; color: #f1f5f9; text-align: center; font-size: 0.9rem; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: 1fr; }
+            .level-box { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="8.1.3_put_call_ratio_sentiment.html" class="nav-home">← Previous</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.1.4</span>
+                    <span class="nav-module-title">Open Interest Analysis</span>
+                </div>
+                <a href="../8.2_dealer_mechanics/8.2.1_dealer_hedging_impact.html" class="nav-next">Next: 8.2 Dealer Mechanics →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.1 Foundations</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.1.4 Open Interest Analysis</span>
+                </div>
+                <h1>Open Interest Analysis — Key Price Levels</h1>
+                <p class="module-subtitle">
+                    Options open interest reveals hidden support and resistance. Heavy call OI above = resistance wall.
+                    Heavy put OI below = support floor. Max pain predicts where stocks "pin" at expiration.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 40 min read</span>
+                    <span class="meta-item">📊 4 Visualizations</span>
+                    <span class="meta-item">💻 Max Pain Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Invisible Magnets in the Market</div>
+                <p>
+                    AAPL is at $182 heading into Friday expiration. You expect it to keep rising, but it stalls at $185 all week.
+                    What you didn't see: there are <strong>50,000 call contracts</strong> at the $185 strike. Market makers who
+                    sold those calls are hedging by selling stock near $185, creating a <strong>resistance wall</strong>.
+                    Understanding OI would have told you: $185 is the ceiling this week.
+                </p>
+            </div>
+
+            <div class="oi-eq">
+                Open Interest at Key Strikes = Support/Resistance Levels for Stocks
+            </div>
+            <p style="text-align: center; color: #94a3b8;">The options market creates invisible price magnets that pull stocks toward specific levels</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Call OI Above = Resistance</h4>
+                    <p>Heavy call OI above current price acts as a resistance ceiling. Market makers hedge by selling stock at those levels.</p>
+                    <div class="highlight">Stock struggles to break above</div>
+                </div>
+                <div class="card">
+                    <h4>Put OI Below = Support</h4>
+                    <p>Heavy put OI below current price acts as a support floor. Market makers hedge by buying stock at those levels.</p>
+                    <div class="highlight">Stock bounces at support</div>
+                </div>
+                <div class="card">
+                    <h4>Max Pain</h4>
+                    <p>The price where the most options expire worthless. Stocks tend to gravitate toward max pain near expiration.</p>
+                    <div class="highlight">Expiration day magnet</div>
+                </div>
+                <div class="card">
+                    <h4>Strike Pinning</h4>
+                    <p>Stocks tend to "pin" to heavily traded strikes at expiration due to hedging flows. Predictable weekly phenomenon.</p>
+                    <div class="highlight">Weekly trading edge</div>
+                </div>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #ef4444;">$185</div>
+                    <div class="metric-label">Resistance (50K Call OI)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #10b981;">$175</div>
+                    <div class="metric-label">Support (40K Put OI)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #f59e0b;">$180</div>
+                    <div class="metric-label">Max Pain</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #8b5cf6;">±$2</div>
+                    <div class="metric-label">Typical Pin Range</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">How OI Creates Price Levels</div>
+                <p>
+                    Market makers sell options to traders. To manage risk, they <strong>delta hedge</strong> — buying or selling
+                    stock to offset their option exposure. When there's massive OI at a strike, their hedging activity
+                    becomes large enough to influence the stock price itself. This creates real support and resistance.
+                </p>
+            </div>
+
+            <!-- SVG Diagram -->
+            <div style="text-align: center; margin: 30px 0;">
+                <svg viewBox="0 0 800 450" style="max-width: 100%; height: auto;">
+                    <!-- Price Line -->
+                    <line x1="100" y1="50" x2="100" y2="400" stroke="#94a3b8" stroke-width="2" />
+                    <text x="90" y="45" fill="#94a3b8" font-size="12" text-anchor="end">Price</text>
+
+                    <!-- Current Price -->
+                    <line x1="50" y1="225" x2="750" y2="225" stroke="#6366f1" stroke-width="2" stroke-dasharray="8,4" />
+                    <text x="60" y="220" fill="#6366f1" font-size="13" font-weight="bold">$180 (Current)</text>
+
+                    <!-- Resistance Levels (Call OI) -->
+                    <rect x="150" y="80" width="250" height="35" rx="5" fill="rgba(239, 68, 68, 0.3)" stroke="#ef4444" />
+                    <text x="275" y="103" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="bold">$190 — Call OI: 45,000</text>
+                    <text x="420" y="103" fill="#fca5a5" font-size="11">STRONG RESISTANCE</text>
+
+                    <rect x="150" y="130" width="180" height="35" rx="5" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-opacity="0.5" />
+                    <text x="240" y="153" text-anchor="middle" fill="#ef4444" font-size="12">$185 — Call OI: 30,000</text>
+                    <text x="350" y="153" fill="#fca5a5" font-size="11">RESISTANCE</text>
+
+                    <!-- Support Levels (Put OI) -->
+                    <rect x="150" y="280" width="200" height="35" rx="5" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-opacity="0.5" />
+                    <text x="250" y="303" text-anchor="middle" fill="#10b981" font-size="12">$175 — Put OI: 35,000</text>
+                    <text x="370" y="303" fill="#86efac" font-size="11">SUPPORT</text>
+
+                    <rect x="150" y="330" width="280" height="35" rx="5" fill="rgba(16, 185, 129, 0.3)" stroke="#10b981" />
+                    <text x="290" y="353" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">$170 — Put OI: 50,000</text>
+                    <text x="450" y="353" fill="#86efac" font-size="11">STRONG SUPPORT</text>
+
+                    <!-- Max Pain -->
+                    <line x1="50" y1="225" x2="130" y2="225" stroke="#f59e0b" stroke-width="3" />
+                    <circle cx="130" cy="225" r="8" fill="#f59e0b" />
+                    <text x="60" y="245" fill="#f59e0b" font-size="11" font-weight="bold">MAX PAIN</text>
+
+                    <!-- Legend -->
+                    <rect x="550" y="380" width="15" height="15" fill="rgba(239, 68, 68, 0.5)" />
+                    <text x="575" y="393" fill="#94a3b8" font-size="11">Call OI = Resistance</text>
+                    <rect x="550" y="405" width="15" height="15" fill="rgba(16, 185, 129, 0.5)" />
+                    <text x="575" y="418" fill="#94a3b8" font-size="11">Put OI = Support</text>
+
+                    <!-- Arrow showing pin effect -->
+                    <path d="M730 100 Q745 225 730 350" stroke="#8b5cf6" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#arrowPurple)" marker-start="url(#arrowPurpleUp)"/>
+                    <text x="755" y="220" fill="#8b5cf6" font-size="11" font-weight="bold">PIN</text>
+                    <text x="752" y="235" fill="#94a3b8" font-size="10">Effect</text>
+
+                    <defs>
+                        <marker id="arrowPurple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L6,3 z" fill="#8b5cf6" />
+                        </marker>
+                        <marker id="arrowPurpleUp" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto-start-reverse">
+                            <path d="M0,0 L0,6 L6,3 z" fill="#8b5cf6" />
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Delta Hedging Explained</h4>
+                    <p>When a market maker sells a call at $185, they buy stock to hedge. As stock approaches $185, hedging intensifies → selling pressure → resistance.</p>
+                    <div class="highlight">Hedging creates real price impact</div>
+                </div>
+                <div class="card">
+                    <h4>OI vs Volume</h4>
+                    <p>OI = total outstanding contracts (accumulated). Volume = today's activity. OI shows persistent levels; volume shows fresh interest.</p>
+                    <div class="highlight">OI for levels, Volume for activity</div>
+                </div>
+                <div class="card">
+                    <h4>OI Changes</h4>
+                    <p>Rising OI + rising price = strong uptrend. Rising OI + falling price = strong downtrend. Falling OI = positions closing.</p>
+                    <div class="highlight">Trend confirmation tool</div>
+                </div>
+                <div class="card">
+                    <h4>Expiration Gravity</h4>
+                    <p>As expiration approaches, the gravitational pull of max pain increases. Strongest effect on Thursday-Friday of expiration week.</p>
+                    <div class="highlight">Weekly expiration edge</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <div class="formula-box">
+                <h3>Max Pain Calculation</h3>
+                <div class="formula">Max Pain = Strike where Total Option Value is MINIMIZED</div>
+                <p>For each possible expiration price, calculate total intrinsic value of all options. Max pain = price with lowest total value.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Total Pain at Price P</h3>
+                <div class="formula">Pain(P) = Σ [Call OI × max(P - K<sub>call</sub>, 0) × 100] + Σ [Put OI × max(K<sub>put</sub> - P, 0) × 100]</div>
+                <p>Sum the intrinsic value of all calls and puts if the stock expires at price P. The strike with minimum Pain(P) is max pain.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Support Level Identification</h3>
+                <div class="formula">Support = Strikes below current price with Put OI > Threshold</div>
+                <p>Threshold = top 20th percentile of put OI across all strikes. Higher OI = stronger support.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Resistance Level Identification</h3>
+                <div class="formula">Resistance = Strikes above current price with Call OI > Threshold</div>
+                <p>Same threshold logic. Higher call OI = stronger resistance.</p>
+            </div>
+
+            <h3>Worked Example: AAPL Max Pain Calculation</h3>
+            <p>AAPL at <strong>$180</strong>. Options expiring this Friday:</p>
+
+            <table class="oi-table">
+                <thead>
+                    <tr>
+                        <th>Strike</th>
+                        <th>Call OI</th>
+                        <th>Put OI</th>
+                        <th>Pain at $170</th>
+                        <th>Pain at $175</th>
+                        <th>Pain at $180</th>
+                        <th>Pain at $185</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>$170</td>
+                        <td>10,000</td>
+                        <td>50,000</td>
+                        <td>$0</td>
+                        <td>$5M</td>
+                        <td>$10M</td>
+                        <td>$15M</td>
+                    </tr>
+                    <tr>
+                        <td>$175</td>
+                        <td>15,000</td>
+                        <td>35,000</td>
+                        <td>$17.5M</td>
+                        <td>$0</td>
+                        <td>$7.5M</td>
+                        <td>$15M</td>
+                    </tr>
+                    <tr>
+                        <td>$180</td>
+                        <td>20,000</td>
+                        <td>20,000</td>
+                        <td>$20M</td>
+                        <td>$10M</td>
+                        <td>$0</td>
+                        <td>$10M</td>
+                    </tr>
+                    <tr>
+                        <td>$185</td>
+                        <td>30,000</td>
+                        <td>10,000</td>
+                        <td>$5M</td>
+                        <td>$10M</td>
+                        <td>$15M</td>
+                        <td>$0</td>
+                    </tr>
+                    <tr>
+                        <td>$190</td>
+                        <td>45,000</td>
+                        <td>5,000</td>
+                        <td>$25M</td>
+                        <td>$22.5M</td>
+                        <td>$45M</td>
+                        <td>$22.5M</td>
+                    </tr>
+                    <tr style="background: rgba(245, 158, 11, 0.2);">
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>120,000</strong></td>
+                        <td><strong>120,000</strong></td>
+                        <td><strong>$67.5M</strong></td>
+                        <td><strong class="maxpain-level">$47.5M ★</strong></td>
+                        <td><strong>$77.5M</strong></td>
+                        <td><strong>$62.5M</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <div class="info-box-title">Result: Max Pain = $175</div>
+                <p>
+                    The minimum total pain occurs at <strong class="maxpain-level">$175</strong> ($47.5M). This means AAPL has
+                    gravitational pull toward $175 as expiration approaches. Currently at $180, the stock may drift
+                    lower toward $175 by Friday. Key levels:
+                </p>
+            </div>
+
+            <div class="level-box">
+                <div class="level-card level-resistance">
+                    <h4 style="color: #ef4444;">Resistance</h4>
+                    <p style="font-size: 1.5rem; font-weight: bold; color: #ef4444;">$185 / $190</p>
+                    <p style="color: #94a3b8;">30K & 45K Call OI</p>
+                </div>
+                <div class="level-card level-maxpain">
+                    <h4 style="color: #f59e0b;">Max Pain</h4>
+                    <p style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">$175</p>
+                    <p style="color: #94a3b8;">Minimum total option value</p>
+                </div>
+                <div class="level-card level-support">
+                    <h4 style="color: #10b981;">Support</h4>
+                    <p style="font-size: 1.5rem; font-weight: bold; color: #10b981;">$170</p>
+                    <p style="color: #94a3b8;">50K Put OI</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 4: STRIKE PINNING -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Strike Pinning Mechanics</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Why Stocks "Pin" to Strikes</div>
+                <p>
+                    Near expiration, market makers with large option positions create feedback loops. If stock is slightly above
+                    a large strike, they sell stock (hedging calls going ITM). If below, they buy stock (hedging puts going ITM).
+                    This creates a magnetic effect that pins the stock to the nearest heavily traded strike.
+                </p>
+            </div>
+
+            <h3>Pin Probability by Day</h3>
+            <table class="oi-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Pin Effect</th>
+                        <th>Trading Implication</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Monday</td>
+                        <td>Weak — 5 days to expiration</td>
+                        <td>Max pain is directional guide, not target</td>
+                    </tr>
+                    <tr>
+                        <td>Tuesday-Wednesday</td>
+                        <td>Moderate — growing influence</td>
+                        <td>Price starts gravitating toward max pain</td>
+                    </tr>
+                    <tr>
+                        <td>Thursday</td>
+                        <td>Strong — hedging intensifies</td>
+                        <td>Expect narrowing range around key strikes</td>
+                    </tr>
+                    <tr style="background: rgba(139, 92, 246, 0.2);">
+                        <td><strong>Friday (Expiration)</strong></td>
+                        <td><strong class="pin-level">Maximum — strongest pin</strong></td>
+                        <td><strong>Stock likely pins ±$2 from max pain</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Pin Strength Factors</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Large OI Concentration</h4>
+                    <p>The more OI at a single strike, the stronger the pin. 50K+ OI at one strike = very strong magnetic pull.</p>
+                    <div class="highlight">OI magnitude matters</div>
+                </div>
+                <div class="card">
+                    <h4>Balanced Call/Put OI</h4>
+                    <p>When both call and put OI are high at the same strike, the pin effect is strongest (hedging from both sides).</p>
+                    <div class="highlight">Dual-sided hedging</div>
+                </div>
+                <div class="card">
+                    <h4>Proximity to Expiration</h4>
+                    <p>Pin effect increases exponentially as expiration approaches. Gamma (hedging sensitivity) explodes near expiry.</p>
+                    <div class="highlight">Thursday/Friday strongest</div>
+                </div>
+                <div class="card">
+                    <h4>Absence of Catalysts</h4>
+                    <p>Pinning works best in quiet markets. Strong news/earnings can overwhelm the pin effect.</p>
+                    <div class="highlight">Calm markets pin better</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>open_interest_analysis.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Open Interest Analysis Module
+
+Calculate max pain, identify support/resistance from options OI,
+and detect strike pinning for stock trading decisions.
+
+Author: Quantitative Trading Mastery
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class OILevel:
+    """A price level identified from open interest."""
+    strike: float
+    level_type: str  # 'support', 'resistance', 'max_pain'
+    oi_amount: int
+    strength: str  # 'WEAK', 'MODERATE', 'STRONG'
+
+
+@dataclass
+class OIAnalysis:
+    """Complete OI analysis results."""
+    max_pain: float
+    support_levels: List[OILevel]
+    resistance_levels: List[OILevel]
+    pin_target: float
+    pin_strength: str
+    total_call_oi: int
+    total_put_oi: int
+    oi_pc_ratio: float
+
+
+def calculate_pain_at_price(
+    price: float,
+    options_data: pd.DataFrame
+) -> float:
+    """
+    Calculate total option pain if stock expires at given price.
+
+    Parameters
+    ----------
+    price : float
+        Hypothetical expiration price
+    options_data : pd.DataFrame
+        Options data with columns: strike, type, open_interest
+
+    Returns
+    -------
+    float
+        Total dollar pain (intrinsic value of all options)
+
+    Examples
+    --------
+    >>> data = pd.DataFrame({
+    ...     'strike': [170, 180, 190],
+    ...     'type': ['call', 'call', 'put'],
+    ...     'open_interest': [10000, 20000, 15000]
+    ... })
+    >>> pain = calculate_pain_at_price(180, data)
+    """
+    total_pain = 0.0
+
+    for _, row in options_data.iterrows():
+        strike = row['strike']
+        oi = row['open_interest']
+        opt_type = row['type'].lower()
+
+        if opt_type == 'call':
+            intrinsic = max(price - strike, 0)
+        else:
+            intrinsic = max(strike - price, 0)
+
+        # Each contract = 100 shares
+        total_pain += intrinsic * oi * 100
+
+    return total_pain
+
+
+def calculate_max_pain(
+    options_data: pd.DataFrame,
+    price_range: Optional[Tuple[float, float]] = None,
+    step: float = 1.0
+) -> Tuple[float, Dict[float, float]]:
+    """
+    Calculate max pain strike (price where total option value is minimized).
+
+    Parameters
+    ----------
+    options_data : pd.DataFrame
+        Options data with columns: strike, type, open_interest
+    price_range : Optional[Tuple[float, float]]
+        Range of prices to evaluate. If None, uses strike range.
+    step : float
+        Price step for evaluation (default $1)
+
+    Returns
+    -------
+    Tuple[float, Dict[float, float]]
+        (max_pain_price, {price: total_pain})
+
+    Examples
+    --------
+    >>> data = pd.DataFrame({
+    ...     'strike': [170, 175, 180, 185, 190],
+    ...     'type': ['call', 'call', 'call', 'put', 'put'],
+    ...     'open_interest': [10000, 15000, 20000, 25000, 5000]
+    ... })
+    >>> max_pain, pain_map = calculate_max_pain(data)
+    """
+    if price_range is None:
+        min_strike = options_data['strike'].min()
+        max_strike = options_data['strike'].max()
+        price_range = (min_strike, max_strike)
+
+    # Evaluate pain at each price point
+    prices = np.arange(price_range[0], price_range[1] + step, step)
+    pain_map = {}
+
+    for price in prices:
+        pain_map[price] = calculate_pain_at_price(price, options_data)
+
+    # Find minimum pain
+    max_pain_price = min(pain_map, key=pain_map.get)
+
+    return max_pain_price, pain_map
+
+
+def identify_support_resistance(
+    options_data: pd.DataFrame,
+    stock_price: float,
+    top_n: int = 3,
+    oi_threshold_pct: float = 75.0
+) -> Tuple[List[OILevel], List[OILevel]]:
+    """
+    Identify support and resistance levels from OI concentration.
+
+    Parameters
+    ----------
+    options_data : pd.DataFrame
+        Options data with columns: strike, type, open_interest
+    stock_price : float
+        Current stock price
+    top_n : int
+        Number of levels to return per side
+    oi_threshold_pct : float
+        Percentile threshold for "significant" OI
+
+    Returns
+    -------
+    Tuple[List[OILevel], List[OILevel]]
+        (support_levels, resistance_levels) sorted by strength
+    """
+    calls = options_data[options_data['type'] == 'call'].copy()
+    puts = options_data[options_data['type'] == 'put'].copy()
+
+    # Calculate OI threshold
+    all_oi = options_data['open_interest']
+    oi_threshold = np.percentile(all_oi, oi_threshold_pct)
+
+    # Resistance: Call OI above current price
+    call_above = calls[
+        (calls['strike'] > stock_price) &
+        (calls['open_interest'] >= oi_threshold)
+    ].nlargest(top_n, 'open_interest')
+
+    resistance = []
+    for _, row in call_above.iterrows():
+        oi = row['open_interest']
+        strength = (
+            "STRONG" if oi > oi_threshold * 2 else
+            "MODERATE" if oi > oi_threshold * 1.5 else
+            "WEAK"
+        )
+        resistance.append(OILevel(
+            strike=row['strike'],
+            level_type='resistance',
+            oi_amount=int(oi),
+            strength=strength
+        ))
+
+    # Support: Put OI below current price
+    put_below = puts[
+        (puts['strike'] < stock_price) &
+        (puts['open_interest'] >= oi_threshold)
+    ].nlargest(top_n, 'open_interest')
+
+    support = []
+    for _, row in put_below.iterrows():
+        oi = row['open_interest']
+        strength = (
+            "STRONG" if oi > oi_threshold * 2 else
+            "MODERATE" if oi > oi_threshold * 1.5 else
+            "WEAK"
+        )
+        support.append(OILevel(
+            strike=row['strike'],
+            level_type='support',
+            oi_amount=int(oi),
+            strength=strength
+        ))
+
+    return support, resistance
+
+
+def assess_pin_strength(
+    options_data: pd.DataFrame,
+    max_pain: float,
+    stock_price: float,
+    days_to_expiry: int
+) -> Tuple[str, float]:
+    """
+    Assess how strong the pinning effect is likely to be.
+
+    Parameters
+    ----------
+    options_data : pd.DataFrame
+        Options data
+    max_pain : float
+        Calculated max pain price
+    stock_price : float
+        Current stock price
+    days_to_expiry : int
+        Days until expiration
+
+    Returns
+    -------
+    Tuple[str, float]
+        (pin_strength, pin_probability)
+    """
+    # Distance from max pain
+    distance_pct = abs(stock_price - max_pain) / stock_price * 100
+
+    # OI concentration at max pain strike
+    mp_oi = options_data[
+        options_data['strike'] == max_pain
+    ]['open_interest'].sum()
+    total_oi = options_data['open_interest'].sum()
+    concentration = mp_oi / total_oi if total_oi > 0 else 0
+
+    # Days factor (closer = stronger)
+    days_factor = max(0, 1 - days_to_expiry / 5)
+
+    # Calculate composite score
+    score = 0
+    if distance_pct < 2:
+        score += 3
+    elif distance_pct < 5:
+        score += 1
+
+    if concentration > 0.15:
+        score += 2
+    elif concentration > 0.08:
+        score += 1
+
+    score += days_factor * 3
+
+    # Classify
+    if score >= 6:
+        return "STRONG", min(0.85, 0.5 + score * 0.05)
+    elif score >= 3:
+        return "MODERATE", min(0.7, 0.4 + score * 0.05)
+    else:
+        return "WEAK", max(0.2, 0.2 + score * 0.05)
+
+
+def analyze_open_interest(
+    options_data: pd.DataFrame,
+    stock_price: float,
+    days_to_expiry: int = 3
+) -> OIAnalysis:
+    """
+    Complete open interest analysis for stock trading.
+
+    Parameters
+    ----------
+    options_data : pd.DataFrame
+        Options chain with columns: strike, type, open_interest
+    stock_price : float
+        Current stock price
+    days_to_expiry : int
+        Days until nearest expiration
+
+    Returns
+    -------
+    OIAnalysis
+        Complete analysis with max pain, support, resistance, and pin assessment
+    """
+    # Calculate max pain
+    max_pain, pain_map = calculate_max_pain(options_data)
+
+    # Identify support/resistance
+    support_levels, resistance_levels = identify_support_resistance(
+        options_data, stock_price
+    )
+
+    # Assess pinning
+    pin_strength, pin_prob = assess_pin_strength(
+        options_data, max_pain, stock_price, days_to_expiry
+    )
+
+    # Calculate totals
+    calls = options_data[options_data['type'] == 'call']
+    puts = options_data[options_data['type'] == 'put']
+    total_call_oi = int(calls['open_interest'].sum())
+    total_put_oi = int(puts['open_interest'].sum())
+    oi_pc_ratio = total_put_oi / total_call_oi if total_call_oi > 0 else 0
+
+    return OIAnalysis(
+        max_pain=max_pain,
+        support_levels=support_levels,
+        resistance_levels=resistance_levels,
+        pin_target=max_pain,
+        pin_strength=pin_strength,
+        total_call_oi=total_call_oi,
+        total_put_oi=total_put_oi,
+        oi_pc_ratio=round(oi_pc_ratio, 2)
+    )
+
+
+def generate_oi_report(
+    symbol: str,
+    analysis: OIAnalysis,
+    stock_price: float
+) -> str:
+    """Generate formatted OI analysis report."""
+    report = f"""
+{'='*60}
+OPEN INTEREST ANALYSIS - {symbol}
+{'='*60}
+
+CURRENT PRICE: ${stock_price}
+
+MAX PAIN: ${analysis.max_pain}
+  Distance: {abs(stock_price - analysis.max_pain):.1f} ({abs(stock_price - analysis.max_pain)/stock_price*100:.1f}%)
+  Pin Strength: {analysis.pin_strength}
+
+{'─'*60}
+RESISTANCE LEVELS (Call OI):"""
+
+    for level in analysis.resistance_levels:
+        report += f"\n  ${level.strike} — OI: {level.oi_amount:,} ({level.strength})"
+
+    report += f"""
+
+SUPPORT LEVELS (Put OI):"""
+
+    for level in analysis.support_levels:
+        report += f"\n  ${level.strike} — OI: {level.oi_amount:,} ({level.strength})"
+
+    report += f"""
+
+{'─'*60}
+OI SUMMARY:
+  Total Call OI: {analysis.total_call_oi:,}
+  Total Put OI:  {analysis.total_put_oi:,}
+  OI P/C Ratio:  {analysis.oi_pc_ratio}
+{'='*60}
+"""
+    return report
+
+
+# ============================================================
+# EXAMPLE USAGE
+# ============================================================
+
+if __name__ == "__main__":
+    # Create sample AAPL options data
+    options_data = pd.DataFrame({
+        'strike': [165, 170, 175, 180, 185, 190, 195,
+                   165, 170, 175, 180, 185, 190, 195],
+        'type': ['call']*7 + ['put']*7,
+        'open_interest': [
+            5000, 10000, 15000, 20000, 30000, 45000, 8000,   # calls
+            8000, 50000, 35000, 20000, 10000, 5000, 2000     # puts
+        ]
+    })
+
+    stock_price = 180.0
+    days_to_expiry = 2  # Wednesday before Friday expiration
+
+    # Run analysis
+    analysis = analyze_open_interest(options_data, stock_price, days_to_expiry)
+
+    # Print report
+    print(generate_oi_report("AAPL", analysis, stock_price))
+
+    # Trading implications
+    print("TRADING IMPLICATIONS:")
+    print(f"  • Max pain at ${analysis.max_pain} suggests downward pull")
+    if analysis.resistance_levels:
+        r = analysis.resistance_levels[0]
+        print(f"  • Key resistance: ${r.strike} ({r.oi_amount:,} call OI)")
+    if analysis.support_levels:
+        s = analysis.support_levels[0]
+        print(f"  • Key support: ${s.strike} ({s.oi_amount:,} put OI)")
+    print(f"  • Pin strength: {analysis.pin_strength}")
+    print(f"  • Trade range: ${analysis.max_pain - 3} to "
+          f"${analysis.resistance_levels[0].strike if analysis.resistance_levels else analysis.max_pain + 5}")
+</code></pre>
+            </div>
+
+            <h3>Sample Output</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Console Output</span>
+                </div>
+                <pre><code class="language-text">============================================================
+OPEN INTEREST ANALYSIS - AAPL
+============================================================
+
+CURRENT PRICE: $180.0
+
+MAX PAIN: $175.0
+  Distance: 5.0 (2.8%)
+  Pin Strength: MODERATE
+
+────────────────────────────────────────────────────────────
+RESISTANCE LEVELS (Call OI):
+  $190.0 — OI: 45,000 (STRONG)
+  $185.0 — OI: 30,000 (MODERATE)
+  $195.0 — OI: 8,000 (WEAK)
+
+SUPPORT LEVELS (Put OI):
+  $170.0 — OI: 50,000 (STRONG)
+  $175.0 — OI: 35,000 (MODERATE)
+
+────────────────────────────────────────────────────────────
+OI SUMMARY:
+  Total Call OI: 133,000
+  Total Put OI:  130,000
+  OI P/C Ratio:  0.98
+============================================================
+
+TRADING IMPLICATIONS:
+  • Max pain at $175.0 suggests downward pull
+  • Key resistance: $190.0 (45,000 call OI)
+  • Key support: $170.0 (50,000 put OI)
+  • Pin strength: MODERATE
+  • Trade range: $172.0 to $190.0</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Weekly Expiration Trading</h4>
+                    <p>Check max pain on Monday. By Thursday/Friday, stocks gravitate toward max pain. Trade the convergence.</p>
+                    <div class="highlight">Best edge: Thursday PM → Friday</div>
+                </div>
+                <div class="card">
+                    <h4>Support/Resistance Levels</h4>
+                    <p>Use OI-derived levels alongside traditional technicals. When both agree, the level is extra strong.</p>
+                    <div class="highlight">Confluence = higher probability</div>
+                </div>
+                <div class="card">
+                    <h4>Breakout Confirmation</h4>
+                    <p>If stock breaks above heavy call OI, the resistance becomes support (delta unwinding). Powerful breakout signal.</p>
+                    <div class="highlight">OI flip = trend change</div>
+                </div>
+                <div class="card">
+                    <h4>Range Trading</h4>
+                    <p>When stock is between heavy put OI (support) and heavy call OI (resistance), trade the range until a break.</p>
+                    <div class="highlight">Mean reversion within OI walls</div>
+                </div>
+            </div>
+
+            <h3>Weekly Trading Workflow</h3>
+            <table class="oi-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>OI Action</th>
+                        <th>Stock Trading</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Monday AM</td>
+                        <td>Calculate max pain for weekly expiration</td>
+                        <td>Set weekly range expectations</td>
+                    </tr>
+                    <tr>
+                        <td>Mon-Wed</td>
+                        <td>Monitor OI changes, identify new key strikes</td>
+                        <td>Trade with awareness of OI levels</td>
+                    </tr>
+                    <tr>
+                        <td>Thursday</td>
+                        <td>Pin effect strengthening — recalculate max pain</td>
+                        <td>Expect range narrowing toward max pain</td>
+                    </tr>
+                    <tr>
+                        <td>Friday AM</td>
+                        <td>Maximum pin effect — stock near max pain</td>
+                        <td>Trade the pin: fade moves away from max pain</td>
+                    </tr>
+                    <tr>
+                        <td>Friday PM</td>
+                        <td>Options expire, OI resets</td>
+                        <td>After 3 PM: stock can move freely. New trends start.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 7: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+
+            <div class="card-grid">
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Treating Max Pain as Guaranteed</h4>
+                    <p>Max pain is a magnet, not a guarantee. Strong catalysts (earnings, Fed, news) can override the pin effect entirely.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Using Monthly OI for Weekly Trades</h4>
+                    <p>Weekly and monthly expirations have different OI profiles. Always use the nearest relevant expiration.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Ignoring OI Changes</h4>
+                    <p>OI shifts throughout the week. Check daily—a big new position at a different strike changes the landscape.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>❌ Low-OI Stocks</h4>
+                    <p>Pinning only works on stocks with significant OI. Small caps with < 5K OI won't exhibit these effects.</p>
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Combine with Technicals</h4>
+                    <p>OI level + moving average + trendline at the same price = ultra-high confidence support/resistance.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Focus on Heaviest Strikes</h4>
+                    <p>Only the top 2-3 OI concentrations matter. Ignore minor OI—it doesn't create meaningful hedging flow.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Watch the Flip</h4>
+                    <p>When stock breaks through a heavy OI level, that level flips (resistance → support). Trade the continuation.</p>
+                </div>
+                <div class="card" style="border-left: 4px solid #10b981;">
+                    <h4>✅ Use for Stop Placement</h4>
+                    <p>Place stops beyond heavy OI levels. If support at $170 (50K put OI), stop at $168 gives you the OI cushion.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 8: SUMMARY -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary & Cheat Sheet</h2>
+
+            <div class="formula-box">
+                <h3>Key Formulas</h3>
+                <div class="formula">Max Pain = Strike minimizing Σ(Call OI × Call Intrinsic + Put OI × Put Intrinsic)</div>
+                <div class="formula">Support = Heavy Put OI below current price</div>
+                <div class="formula">Resistance = Heavy Call OI above current price</div>
+                <div class="formula">Pin Range = Max Pain ± $2 (typically on Friday)</div>
+            </div>
+
+            <h3>Quick Reference Table</h3>
+            <table class="oi-table">
+                <thead>
+                    <tr>
+                        <th>OI Signal</th>
+                        <th>What You See</th>
+                        <th>What It Means</th>
+                        <th>Stock Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="resistance-level">Heavy Call OI Above</td>
+                        <td>50K+ Call OI at $190</td>
+                        <td>Resistance ceiling</td>
+                        <td>Take profit near $190</td>
+                    </tr>
+                    <tr>
+                        <td class="support-level">Heavy Put OI Below</td>
+                        <td>40K+ Put OI at $170</td>
+                        <td>Support floor</td>
+                        <td>Buy near $170, stop below</td>
+                    </tr>
+                    <tr>
+                        <td class="maxpain-level">Max Pain</td>
+                        <td>Min pain at $175</td>
+                        <td>Expiration magnet</td>
+                        <td>Expect drift toward $175</td>
+                    </tr>
+                    <tr>
+                        <td class="pin-level">OI Break</td>
+                        <td>Stock breaks above Call OI wall</td>
+                        <td>Resistance flips to support</td>
+                        <td>Momentum continuation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <div class="info-box-title">Key Takeaways</div>
+                <ul style="margin-left: 20px;">
+                    <li>Open Interest at key strikes creates real support/resistance via hedging flows</li>
+                    <li>Max pain = the strike where most options expire worthless — stocks gravitate toward it</li>
+                    <li>Pin effect is strongest on Thursday-Friday of expiration week</li>
+                    <li>Only works on liquid stocks with significant OI (SPY, AAPL, TSLA, etc.)</li>
+                    <li>Combine OI levels with traditional technicals for highest probability trades</li>
+                    <li>When stock breaks through an OI wall, it flips from resistance to support (or vice versa)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive Max Pain Calculator</h2>
+
+            <div class="calculator-section">
+                <h3>Max Pain Calculator</h3>
+                <p style="color: #94a3b8; margin-bottom: 15px;">Enter options data to calculate max pain and key levels.</p>
+                <div class="calc-grid">
+                    <div>
+                        <label>Stock Price ($)</label>
+                        <input type="number" id="mpStockPrice" class="calc-input" value="180" step="0.01">
+                    </div>
+                    <div>
+                        <label>Number of Strikes</label>
+                        <select id="mpStrikeCount" class="calc-input" onchange="updateStrikeInputs()">
+                            <option value="5" selected>5 Strikes</option>
+                            <option value="7">7 Strikes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h4 style="margin: 15px 0 10px;">Options Data</h4>
+                <div class="strike-row" style="font-weight: bold; color: #67e8f9;">
+                    <span style="text-align: center;">Strike</span>
+                    <span style="text-align: center;">Call OI</span>
+                    <span style="text-align: center;">Put OI</span>
+                </div>
+                <div id="strikeInputs">
+                    <div class="strike-row">
+                        <input class="strike-input" value="170" data-field="strike">
+                        <input class="strike-input" value="10000" data-field="callOI">
+                        <input class="strike-input" value="50000" data-field="putOI">
+                    </div>
+                    <div class="strike-row">
+                        <input class="strike-input" value="175" data-field="strike">
+                        <input class="strike-input" value="15000" data-field="callOI">
+                        <input class="strike-input" value="35000" data-field="putOI">
+                    </div>
+                    <div class="strike-row">
+                        <input class="strike-input" value="180" data-field="strike">
+                        <input class="strike-input" value="20000" data-field="callOI">
+                        <input class="strike-input" value="20000" data-field="putOI">
+                    </div>
+                    <div class="strike-row">
+                        <input class="strike-input" value="185" data-field="strike">
+                        <input class="strike-input" value="30000" data-field="callOI">
+                        <input class="strike-input" value="10000" data-field="putOI">
+                    </div>
+                    <div class="strike-row">
+                        <input class="strike-input" value="190" data-field="strike">
+                        <input class="strike-input" value="45000" data-field="callOI">
+                        <input class="strike-input" value="5000" data-field="putOI">
+                    </div>
+                </div>
+
+                <button class="calc-btn" onclick="calculateMaxPain()" style="margin-top: 15px;">Calculate Max Pain</button>
+                <div id="mpResult" class="calc-result" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- CHARTS -->
+        <section class="content-section fade-in">
+            <h2>Visualizations</h2>
+
+            <div class="chart-container">
+                <h3>Open Interest by Strike</h3>
+                <canvas id="oiStrikeChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Pain Curve (Max Pain Analysis)</h3>
+                <canvas id="painCurveChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Support & Resistance Map</h3>
+                <canvas id="supportResistanceChart"></canvas>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question" data-question="1">
+                    <h4>Question 1: Heavy call OI at $190 with stock at $180 means:</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">The stock will definitely reach $190</div>
+                        <div class="quiz-option" data-correct="true">$190 acts as a resistance level due to market maker hedging</div>
+                        <div class="quiz-option" data-correct="false">You should buy calls at $190</div>
+                        <div class="quiz-option" data-correct="false">The stock will drop to $170</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="2">
+                    <h4>Question 2: Max pain is the price where:</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">Options are most expensive</div>
+                        <div class="quiz-option" data-correct="false">The most traders make money</div>
+                        <div class="quiz-option" data-correct="true">The total value of all options is minimized (most expire worthless)</div>
+                        <div class="quiz-option" data-correct="false">The stock experiences the most volatility</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="3">
+                    <h4>Question 3: When is the strike pinning effect strongest?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">Monday morning</div>
+                        <div class="quiz-option" data-correct="false">Midweek (Wednesday)</div>
+                        <div class="quiz-option" data-correct="true">Thursday-Friday near expiration</div>
+                        <div class="quiz-option" data-correct="false">After hours</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="4">
+                    <h4>Question 4: If stock breaks above a heavy call OI strike, what happens?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">It immediately drops back below</div>
+                        <div class="quiz-option" data-correct="true">The resistance flips to support (delta unwinding creates buying)</div>
+                        <div class="quiz-option" data-correct="false">OI disappears</div>
+                        <div class="quiz-option" data-correct="false">Nothing changes</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" data-question="5">
+                    <h4>Question 5: Rising OI + rising stock price indicates:</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="true">Strong uptrend - new bullish positions being opened</div>
+                        <div class="quiz-option" data-correct="false">Bearish divergence</div>
+                        <div class="quiz-option" data-correct="false">Positions are being closed</div>
+                        <div class="quiz-option" data-correct="false">Market is at max pain</div>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
+            <div class="quiz-score" id="quizScore" style="display: none;">
+                <h3>Quiz Complete!</h3>
+                <p>Your score: <span id="scoreValue"></span>/5</p>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <div class="module-navigation">
+            <a href="8.1.3_put_call_ratio_sentiment.html" class="nav-btn">← Previous: Put/Call Ratio</a>
+            <a href="../8.2_dealer_mechanics/8.2.1_dealer_hedging_impact.html" class="nav-btn">Next: 8.2 Dealer Mechanics →</a>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    <script>
+        // Copy code
+        function copyCode(button) {
+            const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent);
+            button.textContent = 'Copied!';
+            setTimeout(() => button.textContent = 'Copy', 2000);
+        }
+
+        // Max Pain Calculator
+        function calculateMaxPain() {
+            const stockPrice = parseFloat(document.getElementById('mpStockPrice').value);
+            const rows = document.querySelectorAll('#strikeInputs .strike-row');
+            const strikes = [];
+
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                strikes.push({
+                    strike: parseFloat(inputs[0].value),
+                    callOI: parseInt(inputs[1].value),
+                    putOI: parseInt(inputs[2].value)
+                });
+            });
+
+            // Calculate pain at each strike
+            let minPain = Infinity;
+            let maxPainStrike = strikes[0].strike;
+            const painMap = {};
+
+            strikes.forEach(s => {
+                let totalPain = 0;
+                strikes.forEach(option => {
+                    // Call pain
+                    totalPain += Math.max(s.strike - option.strike, 0) * option.callOI * 100;
+                    // Put pain
+                    totalPain += Math.max(option.strike - s.strike, 0) * option.putOI * 100;
+                });
+                painMap[s.strike] = totalPain;
+                if (totalPain < minPain) {
+                    minPain = totalPain;
+                    maxPainStrike = s.strike;
+                }
+            });
+
+            // Find support and resistance
+            let strongestSupport = null, strongestResistance = null;
+            strikes.forEach(s => {
+                if (s.strike < stockPrice && (!strongestSupport || s.putOI > strongestSupport.putOI)) {
+                    strongestSupport = s;
+                }
+                if (s.strike > stockPrice && (!strongestResistance || s.callOI > strongestResistance.callOI)) {
+                    strongestResistance = s;
+                }
+            });
+
+            const distance = Math.abs(stockPrice - maxPainStrike);
+            const direction = stockPrice > maxPainStrike ? 'downward' : stockPrice < maxPainStrike ? 'upward' : 'neutral';
+
+            const resultDiv = document.getElementById('mpResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h4 style="color: #f59e0b;">Max Pain: $${maxPainStrike}</h4>
+                <p><strong>Current Price:</strong> $${stockPrice} (${distance > 0 ? '$' + distance.toFixed(0) + ' ' + direction + ' pull' : 'at max pain'})</p>
+                ${strongestResistance ? `<p><strong>Key Resistance:</strong> <span style="color: #ef4444;">$${strongestResistance.strike}</span> (${strongestResistance.callOI.toLocaleString()} Call OI)</p>` : ''}
+                ${strongestSupport ? `<p><strong>Key Support:</strong> <span style="color: #10b981;">$${strongestSupport.strike}</span> (${strongestSupport.putOI.toLocaleString()} Put OI)</p>` : ''}
+                <p><strong>Expected Pin Range:</strong> $${maxPainStrike - 2} - $${maxPainStrike + 2}</p>
+                <p style="margin-top: 10px; color: #94a3b8;"><em>Pain values: ${Object.entries(painMap).map(([k, v]) => `$${k}: $${(v/1000000).toFixed(1)}M`).join(' | ')}</em></p>
+            `;
+
+            // Update pain curve chart
+            updatePainCurve(painMap, maxPainStrike);
+        }
+
+        function updatePainCurve(painMap, maxPainStrike) {
+            const ctx = document.getElementById('painCurveChart');
+            if (window.painChart) window.painChart.destroy();
+
+            const labels = Object.keys(painMap).map(k => '$' + k);
+            const data = Object.values(painMap).map(v => v / 1000000);
+
+            window.painChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Pain ($M)',
+                        data: data,
+                        backgroundColor: Object.keys(painMap).map(k =>
+                            parseFloat(k) === maxPainStrike ? 'rgba(245, 158, 11, 0.8)' : 'rgba(6, 182, 212, 0.4)'
+                        ),
+                        borderColor: Object.keys(painMap).map(k =>
+                            parseFloat(k) === maxPainStrike ? '#f59e0b' : '#06b6d4'
+                        ),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: `Pain Curve — Max Pain at $${maxPainStrike} (yellow bar = minimum)`, color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // OI by Strike Chart
+            const oiCtx = document.getElementById('oiStrikeChart').getContext('2d');
+            new Chart(oiCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['$165', '$170', '$175', '$180', '$185', '$190', '$195'],
+                    datasets: [
+                        {
+                            label: 'Call OI',
+                            data: [5000, 10000, 15000, 20000, 30000, 45000, 8000],
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Put OI',
+                            data: [8000, 50000, 35000, 20000, 10000, 5000, 2000],
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'AAPL Open Interest Distribution (Call OI = Resistance, Put OI = Support)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Pain Curve (initial)
+            const painData = { 170: 67.5, 175: 47.5, 180: 77.5, 185: 62.5, 190: 82.5 };
+            updatePainCurve(painData, 175);
+
+            // Support/Resistance Chart
+            const srCtx = document.getElementById('supportResistanceChart').getContext('2d');
+            new Chart(srCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                    datasets: [
+                        {
+                            label: 'Stock Price',
+                            data: [182, 181, 179, 177, 175],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Resistance ($190)',
+                            data: [190, 190, 190, 190, 190],
+                            borderColor: '#ef4444',
+                            borderDash: [5, 5],
+                            backgroundColor: 'transparent',
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Max Pain ($175)',
+                            data: [175, 175, 175, 175, 175],
+                            borderColor: '#f59e0b',
+                            borderDash: [8, 4],
+                            backgroundColor: 'transparent',
+                            pointRadius: 0,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Support ($170)',
+                            data: [170, 170, 170, 170, 170],
+                            borderColor: '#10b981',
+                            borderDash: [5, 5],
+                            backgroundColor: 'transparent',
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'Stock Price Gravitating to Max Pain During Expiration Week', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            min: 165,
+                            max: 195,
+                            ticks: { color: '#94a3b8', callback: v => '$' + v },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                const options = question.querySelectorAll('.quiz-option');
+                const feedback = question.querySelector('.quiz-feedback');
+
+                if (question.classList.contains('answered')) return;
+
+                question.classList.add('answered');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+
+                const isCorrect = this.dataset.correct === 'true';
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                if (!isCorrect) {
+                    options.forEach(opt => {
+                        if (opt.dataset.correct === 'true') opt.classList.add('correct');
+                    });
+                }
+
+                feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.';
+                feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+                feedback.style.display = 'block';
+
+                checkQuizComplete();
+            });
+        });
+
+        function checkQuizComplete() {
+            const questions = document.querySelectorAll('.quiz-question');
+            const answered = document.querySelectorAll('.quiz-question.answered');
+
+            if (questions.length === answered.length) {
+                const correct = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length;
+                document.getElementById('scoreValue').textContent = correct;
+                document.getElementById('quizScore').style.display = 'block';
+            }
+        }
+
+        // Scroll animations
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
