@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master zero gamma levels and key strike identification. Learn to find critical price levels where market behavior changes and gamma walls that act as support/resistance.">
+    <title>8.2.3 Zero Gamma & Key Strike Levels | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .level-eq { font-size: 1.4rem; color: #8b5cf6; text-align: center; padding: 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(139, 92, 246, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #8b5cf6; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .level-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .level-table th, .level-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .level-table th { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+        .level-table tr:hover { background: rgba(139, 92, 246, 0.1); }
+        .level-support { color: #10b981; font-weight: bold; }
+        .level-resistance { color: #ef4444; font-weight: bold; }
+        .level-zero { color: #f59e0b; font-weight: bold; }
+        .zone-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .zone-above { background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; }
+        .zone-below { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; }
+        .zone-at { background: rgba(245, 158, 11, 0.15); border: 2px solid #f59e0b; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(139, 92, 246, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #8b5cf6; }
+        .calc-btn { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4); }
+        .calc-result { background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .strike-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 8px; margin: 5px 0; align-items: center; }
+        .strike-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 8px; color: #f1f5f9; text-align: center; font-size: 0.85rem; }
+        .strike-label { color: #94a3b8; font-size: 0.8rem; text-align: center; }
+        .alert-box { padding: 20px; border-radius: 12px; margin: 15px 0; border-left: 4px solid; }
+        .alert-danger { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); border-color: #f59e0b; }
+        .alert-success { background: rgba(16, 185, 129, 0.1); border-color: #10b981; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: 1fr; }
+            .strike-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.2.3</span>
+                    <span class="nav-module-title">Zero Gamma & Key Strike Levels</span>
+                </div>
+                <a href="../8.1_foundations/8.1.1_options_basics_for_stock_traders.html" class="nav-next">Back to Foundations →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.2 Dealer Mechanics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.2.3 Zero Gamma &amp; Key Strike Levels</span>
+                </div>
+                <h1>Zero Gamma &amp; Key Strike Levels</h1>
+                <p class="module-subtitle">
+                    The zero gamma level is where market behavior flips from stable to volatile. Gamma walls are price magnets
+                    that create support and resistance. Know these levels and you know where price is going.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 50 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Level Finder</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Line in the Sand</div>
+                <p>
+                    SPY is trading at $448. You see a technical support at $445. But the <strong>zero gamma level</strong>
+                    is at $443. As long as SPY stays above $443, dealers are buying every dip&mdash;your $445 support is
+                    reinforced by mechanical dealer buying. But if SPY breaks $443, the gamma regime flips negative and dealers
+                    start <strong>selling into the decline</strong>. That $445 "support" evaporates and SPY could fall to $430+.
+                    Knowing the zero gamma level tells you when support is real vs. fragile.
+                </p>
+            </div>
+
+            <div class="level-eq">
+                Zero Gamma Level → Above = Stable | Below = Volatile | At = Breakout Zone
+            </div>
+            <p style="text-align: center; color: #94a3b8;">The single most important price level derived from the options market</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Regime Flip Point</h4>
+                    <p>Zero gamma is where positive gamma becomes negative. Above it: dealers support. Below it: dealers amplify the selloff.</p>
+                </div>
+                <div class="card">
+                    <h4>Gamma Walls = Magnets</h4>
+                    <p>Strikes with massive gamma concentration attract price like magnets. Price gravitates to these levels, especially near expiration.</p>
+                </div>
+                <div class="card">
+                    <h4>Better Than Technicals</h4>
+                    <p>Traditional S/R is subjective. Gamma levels are calculated from real data&mdash;actual positions with real money behind them.</p>
+                </div>
+                <div class="card">
+                    <h4>Expiration Pinning</h4>
+                    <p>Near expiration, gamma concentrates intensely. Price "pins" to the highest gamma strike. Predictable and tradeable.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">Real Example: SPY January 2022 Selloff</div>
+                <p>
+                    SPY started January 2022 at $475. The zero gamma level was at $468. For the first week, SPY dipped to $470 but
+                    bounced&mdash;dealers were buying. On January 10th, SPY broke below $468 (zero gamma). The regime flipped negative.
+                    Over the next two weeks, SPY fell to $430&mdash;a <strong>$38 decline accelerated by negative gamma dealer selling</strong>.
+                    Traders who tracked zero gamma exited at $468, saving 8%+ in drawdown.
+                </p>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$468</div>
+                    <div class="metric-label">Zero Gamma (Jan 2022)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$430</div>
+                    <div class="metric-label">SPY Low After Break</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">-8.1%</div>
+                    <div class="metric-label">Decline Below Zero Γ</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2 Weeks</div>
+                    <div class="metric-label">Time to Bottom</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <h3>What Is the Zero Gamma Level?</h3>
+            <p>
+                The zero gamma level is the price at which the aggregate net GEX equals zero. Above this level, net GEX is positive
+                (dealers dampen moves). Below this level, net GEX is negative (dealers amplify moves). It's the <strong>critical
+                inflection point</strong> for market behavior.
+            </p>
+
+            <div class="zone-card zone-above">
+                <h4>Price ABOVE Zero Gamma</h4>
+                <p><strong>Net GEX is positive.</strong> Dealers buy every dip and sell every rally. The market acts like a rubber band&mdash;it stretches but always snaps back. Mean reversion works. Support holds. Volatility is low.</p>
+            </div>
+
+            <div class="zone-card zone-at">
+                <h4>Price AT Zero Gamma</h4>
+                <p><strong>Net GEX is approximately zero.</strong> This is the breakout zone. Dealer influence is neutral. The market can go either direction sharply. High uncertainty. Reduce size and wait for confirmation of the new regime.</p>
+            </div>
+
+            <div class="zone-card zone-below">
+                <h4>Price BELOW Zero Gamma</h4>
+                <p><strong>Net GEX is negative.</strong> Dealers sell into every decline and buy every rally (destabilizing). The market acts like a ball rolling downhill&mdash;momentum accelerates. Support levels break. Volatility explodes.</p>
+            </div>
+
+            <h3>What Are Gamma Walls?</h3>
+            <p>
+                Gamma walls are strike prices with extremely high gamma concentration (large open interest at high-gamma strikes).
+                These strikes act as <strong>price magnets</strong>&mdash;dealers' hedging creates such strong buying or selling
+                pressure that price gravitates toward these levels, especially near options expiration.
+            </p>
+
+            <!-- SVG Diagram: Zero Gamma and Gamma Walls -->
+            <div style="margin: 30px 0;">
+                <svg viewBox="0 0 800 380" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <!-- Background -->
+                    <rect x="10" y="10" width="780" height="360" rx="16" fill="rgba(0,0,0,0.2)" stroke="rgba(139, 92, 246, 0.3)" stroke-width="1"/>
+                    <text x="400" y="40" text-anchor="middle" fill="#8b5cf6" font-size="16" font-weight="bold">ZERO GAMMA &amp; GAMMA WALLS</text>
+
+                    <!-- Price axis -->
+                    <line x1="80" y1="80" x2="80" y2="340" stroke="#475569" stroke-width="2"/>
+                    <text x="40" y="200" text-anchor="middle" fill="#94a3b8" font-size="11" transform="rotate(-90, 40, 200)">Price</text>
+
+                    <!-- Price levels -->
+                    <text x="75" y="100" text-anchor="end" fill="#94a3b8" font-size="11">$460</text>
+                    <text x="75" y="145" text-anchor="end" fill="#94a3b8" font-size="11">$455</text>
+                    <text x="75" y="190" text-anchor="end" fill="#f59e0b" font-size="12" font-weight="bold">$450</text>
+                    <text x="75" y="235" text-anchor="end" fill="#94a3b8" font-size="11">$445</text>
+                    <text x="75" y="280" text-anchor="end" fill="#94a3b8" font-size="11">$440</text>
+                    <text x="75" y="320" text-anchor="end" fill="#94a3b8" font-size="11">$435</text>
+
+                    <!-- Positive zone (above zero gamma) -->
+                    <rect x="90" y="70" width="690" height="125" rx="8" fill="rgba(16, 185, 129, 0.08)" stroke="none"/>
+                    <text x="740" y="90" text-anchor="end" fill="#10b981" font-size="11">POSITIVE GAMMA</text>
+                    <text x="740" y="105" text-anchor="end" fill="#6ee7b7" font-size="10">Dealers buy dips</text>
+
+                    <!-- Zero Gamma Line -->
+                    <line x1="90" y1="195" x2="760" y2="195" stroke="#f59e0b" stroke-width="3" stroke-dasharray="8,4"/>
+                    <rect x="300" y="178" width="200" height="28" rx="6" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="1"/>
+                    <text x="400" y="197" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="bold">ZERO GAMMA = $450</text>
+
+                    <!-- Negative zone (below zero gamma) -->
+                    <rect x="90" y="200" width="690" height="140" rx="8" fill="rgba(239, 68, 68, 0.08)" stroke="none"/>
+                    <text x="740" y="230" text-anchor="end" fill="#ef4444" font-size="11">NEGATIVE GAMMA</text>
+                    <text x="740" y="245" text-anchor="end" fill="#fca5a5" font-size="10">Dealers sell dips</text>
+
+                    <!-- Gamma Wall: $455 -->
+                    <rect x="140" y="130" width="180" height="30" rx="6" fill="rgba(16, 185, 129, 0.3)" stroke="#10b981" stroke-width="2"/>
+                    <text x="230" y="150" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">GAMMA WALL: $455</text>
+                    <text x="340" y="150" fill="#94a3b8" font-size="10">← Price magnet (resistance)</text>
+
+                    <!-- Gamma Wall: $440 -->
+                    <rect x="140" y="265" width="180" height="30" rx="6" fill="rgba(239, 68, 68, 0.3)" stroke="#ef4444" stroke-width="2"/>
+                    <text x="230" y="285" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="bold">GAMMA WALL: $440</text>
+                    <text x="340" y="285" fill="#94a3b8" font-size="10">← Acceleration zone (danger)</text>
+
+                    <!-- Current price indicator -->
+                    <circle cx="120" cy="160" r="8" fill="#6366f1" stroke="white" stroke-width="2"/>
+                    <text x="135" y="165" fill="#a5b4fc" font-size="11" font-weight="bold">SPY $453 (Current)</text>
+                    <text x="135" y="180" fill="#6ee7b7" font-size="10">$3 above zero gamma — SAFE zone</text>
+
+                    <!-- Distance annotation -->
+                    <line x1="550" y1="160" x2="550" y2="195" stroke="#a5b4fc" stroke-width="1.5" marker-start="url(#arrowUp)" marker-end="url(#arrowDown)"/>
+                    <text x="580" y="180" fill="#a5b4fc" font-size="10">$3 buffer</text>
+
+                    <defs>
+                        <marker id="arrowUp" markerWidth="8" markerHeight="6" refX="4" refY="6" orient="auto"><polygon points="0 6, 4 0, 8 6" fill="#a5b4fc"/></marker>
+                        <marker id="arrowDown" markerWidth="8" markerHeight="6" refX="4" refY="0" orient="auto"><polygon points="0 0, 4 6, 8 0" fill="#a5b4fc"/></marker>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <h3>Finding the Zero Gamma Level</h3>
+            <div class="level-eq">
+                Zero Gamma: Find price P where &Sigma; Net GEX(P) = 0
+            </div>
+            <p>
+                The zero gamma level shifts as GEX changes with price. As the stock price moves, gamma values change
+                (gamma itself has a sensitivity called "speed"). In practice, we calculate net GEX at multiple price levels
+                and find where it crosses zero through interpolation.
+            </p>
+
+            <h3>Identifying Gamma Walls</h3>
+            <div class="level-eq">
+                Gamma Wall = Strike with max |GEX| = max(OI &times; 100 &times; &Gamma; &times; Spot)
+            </div>
+            <p>
+                Gamma walls are simply the strikes with the highest absolute GEX. These create the most dealer hedging flow
+                and therefore the strongest price attraction.
+            </p>
+
+            <h3>Distance to Zero Gamma</h3>
+            <div class="level-eq">
+                Buffer = Current Price - Zero Gamma Level &nbsp;&nbsp;|&nbsp;&nbsp; Positive = Safe, Negative = Danger
+            </div>
+
+            <h3>Worked Example: SPY Gamma Level Map</h3>
+            <table class="level-table">
+                <thead>
+                    <tr><th>Strike</th><th>Call OI</th><th>Put OI</th><th>Call GEX</th><th>Put GEX</th><th>Net GEX</th><th>Cumulative GEX</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$435</td><td>20,000</td><td>60,000</td><td class="level-support">+$12.2M</td><td class="level-resistance">-$36.5M</td><td class="level-resistance">-$24.3M</td><td>-$24.3M</td></tr>
+                    <tr><td>$440</td><td>35,000</td><td>55,000</td><td class="level-support">+$27.7M</td><td class="level-resistance">-$43.6M</td><td class="level-resistance">-$15.9M</td><td>-$40.2M</td></tr>
+                    <tr><td>$445</td><td>60,000</td><td>45,000</td><td class="level-support">+$60.8M</td><td class="level-resistance">-$45.6M</td><td class="level-support">+$15.2M</td><td>-$25.0M</td></tr>
+                    <tr style="background: rgba(245, 158, 11, 0.1);"><td><strong>$450</strong></td><td>100,000</td><td>80,000</td><td class="level-support">+$202.5M</td><td class="level-resistance">-$162.0M</td><td class="level-support">+$40.5M</td><td class="level-zero">+$15.5M ← crosses zero near here</td></tr>
+                    <tr><td>$455</td><td>75,000</td><td>30,000</td><td class="level-support">+$121.5M</td><td class="level-resistance">-$48.6M</td><td class="level-support">+$72.9M</td><td>+$88.4M</td></tr>
+                    <tr><td>$460</td><td>40,000</td><td>15,000</td><td class="level-support">+$32.4M</td><td class="level-resistance">-$12.2M</td><td class="level-support">+$20.2M</td><td>+$108.6M</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <div class="info-box-title">Analysis</div>
+                <p>
+                    <strong>Zero Gamma Level:</strong> Between $445 and $450 (cumulative GEX crosses zero). Interpolated: <span class="level-zero">~$448</span><br>
+                    <strong>Max Gamma Wall:</strong> $455 strike (Net GEX +$72.9M) &mdash; strong call gamma wall (resistance/magnet)<br>
+                    <strong>Negative Gamma Wall:</strong> $440 strike &mdash; if price breaks here, negative gamma accelerates decline<br>
+                    <strong>Current SPY at $452:</strong> $4 above zero gamma. In positive gamma. Safe to fade rallies, buy dips.
+                </p>
+            </div>
+        </section>
+
+        <!-- PART 4: NUMERICAL EXAMPLE -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Complete Numerical Example</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Scenario: Friday Expiration Pin Analysis</div>
+                <p><strong>SPY at $451</strong> | Friday expiration approaching | Determine pin target and danger zones.</p>
+            </div>
+
+            <h3>Step 1: Calculate GEX Across All Strikes</h3>
+            <table class="level-table">
+                <thead>
+                    <tr><th>Strike</th><th>Total GEX</th><th>Level Type</th><th>Distance</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$440</td><td class="level-resistance">-$28.5M</td><td>Negative Gamma Wall</td><td>-$11 (danger below)</td></tr>
+                    <tr><td>$445</td><td class="level-resistance">-$8.2M</td><td>Mild negative</td><td>-$6</td></tr>
+                    <tr style="background: rgba(245, 158, 11, 0.1);"><td><strong>$448</strong></td><td class="level-zero">$0 (Zero Gamma)</td><td>Regime Flip Point</td><td>-$3</td></tr>
+                    <tr><td>$450</td><td class="level-support">+$40.5M</td><td>Strong call wall</td><td>-$1</td></tr>
+                    <tr style="background: rgba(139, 92, 246, 0.15);"><td><strong>$451</strong></td><td>&mdash;</td><td><strong>CURRENT PRICE</strong></td><td>&mdash;</td></tr>
+                    <tr><td>$455</td><td class="level-support">+$72.9M</td><td>MAX GAMMA WALL</td><td>+$4</td></tr>
+                    <tr><td>$460</td><td class="level-support">+$20.2M</td><td>Secondary wall</td><td>+$9</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Step 2: Generate Trading Levels</h3>
+
+            <div class="alert-box alert-success">
+                <strong style="color: #10b981;">Pin Target: $455</strong><br>
+                Highest gamma concentration. Price will gravitate here into Friday expiration. Dealers buy every dip toward $455 and sell rallies above it. <strong>Trade: Long SPY targeting $455, stop below $448 (zero gamma).</strong>
+            </div>
+
+            <div class="alert-box alert-warning">
+                <strong style="color: #f59e0b;">Warning Level: $448 (Zero Gamma)</strong><br>
+                If SPY breaks below $448, the regime flips negative. Dealers switch from buying dips to selling dips. <strong>Action: Close all longs if SPY breaks $448. Switch to short/defensive.</strong>
+            </div>
+
+            <div class="alert-box alert-danger">
+                <strong style="color: #ef4444;">Danger Zone: $440 (Negative Gamma Wall)</strong><br>
+                Massive put gamma at $440. If reached, dealer selling creates an avalanche. SPY could fall to $430+ rapidly. <strong>Action: Maximum caution. Hedge with puts. Reduce all exposure.</strong>
+            </div>
+
+            <h3>Step 3: Visualize the Gamma Map</h3>
+            <!-- Chart: Price with Gamma Levels -->
+            <div class="chart-container">
+                <canvas id="gammaMapChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Production-Quality Gamma Level Finder</div>
+                <p>Find zero gamma, gamma walls, pin targets, and generate trading alerts from any options chain.</p>
+            </div>
+
+            <div class="code-block-wrapper">
+                <div class="code-block-header">
+                    <span class="code-lang">Python</span>
+                    <span class="code-title">gamma_level_finder.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class LevelType(Enum):
+    """Classification of gamma-derived price levels."""
+    ZERO_GAMMA = "ZERO_GAMMA"
+    GAMMA_WALL_CALL = "CALL_WALL"     # High call GEX (resistance/magnet)
+    GAMMA_WALL_PUT = "PUT_WALL"       # High put GEX (danger if broken)
+    PIN_TARGET = "PIN_TARGET"          # Likely expiration pin
+    SUPPORT = "SUPPORT"
+    RESISTANCE = "RESISTANCE"
+
+
+@dataclass
+class GammaLevel:
+    """A significant gamma-derived price level."""
+    price: float
+    level_type: LevelType
+    gex_value: float
+    strength: str          # 'weak', 'moderate', 'strong'
+    distance_pct: float    # Distance from current price (%)
+    description: str
+
+
+@dataclass
+class GammaAnalysis:
+    """Complete gamma level analysis."""
+    zero_gamma: Optional[float]
+    gamma_walls: List[GammaLevel]
+    pin_target: Optional[float]
+    current_regime: str
+    buffer_to_zero: float   # Distance to zero gamma in $
+    alerts: List[str]
+
+
+def find_zero_gamma_level(
+    gex_by_strike: pd.DataFrame,
+    spot_price: float
+) -> Optional[float]:
+    """
+    Find the zero gamma level via interpolation.
+
+    Parameters
+    ----------
+    gex_by_strike : pd.DataFrame
+        Columns: strike, net_gex (sorted by strike ascending)
+    spot_price : float
+        Current stock price
+
+    Returns
+    -------
+    Optional[float]
+        Zero gamma price level, or None if not found
+    """
+    df = gex_by_strike.sort_values('strike').reset_index(drop=True)
+
+    for i in range(len(df) - 1):
+        gex_a = df.loc[i, 'net_gex']
+        gex_b = df.loc[i + 1, 'net_gex']
+
+        # Check for sign change
+        if gex_a * gex_b &lt; 0:
+            # Linear interpolation
+            strike_a = df.loc[i, 'strike']
+            strike_b = df.loc[i + 1, 'strike']
+            ratio = abs(gex_a) / (abs(gex_a) + abs(gex_b))
+            zero_level = strike_a + ratio * (strike_b - strike_a)
+            return round(zero_level, 2)
+
+    # If no sign change, check if all positive or negative
+    if df['net_gex'].sum() &gt; 0:
+        return df['strike'].min() - 5  # Below all strikes
+    return None
+
+
+def identify_gamma_walls(
+    gex_by_strike: pd.DataFrame,
+    spot_price: float,
+    top_n: int = 3
+) -> List[GammaLevel]:
+    """
+    Identify the strongest gamma walls (strikes with highest GEX).
+
+    Parameters
+    ----------
+    gex_by_strike : pd.DataFrame
+        Columns: strike, net_gex, call_gex, put_gex
+    spot_price : float
+        Current stock price
+    top_n : int
+        Number of top walls to return
+
+    Returns
+    -------
+    List[GammaLevel]
+        Top gamma walls sorted by strength
+    """
+    walls = []
+
+    # Sort by absolute GEX value
+    df = gex_by_strike.copy()
+    df['abs_gex'] = df['net_gex'].abs()
+    top = df.nlargest(top_n, 'abs_gex')
+
+    for _, row in top.iterrows():
+        strike = row['strike']
+        net_gex = row['net_gex']
+        distance_pct = (strike - spot_price) / spot_price * 100
+
+        if net_gex &gt; 0:
+            level_type = LevelType.GAMMA_WALL_CALL
+            desc = f"Call gamma wall at ${strike}. Price magnet/resistance."
+        else:
+            level_type = LevelType.GAMMA_WALL_PUT
+            desc = f"Put gamma wall at ${strike}. Danger zone if broken."
+
+        # Classify strength
+        abs_gex = abs(net_gex)
+        if abs_gex &gt; 50_000_000:
+            strength = "strong"
+        elif abs_gex &gt; 20_000_000:
+            strength = "moderate"
+        else:
+            strength = "weak"
+
+        walls.append(GammaLevel(
+            price=strike,
+            level_type=level_type,
+            gex_value=net_gex,
+            strength=strength,
+            distance_pct=round(distance_pct, 2),
+            description=desc
+        ))
+
+    return sorted(walls, key=lambda w: abs(w.gex_value), reverse=True)
+
+
+def find_pin_target(
+    gex_by_strike: pd.DataFrame,
+    spot_price: float,
+    max_distance_pct: float = 2.0
+) -> Optional[float]:
+    """
+    Find the most likely expiration pin target.
+
+    The pin target is the strike with the highest positive GEX
+    near the current price. Dealers' hedging pulls price toward
+    this level into expiration.
+
+    Parameters
+    ----------
+    gex_by_strike : pd.DataFrame
+        Columns: strike, net_gex
+    spot_price : float
+        Current stock price
+    max_distance_pct : float
+        Maximum distance from spot to consider (%)
+
+    Returns
+    -------
+    Optional[float]
+        Pin target strike price
+    """
+    df = gex_by_strike.copy()
+    df['distance_pct'] = abs(df['strike'] - spot_price) / spot_price * 100
+
+    # Filter to nearby strikes with positive GEX
+    nearby = df[
+        (df['distance_pct'] &lt;= max_distance_pct) &amp;
+        (df['net_gex'] &gt; 0)
+    ]
+
+    if nearby.empty:
+        return None
+
+    # Highest positive GEX near current price
+    pin_idx = nearby['net_gex'].idxmax()
+    return nearby.loc[pin_idx, 'strike']
+
+
+def generate_gamma_alerts(
+    spot_price: float,
+    zero_gamma: Optional[float],
+    gamma_walls: List[GammaLevel]
+) -> List[str]:
+    """
+    Generate trading alerts based on gamma levels.
+
+    Parameters
+    ----------
+    spot_price : float
+        Current stock price
+    zero_gamma : Optional[float]
+        Zero gamma level
+    gamma_walls : List[GammaLevel]
+        Identified gamma walls
+
+    Returns
+    -------
+    List[str]
+        Alert messages for the trader
+    """
+    alerts = []
+
+    if zero_gamma is not None:
+        buffer = spot_price - zero_gamma
+        buffer_pct = buffer / spot_price * 100
+
+        if buffer_pct &lt; 0:
+            alerts.append(
+                f"⚠️ DANGER: Price ${spot_price} is BELOW zero gamma "
+                f"${zero_gamma}. Negative gamma regime. "
+                f"Dealers amplifying moves. Reduce exposure."
+            )
+        elif buffer_pct &lt; 0.5:
+            alerts.append(
+                f"🟡 WARNING: Price ${spot_price} is only "
+                f"${buffer:.1f} ({buffer_pct:.1f}%) above zero gamma "
+                f"${zero_gamma}. Close to regime flip."
+            )
+        elif buffer_pct &lt; 1.5:
+            alerts.append(
+                f"🟢 SAFE: Price ${spot_price} is ${buffer:.1f} "
+                f"({buffer_pct:.1f}%) above zero gamma ${zero_gamma}. "
+                f"Positive gamma. Dealers supporting."
+            )
+        else:
+            alerts.append(
+                f"🟢 STRONG: Price ${spot_price} is ${buffer:.1f} "
+                f"({buffer_pct:.1f}%) above zero gamma ${zero_gamma}. "
+                f"Deep positive gamma. Very stable."
+            )
+
+    for wall in gamma_walls:
+        dist = abs(wall.price - spot_price)
+        if dist &lt; spot_price * 0.005:  # Within 0.5%
+            if wall.level_type == LevelType.GAMMA_WALL_CALL:
+                alerts.append(
+                    f"📌 PINNING: Price near call wall ${wall.price}. "
+                    f"Strong magnet. Expect price to stay here."
+                )
+            else:
+                alerts.append(
+                    f"⚠️ NEAR PUT WALL: Price near danger zone "
+                    f"${wall.price}. Break = acceleration down."
+                )
+
+    return alerts
+
+
+def analyze_gamma_levels(
+    options_chain: pd.DataFrame,
+    spot_price: float
+) -> GammaAnalysis:
+    """
+    Complete gamma level analysis from options chain.
+
+    Parameters
+    ----------
+    options_chain : pd.DataFrame
+        Columns: strike, call_oi, put_oi, call_gamma, put_gamma
+    spot_price : float
+        Current stock price
+
+    Returns
+    -------
+    GammaAnalysis
+        Complete analysis with levels, alerts, and recommendations
+    """
+    # Calculate GEX per strike
+    gex_data = []
+    for _, row in options_chain.iterrows():
+        call_gex = row['call_oi'] * 100 * row['call_gamma'] * spot_price
+        put_gex = -(row['put_oi'] * 100 * row['put_gamma'] * spot_price)
+        gex_data.append({
+            'strike': row['strike'],
+            'call_gex': call_gex,
+            'put_gex': put_gex,
+            'net_gex': call_gex + put_gex
+        })
+
+    gex_df = pd.DataFrame(gex_data)
+
+    # Find key levels
+    zero_gamma = find_zero_gamma_level(gex_df, spot_price)
+    walls = identify_gamma_walls(gex_df, spot_price)
+    pin = find_pin_target(gex_df, spot_price)
+
+    # Buffer calculation
+    buffer = (spot_price - zero_gamma) if zero_gamma else float('inf')
+
+    # Current regime
+    if buffer &gt; 0:
+        regime = "POSITIVE GAMMA — Stable, mean reversion"
+    elif buffer &gt; -spot_price * 0.01:
+        regime = "NEUTRAL — Near flip point, reduce size"
+    else:
+        regime = "NEGATIVE GAMMA — Volatile, momentum"
+
+    # Generate alerts
+    alerts = generate_gamma_alerts(spot_price, zero_gamma, walls)
+
+    return GammaAnalysis(
+        zero_gamma=zero_gamma,
+        gamma_walls=walls,
+        pin_target=pin,
+        current_regime=regime,
+        buffer_to_zero=round(buffer, 2),
+        alerts=alerts
+    )
+
+
+# ─── EXAMPLE USAGE ────────────────────────────────────
+if __name__ == "__main__":
+    # SPY options chain
+    chain = pd.DataFrame({
+        'strike':     [435, 440, 445, 450, 455, 460],
+        'call_oi':    [20000, 35000, 60000, 100000, 75000, 40000],
+        'put_oi':     [60000, 55000, 45000, 80000, 30000, 15000],
+        'call_gamma': [0.015, 0.025, 0.040, 0.050, 0.040, 0.020],
+        'put_gamma':  [0.015, 0.025, 0.040, 0.050, 0.040, 0.020]
+    })
+
+    result = analyze_gamma_levels(chain, spot_price=452)
+
+    print("═══ Gamma Level Analysis: SPY @ $452 ═══")
+    print(f"  Zero Gamma  : ${result.zero_gamma}")
+    print(f"  Buffer      : ${result.buffer_to_zero}")
+    print(f"  Regime      : {result.current_regime}")
+    print(f"  Pin Target  : ${result.pin_target}")
+    print(f"\n  Gamma Walls:")
+    for wall in result.gamma_walls:
+        print(f"    ${wall.price} ({wall.level_type.value})"
+              f" — GEX ${wall.gex_value/1e6:.1f}M"
+              f" [{wall.strength}]")
+    print(f"\n  Alerts:")
+    for alert in result.alerts:
+        print(f"    {alert}")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>Zero Gamma Trading Rules</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>1. Daily Level Check</h4>
+                    <p>Calculate zero gamma each morning. Know exactly where the regime flips. This is your "line in the sand" for the day. If price is above, trade bullish/neutral. If below, trade defensive.</p>
+                </div>
+                <div class="card">
+                    <h4>2. Stop Loss Placement</h4>
+                    <p>For long positions, place stops just below zero gamma. If the regime flips, your exit is automatic. Don't fight negative gamma&mdash;it's a losing battle.</p>
+                </div>
+                <div class="card">
+                    <h4>3. Gamma Wall Targets</h4>
+                    <p>Set profit targets at gamma walls. Price gravitates to these levels. The max gamma strike is often the pin target for weekly/monthly expiration.</p>
+                </div>
+                <div class="card">
+                    <h4>4. Expiration Pinning</h4>
+                    <p>On expiration Friday, gamma concentrates massively. The highest GEX strike becomes a strong magnet. Position early in the week for the pin.</p>
+                </div>
+            </div>
+
+            <h3>Complete Trading Scenarios</h3>
+
+            <div class="alert-box alert-success">
+                <strong style="color: #10b981;">Scenario A: SPY Above Zero Gamma</strong><br>
+                SPY at $453 | Zero Gamma at $448 | Max Gamma Wall at $455<br><br>
+                <strong>Strategy:</strong> Long SPY, target $455 (gamma wall), stop at $447 (just below zero gamma).<br>
+                <strong>Rationale:</strong> Dealers buy every dip. Price attracted to $455. Risk/reward = $2 risk for $2 reward, but probability strongly favors upside due to dealer support.
+            </div>
+
+            <div class="alert-box alert-danger">
+                <strong style="color: #ef4444;">Scenario B: SPY Below Zero Gamma</strong><br>
+                SPY at $445 | Zero Gamma at $448 | Put Wall at $440<br><br>
+                <strong>Strategy:</strong> Short SPY or buy puts. Target $440 (put gamma wall). Stop at $449 (above zero gamma).<br>
+                <strong>Rationale:</strong> Dealers selling into decline. Momentum accelerates down. $440 put wall may cause temporary bounce but is also danger zone for further acceleration.
+            </div>
+
+            <div class="alert-box alert-warning">
+                <strong style="color: #f59e0b;">Scenario C: Expiration Friday Pin</strong><br>
+                SPY at $451 | Highest GEX at $450 | Expiration in 2 hours<br><br>
+                <strong>Strategy:</strong> Sell SPY call spread above $452, sell put spread below $448. Collect premium as price pins to $450.<br>
+                <strong>Rationale:</strong> Massive gamma at $450 creates intense pinning. Dealers hedge aggressively to keep price at $450. High probability of pin.
+            </div>
+
+            <!-- Chart: GEX Profile with Trading Zones -->
+            <div class="chart-container">
+                <canvas id="tradingZoneChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+
+            <table class="level-table">
+                <thead>
+                    <tr><th style="width:45%">&#10060; Mistake</th><th style="width:55%">&#9989; Correct Approach</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Treating zero gamma as a fixed level</td>
+                        <td>Zero gamma shifts daily as options are traded. Recalculate every morning.</td>
+                    </tr>
+                    <tr>
+                        <td>Ignoring the buffer distance</td>
+                        <td>If price is only 0.3% above zero gamma, treat it as if you're AT zero gamma. Small buffer = high risk.</td>
+                    </tr>
+                    <tr>
+                        <td>Buying the dip below zero gamma</td>
+                        <td>Below zero gamma, dips accelerate. Don't catch a falling knife. Wait for gamma to flip back positive.</td>
+                    </tr>
+                    <tr>
+                        <td>Using only one expiration cycle</td>
+                        <td>Include ALL expirations in your gamma calculation, especially 0DTE and weekly options.</td>
+                    </tr>
+                    <tr>
+                        <td>Treating gamma walls as guaranteed levels</td>
+                        <td>Gamma walls are magnets, not barriers. Price can overshoot, especially in negative gamma. Use them as probability zones.</td>
+                    </tr>
+                    <tr>
+                        <td>Not considering 0DTE gamma near close</td>
+                        <td>0DTE gamma explodes near the close. Pinning effects are strongest in the last 1-2 hours of trading.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 8: SUMMARY & CHEAT SHEET -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Cheat Sheet</h2>
+
+            <h3>Key Concepts</h3>
+            <div class="level-eq">
+                Zero Gamma = Where Regime Flips &nbsp;|&nbsp; Gamma Walls = Price Magnets &nbsp;|&nbsp; Pin Target = Expiration Magnet
+            </div>
+
+            <h3>Quick Reference</h3>
+            <div class="zone-card zone-above">
+                <h4>Above Zero Gamma (Buffer &gt; 1%)</h4>
+                <p><strong>Action:</strong> Trade normally. Buy dips. Target gamma walls. Mean reversion. Full position size. Tight stops at zero gamma.</p>
+            </div>
+            <div class="zone-card zone-at">
+                <h4>Near Zero Gamma (Buffer &lt; 0.5%)</h4>
+                <p><strong>Action:</strong> Reduce size 50%. Tighten stops. Prepare for possible regime flip. No new long positions. Wait for direction.</p>
+            </div>
+            <div class="zone-card zone-below">
+                <h4>Below Zero Gamma</h4>
+                <p><strong>Action:</strong> Defensive mode. Close longs. Consider shorts. No dip buying. Hedge with puts. Wait for gamma to flip positive before re-entering.</p>
+            </div>
+
+            <h3>Daily Checklist</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>1. Calculate Zero Gamma</h4>
+                    <p>Where does net GEX = 0? This is your most important level for the day. Mark it on your chart.</p>
+                </div>
+                <div class="card">
+                    <h4>2. Find Gamma Walls</h4>
+                    <p>Top 3 strikes by GEX magnitude. These are support/resistance and price magnets. Mark them.</p>
+                </div>
+                <div class="card">
+                    <h4>3. Measure Buffer</h4>
+                    <p>How far is current price from zero gamma? &gt;1% = safe. &lt;0.5% = caution. Below = danger.</p>
+                </div>
+                <div class="card">
+                    <h4>4. Set Alerts</h4>
+                    <p>Alert at zero gamma level. Alert at top gamma walls. Alert at pin target on expiration days.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive Gamma Level Finder</h2>
+
+            <div class="calculator-section">
+                <h3>Zero Gamma &amp; Wall Finder</h3>
+                <p style="color: #94a3b8; margin-bottom: 15px;">Enter strike data to find the zero gamma level and gamma walls. Add up to 6 strikes.</p>
+
+                <div style="margin-bottom: 10px;">
+                    <div class="strike-row" style="margin-bottom: 8px;">
+                        <div class="strike-label"><strong>Strike</strong></div>
+                        <div class="strike-label"><strong>Call OI</strong></div>
+                        <div class="strike-label"><strong>Put OI</strong></div>
+                        <div class="strike-label"><strong>Gamma</strong></div>
+                        <div class="strike-label"><strong>Net GEX</strong></div>
+                    </div>
+                    <div class="strike-row">
+                        <input type="number" class="strike-input s-strike" value="440">
+                        <input type="number" class="strike-input s-calloi" value="35000">
+                        <input type="number" class="strike-input s-putoi" value="55000">
+                        <input type="number" class="strike-input s-gamma" step="0.001" value="0.025">
+                        <div class="strike-input" id="gex0" style="background: rgba(139, 92, 246, 0.2);">—</div>
+                    </div>
+                    <div class="strike-row">
+                        <input type="number" class="strike-input s-strike" value="445">
+                        <input type="number" class="strike-input s-calloi" value="60000">
+                        <input type="number" class="strike-input s-putoi" value="45000">
+                        <input type="number" class="strike-input s-gamma" step="0.001" value="0.040">
+                        <div class="strike-input" id="gex1" style="background: rgba(139, 92, 246, 0.2);">—</div>
+                    </div>
+                    <div class="strike-row">
+                        <input type="number" class="strike-input s-strike" value="450">
+                        <input type="number" class="strike-input s-calloi" value="100000">
+                        <input type="number" class="strike-input s-putoi" value="80000">
+                        <input type="number" class="strike-input s-gamma" step="0.001" value="0.050">
+                        <div class="strike-input" id="gex2" style="background: rgba(139, 92, 246, 0.2);">—</div>
+                    </div>
+                    <div class="strike-row">
+                        <input type="number" class="strike-input s-strike" value="455">
+                        <input type="number" class="strike-input s-calloi" value="75000">
+                        <input type="number" class="strike-input s-putoi" value="30000">
+                        <input type="number" class="strike-input s-gamma" step="0.001" value="0.040">
+                        <div class="strike-input" id="gex3" style="background: rgba(139, 92, 246, 0.2);">—</div>
+                    </div>
+                    <div class="strike-row">
+                        <input type="number" class="strike-input s-strike" value="460">
+                        <input type="number" class="strike-input s-calloi" value="40000">
+                        <input type="number" class="strike-input s-putoi" value="15000">
+                        <input type="number" class="strike-input s-gamma" step="0.001" value="0.020">
+                        <div class="strike-input" id="gex4" style="background: rgba(139, 92, 246, 0.2);">—</div>
+                    </div>
+                </div>
+
+                <div class="calc-grid">
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Current Price ($)</label>
+                        <input type="number" id="levelSpot" class="calc-input" value="452">
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="calc-btn" onclick="findGammaLevels()" style="width: 100%;">Find Levels</button>
+                    </div>
+                </div>
+                <div class="calc-result" id="levelResult" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- CHART: Gamma Walls Visualization -->
+        <section class="content-section fade-in">
+            <h2>Gamma Level Map</h2>
+            <p style="color: #94a3b8;">Net GEX by strike with zero gamma line and gamma walls highlighted.</p>
+            <div class="chart-container">
+                <canvas id="gammaWallChart"></canvas>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+
+            <div class="quiz-question" id="q1">
+                <h4>Q1: What happens when price drops below the zero gamma level?</h4>
+                <div class="quiz-option" data-correct="false">Dealers start buying more aggressively (support)</div>
+                <div class="quiz-option" data-correct="true">Net GEX flips negative — dealers sell into declines, amplifying the move</div>
+                <div class="quiz-option" data-correct="false">Nothing changes — zero gamma is just a theoretical level</div>
+                <div class="quiz-option" data-correct="false">Volatility decreases and price stabilizes</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q2">
+                <h4>Q2: What is a gamma wall?</h4>
+                <div class="quiz-option" data-correct="false">A price level where all options expire worthless</div>
+                <div class="quiz-option" data-correct="false">The maximum price a stock can reach</div>
+                <div class="quiz-option" data-correct="true">A strike with extremely high gamma concentration that acts as a price magnet</div>
+                <div class="quiz-option" data-correct="false">A technical indicator based on moving averages</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q3">
+                <h4>Q3: SPY is at $451 and zero gamma is at $448. What's the appropriate action?</h4>
+                <div class="quiz-option" data-correct="true">Trade normally with stops below $448 — positive gamma regime</div>
+                <div class="quiz-option" data-correct="false">Short SPY aggressively — price is too high</div>
+                <div class="quiz-option" data-correct="false">Close all positions — too close to zero gamma</div>
+                <div class="quiz-option" data-correct="false">Ignore the level — technicals are more important</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q4">
+                <h4>Q4: On expiration Friday, what creates the "pinning" effect?</h4>
+                <div class="quiz-option" data-correct="false">Retail traders buying at round numbers</div>
+                <div class="quiz-option" data-correct="false">Market makers closing for the weekend</div>
+                <div class="quiz-option" data-correct="true">Concentrated gamma at specific strikes forces intense dealer hedging that pulls price to those levels</div>
+                <div class="quiz-option" data-correct="false">The Fed controls prices on Fridays</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q5">
+                <h4>Q5: Why should you NOT buy the dip when price is below zero gamma?</h4>
+                <div class="quiz-option" data-correct="false">Because stocks always go to zero in negative gamma</div>
+                <div class="quiz-option" data-correct="true">Because dealers are selling into the decline, making dips accelerate rather than reverse</div>
+                <div class="quiz-option" data-correct="false">Because options expire worthless below zero gamma</div>
+                <div class="quiz-option" data-correct="false">Because the VIX is always above 30 in negative gamma</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-score" id="quizScore" style="display:none; margin-top: 20px; padding: 20px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; text-align: center;">
+                <h3>Quiz Complete!</h3>
+                <p>You scored <span id="scoreValue" style="color: #8b5cf6; font-weight: bold; font-size: 1.5rem;">0</span> / 5</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        // Copy button
+        function copyCode(btn) {
+            const code = btn.closest('.code-block-wrapper').querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        // Gamma Level Finder Calculator
+        function findGammaLevels() {
+            const spot = parseFloat(document.getElementById('levelSpot').value);
+            const strikes = document.querySelectorAll('.s-strike');
+            const callOIs = document.querySelectorAll('.s-calloi');
+            const putOIs = document.querySelectorAll('.s-putoi');
+            const gammas = document.querySelectorAll('.s-gamma');
+
+            const data = [];
+            for (let i = 0; i < strikes.length; i++) {
+                const strike = parseFloat(strikes[i].value);
+                const callOI = parseFloat(callOIs[i].value);
+                const putOI = parseFloat(putOIs[i].value);
+                const gamma = parseFloat(gammas[i].value);
+
+                if (isNaN(strike) || isNaN(callOI) || isNaN(putOI) || isNaN(gamma)) continue;
+
+                const callGEX = callOI * 100 * gamma * spot;
+                const putGEX = -(putOI * 100 * gamma * spot);
+                const netGEX = callGEX + putGEX;
+
+                data.push({ strike, callGEX, putGEX, netGEX });
+
+                // Update inline display
+                const gexEl = document.getElementById('gex' + i);
+                if (gexEl) {
+                    const val = (netGEX / 1e6).toFixed(1);
+                    gexEl.textContent = (netGEX > 0 ? '+' : '') + val + 'M';
+                    gexEl.style.color = netGEX > 0 ? '#10b981' : '#ef4444';
+                }
+            }
+
+            // Sort by strike
+            data.sort((a, b) => a.strike - b.strike);
+
+            // Find zero gamma (sign change in cumulative)
+            let zeroGamma = null;
+            let cumulative = 0;
+            let prevCum = null;
+            let prevStrike = null;
+            for (const d of data) {
+                cumulative += d.netGEX;
+                if (prevCum !== null && prevCum * cumulative < 0) {
+                    const ratio = Math.abs(prevCum) / (Math.abs(prevCum) + Math.abs(cumulative));
+                    zeroGamma = prevStrike + ratio * (d.strike - prevStrike);
+                    break;
+                }
+                prevCum = cumulative;
+                prevStrike = d.strike;
+            }
+
+            // Find max gamma wall
+            let maxWall = data[0];
+            for (const d of data) {
+                if (Math.abs(d.netGEX) > Math.abs(maxWall.netGEX)) maxWall = d;
+            }
+
+            // Find pin target (highest positive GEX near price)
+            let pin = null;
+            let pinGEX = 0;
+            for (const d of data) {
+                if (d.netGEX > pinGEX && Math.abs(d.strike - spot) / spot < 0.02) {
+                    pin = d.strike;
+                    pinGEX = d.netGEX;
+                }
+            }
+
+            // Buffer
+            const buffer = zeroGamma ? (spot - zeroGamma).toFixed(2) : 'N/A';
+            const bufferPct = zeroGamma ? ((spot - zeroGamma) / spot * 100).toFixed(2) : 'N/A';
+
+            let regime, regimeColor;
+            if (zeroGamma === null || spot > zeroGamma + spot * 0.01) {
+                regime = 'POSITIVE GAMMA (Stable)'; regimeColor = '#10b981';
+            } else if (spot > zeroGamma) {
+                regime = 'NEAR ZERO (Caution)'; regimeColor = '#f59e0b';
+            } else {
+                regime = 'NEGATIVE GAMMA (Volatile)'; regimeColor = '#ef4444';
+            }
+
+            const result = document.getElementById('levelResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h4 style="color: #8b5cf6; margin-bottom: 15px;">Gamma Level Analysis</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong style="color: #f59e0b;">Zero Gamma</strong><br>
+                        <span style="font-size: 1.3rem; color: #f59e0b;">${zeroGamma ? '$' + zeroGamma.toFixed(1) : 'Not Found'}</span>
+                    </div>
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong style="color: #94a3b8;">Buffer</strong><br>
+                        <span style="font-size: 1.3rem; color: ${parseFloat(buffer) > 0 ? '#10b981' : '#ef4444'};">$${buffer} (${bufferPct}%)</span>
+                    </div>
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong style="color: #8b5cf6;">Max Gamma Wall</strong><br>
+                        <span style="font-size: 1.3rem; color: #8b5cf6;">$${maxWall.strike} (${(maxWall.netGEX/1e6).toFixed(1)}M)</span>
+                    </div>
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong style="color: #6366f1;">Pin Target</strong><br>
+                        <span style="font-size: 1.3rem; color: #6366f1;">${pin ? '$' + pin : 'None nearby'}</span>
+                    </div>
+                </div>
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center;">
+                    <strong style="color: ${regimeColor}; font-size: 1.1rem;">${regime}</strong>
+                </div>
+            `;
+        }
+
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart 1: Gamma Map with Price Levels
+            const mapStrikes = ['$440', '$443', '$445', '$448', '$450', '$452', '$455', '$458', '$460'];
+            const mapGEX = [-28.5, -15.0, -8.2, 0, 40.5, 55.0, 72.9, 30.0, 20.2];
+            const spotLine = Array(9).fill(null);
+            spotLine[5] = 70; // Mark current price at $452
+
+            new Chart(document.getElementById('gammaMapChart'), {
+                type: 'bar',
+                data: {
+                    labels: mapStrikes,
+                    datasets: [
+                        {
+                            label: 'Net GEX ($M)',
+                            data: mapGEX,
+                            backgroundColor: mapGEX.map(v => v > 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                            borderColor: mapGEX.map(v => v > 0 ? '#10b981' : '#ef4444'),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'SPY Gamma Map — Zero Gamma at $448, Current Price $452', color: '#f1f5f9' },
+                        annotation: false
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Net GEX ($M)', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Strike Price', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Trading Zone Visualization (Line chart with zones)
+            const days = Array.from({length: 20}, (_, i) => `Day ${i+1}`);
+            const spyPrice = [452, 453, 454, 455, 454, 453, 451, 449, 448, 446, 443, 441, 438, 435, 433, 430, 428, 432, 436, 440];
+            const zeroGammaLine = Array(20).fill(448);
+
+            new Chart(document.getElementById('tradingZoneChart'), {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [
+                        {
+                            label: 'SPY Price',
+                            data: spyPrice,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: spyPrice.map(p => p >= 448 ? '#10b981' : '#ef4444'),
+                            fill: false,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Zero Gamma ($448)',
+                            data: zeroGammaLine,
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            borderDash: [8, 4],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Gamma Wall ($455)',
+                            data: Array(20).fill(455),
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Put Wall ($440)',
+                            data: Array(20).fill(440),
+                            borderColor: '#ef4444',
+                            borderWidth: 1,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'SPY with Zero Gamma & Gamma Walls — Regime Flip on Day 9', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Price ($)', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: Gamma Wall Profile
+            const wallStrikes = ['$435', '$440', '$445', '$450', '$455', '$460'];
+            const callGEX = [12.2, 27.7, 60.8, 202.5, 121.5, 32.4];
+            const putGEX = [-36.5, -43.6, -45.6, -162.0, -48.6, -12.2];
+
+            new Chart(document.getElementById('gammaWallChart'), {
+                type: 'bar',
+                data: {
+                    labels: wallStrikes,
+                    datasets: [
+                        {
+                            label: 'Call GEX ($M) — Support',
+                            data: callGEX,
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Put GEX ($M) — Pressure',
+                            data: putGEX,
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'SPY Gamma Walls: Call GEX (Support) vs Put GEX (Pressure)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'GEX ($M)', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Strike Price', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                const options = question.querySelectorAll('.quiz-option');
+                const feedback = question.querySelector('.quiz-feedback');
+
+                if (question.classList.contains('answered')) return;
+
+                question.classList.add('answered');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+
+                const isCorrect = this.dataset.correct === 'true';
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                if (!isCorrect) {
+                    options.forEach(opt => {
+                        if (opt.dataset.correct === 'true') opt.classList.add('correct');
+                    });
+                }
+
+                feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.';
+                feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+                feedback.style.display = 'block';
+
+                checkQuizComplete();
+            });
+        });
+
+        function checkQuizComplete() {
+            const questions = document.querySelectorAll('.quiz-question');
+            const answered = document.querySelectorAll('.quiz-question.answered');
+
+            if (questions.length === answered.length) {
+                const correct = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length;
+                document.getElementById('scoreValue').textContent = correct;
+                document.getElementById('quizScore').style.display = 'block';
+            }
+        }
+
+        // Scroll animations
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

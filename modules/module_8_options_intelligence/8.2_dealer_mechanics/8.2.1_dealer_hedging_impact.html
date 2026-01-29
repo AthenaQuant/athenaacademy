@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Understand how dealer hedging creates predictable stock price behavior. Learn delta hedging mechanics and gamma environments to improve your stock trading.">
+    <title>8.2.1 Dealer Hedging Impact | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .dealer-eq { font-size: 1.4rem; color: #10b981; text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .hedge-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .hedge-table th, .hedge-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .hedge-table th { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .hedge-table tr:hover { background: rgba(16, 185, 129, 0.1); }
+        .positive-gamma { color: #10b981; font-weight: bold; }
+        .negative-gamma { color: #ef4444; font-weight: bold; }
+        .neutral-gamma { color: #f59e0b; font-weight: bold; }
+        .regime-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .regime-positive { background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; }
+        .regime-negative { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #10b981; }
+        .calc-btn { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); }
+        .calc-result { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        .flow-diagram { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 30px 0; flex-wrap: wrap; }
+        .flow-box { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2)); padding: 18px; border-radius: 12px; text-align: center; min-width: 140px; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .flow-arrow { font-size: 2rem; color: #10b981; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: 1fr; }
+            .flow-diagram { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.2.1</span>
+                    <span class="nav-module-title">Dealer Hedging Impact</span>
+                </div>
+                <a href="8.2.2_gamma_exposure_gex.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.2 Dealer Mechanics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.2.1 Dealer Hedging Impact</span>
+                </div>
+                <h1>How Dealers Hedge &mdash; And Why It Matters for Stock Trading</h1>
+                <p class="module-subtitle">
+                    Dealers are the largest participants in the options market. Their hedging activity creates predictable stock price behavior.
+                    Understanding dealer mechanics is THE most powerful options-derived signal for stock traders.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 50 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Hedge Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Invisible Hand Moving Stocks</div>
+                <p>
+                    You buy SPY at $450 thinking it will rally. Unknown to you, dealers are <strong>short gamma</strong> and must
+                    <strong>SELL stock as it rises</strong>&mdash;creating invisible resistance. Your trade gets stopped out at $451.
+                    If you had checked dealer positioning, you'd know the market was in a <strong>negative gamma regime</strong>
+                    where rallies get sold and dips get bought harder.
+                </p>
+            </div>
+
+            <div class="dealer-eq">
+                Dealer Hedging Flow → Stock Price Behavior → Your Trading Edge
+            </div>
+            <p style="text-align: center; color: #94a3b8;">Dealers move billions in stock daily just to hedge their options books</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Largest Market Participant</h4>
+                    <p>Options dealers (market makers) hedge tens of billions in stock daily. Their flow dwarfs most institutional orders.</p>
+                </div>
+                <div class="card">
+                    <h4>Predictable Behavior</h4>
+                    <p>Unlike discretionary traders, dealers MUST hedge mechanically. Their actions are formulaic and predictable.</p>
+                </div>
+                <div class="card">
+                    <h4>Price Stabilizer or Destabilizer</h4>
+                    <p>Depending on gamma, dealers either dampen volatility (positive gamma) or amplify it (negative gamma).</p>
+                </div>
+                <div class="card">
+                    <h4>Strategy Selector</h4>
+                    <p>Knowing the gamma regime tells you whether to trade mean reversion or momentum&mdash;the #1 decision in trading.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">Real Example: March 2020 COVID Crash</div>
+                <p>
+                    As SPY fell from $340 to $220, dealers were massively <strong>short gamma</strong>. Each drop forced them to
+                    <strong>sell more stock</strong>, accelerating the crash. The negative gamma feedback loop turned a 10% correction
+                    into a 35% crash in weeks. Traders who understood this reduced exposure early. Those who didn't got crushed
+                    trying to "buy the dip" into a negative gamma avalanche.
+                </p>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$50B+</div>
+                    <div class="metric-label">Daily Dealer Hedging</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">70%</div>
+                    <div class="metric-label">Of SPY Options Market-Made</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2x</div>
+                    <div class="metric-label">Vol in Neg Gamma</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">#1</div>
+                    <div class="metric-label">Signal for Regime</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <h3>Who Are Dealers?</h3>
+            <p>
+                Market makers (dealers) are firms like Citadel Securities, Susquehanna, and Wolverine that provide liquidity in options markets.
+                When you buy a call option, a dealer likely sold it to you. They don't have a directional opinion&mdash;they profit from
+                the bid-ask spread. But to stay market-neutral, they must <strong>hedge</strong> by trading the underlying stock.
+            </p>
+
+            <h3>The Hedging Feedback Loop</h3>
+            <p>
+                Dealers are typically <strong>short options</strong> (short gamma). This means they sold calls and puts to customers.
+                To manage risk, they delta-hedge by buying or selling stock as prices move. This creates a powerful feedback loop:
+            </p>
+
+            <div class="flow-diagram">
+                <div class="flow-box">
+                    <strong>Dealer Sells Calls</strong><br><small>Gets premium, takes risk</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">
+                    <strong>Stock Rallies</strong><br><small>Call delta increases</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">
+                    <strong>Dealer Must Sell Stock</strong><br><small>Hedge more delta</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">
+                    <strong>Creates Resistance</strong><br><small>Suppresses rally</small>
+                </div>
+            </div>
+
+            <div class="regime-card regime-positive">
+                <h4>Positive Gamma Environment (Dealers Long Gamma)</h4>
+                <p><strong>Dealer behavior:</strong> Buy dips, sell rallies (stabilizing)</p>
+                <p><strong>Market behavior:</strong> Low volatility, range-bound, mean reversion works</p>
+                <p><strong>Analogy:</strong> Like a spring pulling price back to center. The further it stretches, the harder it snaps back.</p>
+                <p><strong>Trading strategy:</strong> Fade extremes, sell premium, tight stops, range strategies</p>
+            </div>
+
+            <div class="regime-card regime-negative">
+                <h4>Negative Gamma Environment (Dealers Short Gamma)</h4>
+                <p><strong>Dealer behavior:</strong> Sell dips, buy rallies (destabilizing)</p>
+                <p><strong>Market behavior:</strong> High volatility, trending, momentum works</p>
+                <p><strong>Analogy:</strong> Like pushing a ball downhill. The further it goes, the faster it accelerates.</p>
+                <p><strong>Trading strategy:</strong> Follow trends, buy breakouts, wide stops, momentum strategies</p>
+            </div>
+
+            <!-- SVG Diagram: Positive vs Negative Gamma -->
+            <div style="margin: 30px 0;">
+                <svg viewBox="0 0 800 320" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <!-- Positive Gamma Side -->
+                    <rect x="10" y="10" width="380" height="300" rx="16" fill="rgba(16, 185, 129, 0.1)" stroke="#10b981" stroke-width="2"/>
+                    <text x="200" y="45" text-anchor="middle" fill="#10b981" font-size="16" font-weight="bold">POSITIVE GAMMA</text>
+                    <text x="200" y="70" text-anchor="middle" fill="#94a3b8" font-size="12">Dealers Buy Dips, Sell Rallies</text>
+                    <!-- Spring analogy -->
+                    <line x1="100" y1="160" x2="300" y2="160" stroke="#475569" stroke-width="2" stroke-dasharray="6"/>
+                    <text x="200" y="155" text-anchor="middle" fill="#94a3b8" font-size="11">Equilibrium</text>
+                    <!-- Price oscillates around center -->
+                    <path d="M 80 160 Q 120 110, 160 160 Q 200 210, 240 160 Q 280 130, 320 160" fill="none" stroke="#10b981" stroke-width="3"/>
+                    <circle cx="320" cy="160" r="6" fill="#10b981"/>
+                    <!-- Arrows pulling back -->
+                    <line x1="140" y1="120" x2="160" y2="145" stroke="#10b981" stroke-width="2" marker-end="url(#arrowG)"/>
+                    <line x1="220" y1="200" x2="200" y2="175" stroke="#10b981" stroke-width="2" marker-end="url(#arrowG)"/>
+                    <text x="200" y="250" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Range-Bound</text>
+                    <text x="200" y="270" text-anchor="middle" fill="#94a3b8" font-size="11">Low Vol • Mean Reversion</text>
+                    <text x="200" y="290" text-anchor="middle" fill="#94a3b8" font-size="11">Fade Moves • Tight Stops</text>
+                    <!-- Negative Gamma Side -->
+                    <rect x="410" y="10" width="380" height="300" rx="16" fill="rgba(239, 68, 68, 0.1)" stroke="#ef4444" stroke-width="2"/>
+                    <text x="600" y="45" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="bold">NEGATIVE GAMMA</text>
+                    <text x="600" y="70" text-anchor="middle" fill="#94a3b8" font-size="12">Dealers Sell Dips, Buy Rallies</text>
+                    <!-- Accelerating move -->
+                    <path d="M 480 120 L 500 130 L 530 150 L 570 185 L 620 230 L 680 270" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <circle cx="680" cy="270" r="6" fill="#ef4444"/>
+                    <!-- Arrows pushing away -->
+                    <line x1="540" y1="140" x2="555" y2="160" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowR)"/>
+                    <line x1="600" y1="190" x2="620" y2="215" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowR)"/>
+                    <text x="600" y="250" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="600">Trending / Volatile</text>
+                    <text x="600" y="270" text-anchor="middle" fill="#94a3b8" font-size="11">High Vol • Momentum</text>
+                    <text x="600" y="290" text-anchor="middle" fill="#94a3b8" font-size="11">Follow Trends • Wide Stops</text>
+                    <defs>
+                        <marker id="arrowG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/></marker>
+                        <marker id="arrowR" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/></marker>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <h3>Delta (&#916;): Option Price Sensitivity</h3>
+            <div class="dealer-eq">
+                &#916; = &#8706;V / &#8706;S &nbsp;&nbsp;|&nbsp;&nbsp; Call &#916; &#8712; [0, 1] &nbsp;&nbsp;|&nbsp;&nbsp; Put &#916; &#8712; [-1, 0]
+            </div>
+            <p>
+                Delta measures how much an option's price changes per $1 move in the stock. A call with delta 0.50 gains $0.50
+                when the stock rises $1. Dealers use delta to calculate how many shares they need to hedge.
+            </p>
+
+            <table class="hedge-table">
+                <thead>
+                    <tr><th>Moneyness</th><th>Call Delta</th><th>Put Delta</th><th>Interpretation</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Deep ITM</td><td>0.80 - 1.00</td><td>-0.80 to -1.00</td><td>Behaves like stock</td></tr>
+                    <tr><td>ATM</td><td>~0.50</td><td>~-0.50</td><td>50/50 chance of expiring ITM</td></tr>
+                    <tr><td>OTM</td><td>0.05 - 0.30</td><td>-0.05 to -0.30</td><td>Low probability, high leverage</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Gamma (&#915;): Rate of Change of Delta</h3>
+            <div class="dealer-eq">
+                &#915; = &#8706;&#916; / &#8706;S = &#8706;&sup2;V / &#8706;S&sup2; &nbsp;&nbsp;|&nbsp;&nbsp; Highest at ATM, near expiration
+            </div>
+            <p>
+                Gamma tells you how much delta changes as the stock moves. If gamma is 0.05, then a $1 stock move changes
+                delta by 0.05. This is what forces dealers to continuously re-hedge, creating flow in the stock market.
+            </p>
+
+            <h3>Dealer Hedge Calculation</h3>
+            <div class="dealer-eq">
+                Shares to Hedge = Contracts &times; 100 &times; Delta
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">Worked Example: Dealer Short 10,000 SPY Calls</div>
+                <p>
+                    <strong>Position:</strong> Short 10,000 SPY $450 calls (ATM)<br>
+                    <strong>Delta:</strong> 0.50 | <strong>Gamma:</strong> 0.05<br><br>
+                    <strong>Initial hedge:</strong> 10,000 &times; 100 &times; 0.50 = <span class="positive-gamma">500,000 SPY shares to sell</span><br><br>
+                    As SPY rallies $1 to $451:<br>
+                    New delta = 0.50 + 0.05 = 0.55<br>
+                    New hedge = 10,000 &times; 100 &times; 0.55 = 550,000 shares<br>
+                    <strong>Dealer must sell 50,000 additional shares</strong> &rarr; Creates selling pressure / resistance
+                </p>
+            </div>
+
+            <h3>Hedging Flow at Each Price Level</h3>
+            <table class="hedge-table">
+                <thead>
+                    <tr><th>SPY Price</th><th>Delta</th><th>Total Hedge (shares)</th><th>Incremental Flow</th><th>Direction</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$448</td><td>0.40</td><td>400,000</td><td>&mdash;</td><td>&mdash;</td></tr>
+                    <tr><td>$449</td><td>0.45</td><td>450,000</td><td>50,000</td><td class="negative-gamma">SELL</td></tr>
+                    <tr><td>$450</td><td>0.50</td><td>500,000</td><td>50,000</td><td class="negative-gamma">SELL</td></tr>
+                    <tr><td>$451</td><td>0.55</td><td>550,000</td><td>50,000</td><td class="negative-gamma">SELL</td></tr>
+                    <tr><td>$452</td><td>0.60</td><td>600,000</td><td>50,000</td><td class="negative-gamma">SELL</td></tr>
+                    <tr><td>$453</td><td>0.65</td><td>650,000</td><td>50,000</td><td class="negative-gamma">SELL</td></tr>
+                </tbody>
+            </table>
+            <p style="color: #94a3b8; text-align: center;">
+                Each $1 rally forces dealers to sell 50,000 more shares &mdash; continuous resistance
+            </p>
+        </section>
+
+        <!-- PART 4: NUMERICAL EXAMPLE -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Complete Numerical Example</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Scenario: SPY Dealer Hedging Simulation</div>
+                <p><strong>Setup:</strong> Dealer is short 10,000 SPY $450 calls and short 8,000 SPY $445 puts</p>
+            </div>
+
+            <h3>Step 1: Call Hedging (Short 10,000 $450 Calls)</h3>
+            <p>
+                <strong>Current SPY:</strong> $450 | <strong>Call &#916;:</strong> 0.50 | <strong>Call &#915;:</strong> 0.05<br>
+                Initial hedge: 10,000 &times; 100 &times; 0.50 = <strong>500,000 shares (SHORT)</strong>
+            </p>
+
+            <h3>Step 2: Put Hedging (Short 8,000 $445 Puts)</h3>
+            <p>
+                <strong>Put &#916;:</strong> -0.30 | <strong>Put &#915;:</strong> 0.04<br>
+                Initial hedge: 8,000 &times; 100 &times; (-0.30) = <strong>-240,000 shares (BUY 240,000)</strong>
+            </p>
+
+            <h3>Step 3: Net Hedge</h3>
+            <p>
+                Net position: -500,000 + 240,000 = <strong>-260,000 shares (net SHORT)</strong><br>
+                Net gamma exposure: -(10,000 &times; 100 &times; 0.05) + (8,000 &times; 100 &times; 0.04) = -50,000 + 32,000 = <strong>-18,000</strong>
+            </p>
+
+            <div class="regime-card regime-negative">
+                <h4>Interpretation: Negative Gamma &rarr; Destabilizing</h4>
+                <p>
+                    Net gamma is <strong>-18,000</strong>. For every $1 SPY rallies, dealers must sell ~18,000 additional shares.
+                    For every $1 SPY falls, dealers must buy ~18,000 additional shares. This <strong>amplifies moves in both directions</strong>.
+                </p>
+            </div>
+
+            <h3>Step 4: Rally Scenario (SPY $450 &rarr; $455)</h3>
+            <table class="hedge-table">
+                <thead>
+                    <tr><th>SPY</th><th>Call &#916;</th><th>Put &#916;</th><th>Net Hedge</th><th>Incremental</th><th>Impact</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$450</td><td>0.50</td><td>-0.30</td><td>-260,000</td><td>&mdash;</td><td>&mdash;</td></tr>
+                    <tr><td>$451</td><td>0.55</td><td>-0.26</td><td>-342,000</td><td class="negative-gamma">-82,000 (SELL)</td><td>Resistance</td></tr>
+                    <tr><td>$452</td><td>0.60</td><td>-0.22</td><td>-424,000</td><td class="negative-gamma">-82,000 (SELL)</td><td>More resistance</td></tr>
+                    <tr><td>$453</td><td>0.65</td><td>-0.18</td><td>-506,000</td><td class="negative-gamma">-82,000 (SELL)</td><td>Heavy resistance</td></tr>
+                    <tr><td>$454</td><td>0.70</td><td>-0.14</td><td>-588,000</td><td class="negative-gamma">-82,000 (SELL)</td><td>Rally stalls</td></tr>
+                    <tr><td>$455</td><td>0.75</td><td>-0.10</td><td>-670,000</td><td class="negative-gamma">-82,000 (SELL)</td><td>Capped</td></tr>
+                </tbody>
+            </table>
+            <p style="color:#94a3b8;">Over a $5 rally, dealers sold <strong>410,000 additional shares</strong> of SPY&mdash;massive headwind.</p>
+
+            <!-- Chart: Hedging Flow Simulation -->
+            <div class="chart-container">
+                <canvas id="hedgingFlowChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Production-Quality Dealer Hedging Analyzer</div>
+                <p>Complete Python implementation for simulating and analyzing dealer hedging behavior on any stock or ETF.</p>
+            </div>
+
+            <div class="code-block-wrapper">
+                <div class="code-block-header">
+                    <span class="code-lang">Python</span>
+                    <span class="code-title">dealer_hedging_analyzer.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+
+class GammaRegime(Enum):
+    """Market regime based on dealer gamma exposure."""
+    POSITIVE = "POSITIVE_GAMMA"
+    NEGATIVE = "NEGATIVE_GAMMA"
+    NEUTRAL = "NEUTRAL"
+
+
+@dataclass
+class OptionPosition:
+    """Represents a dealer's options position."""
+    contracts: int          # Positive = long, negative = short
+    strike: float
+    option_type: str        # 'call' or 'put'
+    delta: float
+    gamma: float
+    open_interest: int = 0  # Total open interest at this strike
+
+
+@dataclass
+class HedgeResult:
+    """Result of dealer hedge calculation."""
+    shares: float
+    direction: str          # 'BUY' or 'SELL'
+    dollar_amount: float
+    position_type: str      # 'SHORT' or 'LONG'
+    gamma_exposure: float
+
+
+def calculate_dealer_hedge(
+    position: OptionPosition,
+    stock_price: float
+) -> HedgeResult:
+    """
+    Calculate dealer's required stock hedge for a single position.
+
+    Parameters
+    ----------
+    position : OptionPosition
+        Dealer's options position
+    stock_price : float
+        Current stock price
+
+    Returns
+    -------
+    HedgeResult
+        Hedge details including shares, direction, dollar amount
+    """
+    # Shares needed = contracts × 100 × delta
+    shares_to_hedge = position.contracts * 100 * position.delta
+
+    # Gamma exposure for this position
+    gamma_exp = position.contracts * 100 * position.gamma
+
+    return HedgeResult(
+        shares=abs(shares_to_hedge),
+        direction='SELL' if shares_to_hedge &lt; 0 else 'BUY',
+        dollar_amount=abs(shares_to_hedge) * stock_price,
+        position_type='SHORT' if position.contracts &lt; 0 else 'LONG',
+        gamma_exposure=gamma_exp
+    )
+
+
+def simulate_dealer_hedging(
+    initial_position: OptionPosition,
+    price_range: np.ndarray
+) -> pd.DataFrame:
+    """
+    Simulate dealer hedging flow across a price range.
+
+    Parameters
+    ----------
+    initial_position : OptionPosition
+        Starting dealer position
+    price_range : np.ndarray
+        Array of stock prices to simulate
+
+    Returns
+    -------
+    pd.DataFrame
+        Hedging flow at each price level
+    """
+    results = []
+    base_price = price_range[0]
+    previous_shares = None
+
+    for price in price_range:
+        price_change = price - base_price
+
+        # Delta changes with gamma
+        if initial_position.option_type == 'call':
+            new_delta = np.clip(
+                initial_position.delta + initial_position.gamma * price_change,
+                0.0, 1.0
+            )
+        else:
+            new_delta = np.clip(
+                initial_position.delta + initial_position.gamma * price_change,
+                -1.0, 0.0
+            )
+
+        # Required hedge
+        shares_needed = initial_position.contracts * 100 * new_delta
+
+        if previous_shares is None:
+            delta_shares = 0.0
+        else:
+            delta_shares = shares_needed - previous_shares
+
+        results.append({
+            'price': price,
+            'delta': round(new_delta, 4),
+            'total_hedge': round(shares_needed, 0),
+            'incremental_flow': round(delta_shares, 0),
+            'flow_direction': 'SELL' if delta_shares &lt; 0 else 'BUY',
+            'flow_shares': abs(round(delta_shares, 0))
+        })
+
+        previous_shares = shares_needed
+
+    return pd.DataFrame(results)
+
+
+def estimate_dealer_impact(
+    options_chain: pd.DataFrame,
+    stock_price: float,
+    assume_dealer_short: bool = True
+) -> Dict[str, any]:
+    """
+    Estimate aggregate dealer hedging impact from full options chain.
+
+    Parameters
+    ----------
+    options_chain : pd.DataFrame
+        Columns: strike, type, open_interest, delta, gamma
+    stock_price : float
+        Current stock price
+    assume_dealer_short : bool
+        Assume dealers are net short options (typical)
+
+    Returns
+    -------
+    Dict
+        Aggregate positioning, regime, and strategy recommendation
+    """
+    dealer_sign = -1 if assume_dealer_short else 1
+
+    total_delta = 0.0
+    total_gamma = 0.0
+
+    for _, row in options_chain.iterrows():
+        contracts = row['open_interest'] * dealer_sign
+        total_delta += contracts * 100 * row['delta']
+        total_gamma += contracts * 100 * row['gamma']
+
+    # Determine regime
+    if total_gamma &lt; -1_000_000:
+        regime = GammaRegime.NEGATIVE
+        behavior = "Dealers amplify moves (sell dips, buy rallies)"
+        strategy = "Follow trends, momentum, wider stops"
+    elif total_gamma &gt; 1_000_000:
+        regime = GammaRegime.POSITIVE
+        behavior = "Dealers dampen moves (buy dips, sell rallies)"
+        strategy = "Fade extremes, mean reversion, tight stops"
+    else:
+        regime = GammaRegime.NEUTRAL
+        behavior = "Mixed dealer flow, no dominant regime"
+        strategy = "Use other signals, balanced approach"
+
+    return {
+        'total_delta_exposure': round(total_delta, 0),
+        'total_gamma_exposure': round(total_gamma, 0),
+        'gamma_regime': regime.value,
+        'dealer_behavior': behavior,
+        'recommended_strategy': strategy,
+        'shares_hedged': abs(round(total_delta, 0)),
+        'dollar_hedged': abs(round(total_delta * stock_price, 0))
+    }
+
+
+def classify_gamma_regime(
+    gamma_exposure: float,
+    threshold: float = 1_000_000
+) -> Tuple[GammaRegime, str]:
+    """
+    Classify the current gamma regime.
+
+    Parameters
+    ----------
+    gamma_exposure : float
+        Net gamma exposure value
+    threshold : float
+        Threshold for positive/negative classification
+
+    Returns
+    -------
+    Tuple[GammaRegime, str]
+        Regime classification and trading recommendation
+    """
+    if gamma_exposure &gt; threshold:
+        return (
+            GammaRegime.POSITIVE,
+            "STABLE: Range-bound expected. "
+            "Fade moves, sell premium, tight stops."
+        )
+    elif gamma_exposure &lt; -threshold:
+        return (
+            GammaRegime.NEGATIVE,
+            "VOLATILE: Trending expected. "
+            "Follow momentum, buy breakouts, wide stops."
+        )
+    else:
+        return (
+            GammaRegime.NEUTRAL,
+            "MIXED: No clear regime. "
+            "Use additional signals for confirmation."
+        )
+
+
+# ─── EXAMPLE USAGE ────────────────────────────────────
+if __name__ == "__main__":
+    # Example 1: Single position hedge
+    dealer_pos = OptionPosition(
+        contracts=-10_000,
+        strike=450,
+        option_type='call',
+        delta=0.50,
+        gamma=0.05
+    )
+
+    hedge = calculate_dealer_hedge(dealer_pos, stock_price=450)
+    print("═══ Dealer Hedge Required ═══")
+    print(f"  Direction : {hedge.direction}")
+    print(f"  Shares    : {hedge.shares:,.0f}")
+    print(f"  Dollar Amt: ${hedge.dollar_amount:,.0f}")
+    print(f"  Gamma Exp : {hedge.gamma_exposure:,.0f}")
+
+    # Example 2: Simulate hedging across price range
+    prices = np.arange(445, 456, 0.5)
+    flow = simulate_dealer_hedging(dealer_pos, prices)
+    print("\n═══ Hedging Flow Simulation ═══")
+    print(flow.to_string(index=False))
+
+    # Example 3: Full options chain analysis
+    chain = pd.DataFrame({
+        'strike': [440, 445, 450, 455, 460,
+                   440, 445, 450, 455, 460],
+        'type':   ['call']*5 + ['put']*5,
+        'open_interest': [50000, 75000, 100000, 60000, 30000,
+                          25000, 40000, 80000, 50000, 20000],
+        'delta':  [0.70, 0.60, 0.50, 0.35, 0.20,
+                   -0.30, -0.40, -0.50, -0.65, -0.80],
+        'gamma':  [0.03, 0.04, 0.05, 0.04, 0.02,
+                   0.03, 0.04, 0.05, 0.04, 0.02]
+    })
+
+    impact = estimate_dealer_impact(chain, stock_price=450)
+    print("\n═══ Aggregate Dealer Impact ═══")
+    print(f"  Regime     : {impact['gamma_regime']}")
+    print(f"  Gamma Exp  : {impact['total_gamma_exposure']:,.0f}")
+    print(f"  Behavior   : {impact['dealer_behavior']}")
+    print(f"  Strategy   : {impact['recommended_strategy']}")
+    print(f"  Shares     : {impact['shares_hedged']:,.0f}")
+    print(f"  Dollar Exp : ${impact['dollar_hedged']:,.0f}")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>How to Use Dealer Hedging in Your Trading</h3>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>1. Pre-Trade Regime Check</h4>
+                    <p>Before ANY trade, check the gamma environment. Positive gamma = fade moves. Negative gamma = follow trends. This one check prevents most losing strategies.</p>
+                </div>
+                <div class="card">
+                    <h4>2. Day Trading Adjustments</h4>
+                    <p>Positive gamma: Buy pullbacks to VWAP, sell pops. Expect 0.3-0.5% daily range. Negative gamma: Trade breakouts, expect 1-2%+ daily range.</p>
+                </div>
+                <div class="card">
+                    <h4>3. Swing Trading Position Sizing</h4>
+                    <p>Negative gamma = reduce size by 30-50%. Moves are larger and more violent. Positive gamma = full size with tight stops.</p>
+                </div>
+                <div class="card">
+                    <h4>4. Risk Management</h4>
+                    <p>Negative gamma + market falling = crash risk. Reduce all long exposure. Positive gamma + market dipping = buying opportunity (dealers provide support).</p>
+                </div>
+            </div>
+
+            <h3>Real Example: SPY Gamma Regime Trading</h3>
+            <div class="info-box">
+                <div class="info-box-title">Example Workflow</div>
+                <p>
+                    <strong>Step 1:</strong> Check GEX dashboard &rarr; SPY GEX is +$5B (positive gamma)<br>
+                    <strong>Step 2:</strong> SPY rallies from $450 to $453 in morning &rarr; Dealers sell into rally<br>
+                    <strong>Step 3:</strong> Strategy: Short SPY at $453, target $450, stop $454.50<br>
+                    <strong>Result:</strong> SPY fades back to $450 by close (dealers absorbed the rally)<br><br>
+                    <strong>Opposite scenario:</strong> GEX is -$3B (negative gamma). SPY breaks below $445 support.
+                    Do NOT buy the dip&mdash;dealers are selling into the decline, accelerating it. Wait for gamma to flip positive.
+                </p>
+            </div>
+
+            <!-- Chart: Gamma Regime and Price Behavior -->
+            <div class="chart-container">
+                <canvas id="regimeChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+
+            <table class="hedge-table">
+                <thead>
+                    <tr><th style="width:45%">&#10060; Mistake</th><th style="width:55%">&#9989; Correct Approach</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ignoring gamma regime entirely</td>
+                        <td>Check gamma BEFORE every trade. It determines which strategy works.</td>
+                    </tr>
+                    <tr>
+                        <td>Using mean reversion in negative gamma</td>
+                        <td>Negative gamma = momentum environment. Mean reversion gets crushed.</td>
+                    </tr>
+                    <tr>
+                        <td>Using momentum in positive gamma</td>
+                        <td>Positive gamma = range-bound. Breakout trades get whipsawed.</td>
+                    </tr>
+                    <tr>
+                        <td>Same position size in all regimes</td>
+                        <td>Reduce size 30-50% in negative gamma due to higher volatility.</td>
+                    </tr>
+                    <tr>
+                        <td>Checking only daily gamma, ignoring 0DTE</td>
+                        <td>0DTE options have massive gamma. Check intraday gamma for day trades.</td>
+                    </tr>
+                    <tr>
+                        <td>Using dealer flow as sole signal</td>
+                        <td>Combine with price action, volume, and IV for confirmation.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 8: SUMMARY & CHEAT SHEET -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Cheat Sheet</h2>
+
+            <div class="regime-card regime-positive">
+                <h4>Positive Gamma (GEX &gt; 0)</h4>
+                <p><strong>Dealers:</strong> Buy dips, sell rallies (stabilizing)</p>
+                <p><strong>Market:</strong> Range-bound, low volatility</p>
+                <p><strong>Strategy:</strong> Fade extremes, sell premium, tight stops</p>
+                <p><strong>Position Size:</strong> Normal to full</p>
+            </div>
+
+            <div class="regime-card regime-negative">
+                <h4>Negative Gamma (GEX &lt; 0)</h4>
+                <p><strong>Dealers:</strong> Sell dips, buy rallies (destabilizing)</p>
+                <p><strong>Market:</strong> Trending, high volatility</p>
+                <p><strong>Strategy:</strong> Follow trends, buy breakouts, wide stops</p>
+                <p><strong>Position Size:</strong> Reduce 30-50%</p>
+            </div>
+
+            <h3>Key Formulas</h3>
+            <div class="dealer-eq">
+                Dealer Hedge = Contracts &times; 100 &times; Delta
+            </div>
+            <div class="dealer-eq">
+                New Delta = Old Delta + (Gamma &times; Price Change)
+            </div>
+            <div class="dealer-eq">
+                Net Gamma Exposure = &Sigma;(OI &times; 100 &times; Gamma) for all strikes
+            </div>
+
+            <h3>Trading Wisdom</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Dealers Are Mechanical</h4>
+                    <p>Their hedging is formulaic. Positive gamma = buy support, sell resistance. Negative gamma = amplify every move.</p>
+                </div>
+                <div class="card">
+                    <h4>Gamma Regime = Strategy</h4>
+                    <p>The single most important pre-trade check. It tells you whether to fade or follow the move.</p>
+                </div>
+                <div class="card">
+                    <h4>Crashes Are Gamma Events</h4>
+                    <p>Most crashes accelerate because of negative gamma feedback loops. Dealers selling accelerates the selloff.</p>
+                </div>
+                <div class="card">
+                    <h4>Combine Signals</h4>
+                    <p>Gamma regime + price levels + IV + volume = complete picture. Never use one signal alone.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive Dealer Hedge Calculator</h2>
+
+            <div class="calculator-section">
+                <h3>Dealer Hedging Simulator</h3>
+                <p style="color: #94a3b8; margin-bottom: 15px;">Calculate how many shares a dealer must buy or sell to hedge their options position.</p>
+                <div class="calc-grid">
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Contracts (negative = short)</label>
+                        <input type="number" id="calcContracts" class="calc-input" value="-10000" placeholder="-10000">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Option Type</label>
+                        <select id="calcType" class="calc-input">
+                            <option value="call">Call</option>
+                            <option value="put">Put</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Current Delta</label>
+                        <input type="number" id="calcDelta" class="calc-input" step="0.01" value="0.50" placeholder="0.50">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Gamma</label>
+                        <input type="number" id="calcGamma" class="calc-input" step="0.01" value="0.05" placeholder="0.05">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Stock Price ($)</label>
+                        <input type="number" id="calcPrice" class="calc-input" value="450" placeholder="450">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Price Move ($)</label>
+                        <input type="number" id="calcMove" class="calc-input" step="0.5" value="1" placeholder="1">
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculateHedge()">Calculate Dealer Hedge</button>
+                <div class="calc-result" id="hedgeResult" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- CHART: Dealer Behavior Visualization -->
+        <section class="content-section fade-in">
+            <h2>Dealer Hedging Flow Visualization</h2>
+            <p style="color: #94a3b8;">How dealer hedging creates resistance (short gamma) or support (long gamma) at different price levels.</p>
+            <div class="chart-container">
+                <canvas id="dealerBehaviorChart"></canvas>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+
+            <div class="quiz-question" id="q1">
+                <h4>Q1: When dealers are SHORT gamma and the stock rallies, what must they do?</h4>
+                <div class="quiz-option" data-correct="false">Buy more stock (adding to the rally)</div>
+                <div class="quiz-option" data-correct="true">Sell more stock (creating resistance)</div>
+                <div class="quiz-option" data-correct="false">Do nothing (no hedge needed)</div>
+                <div class="quiz-option" data-correct="false">Buy put options to hedge</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q2">
+                <h4>Q2: In a POSITIVE gamma environment, which trading strategy works best?</h4>
+                <div class="quiz-option" data-correct="false">Momentum / trend following</div>
+                <div class="quiz-option" data-correct="false">Breakout trading</div>
+                <div class="quiz-option" data-correct="true">Mean reversion / fading extremes</div>
+                <div class="quiz-option" data-correct="false">Buying far OTM options</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q3">
+                <h4>Q3: A dealer is short 5,000 SPY calls with delta 0.60. How many shares must they sell to hedge?</h4>
+                <div class="quiz-option" data-correct="false">5,000 shares</div>
+                <div class="quiz-option" data-correct="false">30,000 shares</div>
+                <div class="quiz-option" data-correct="true">300,000 shares</div>
+                <div class="quiz-option" data-correct="false">3,000,000 shares</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q4">
+                <h4>Q4: What caused the March 2020 crash to accelerate so rapidly?</h4>
+                <div class="quiz-option" data-correct="false">Positive gamma forced dealers to buy dips</div>
+                <div class="quiz-option" data-correct="true">Negative gamma forced dealers to sell into the decline</div>
+                <div class="quiz-option" data-correct="false">Dealers stopped hedging entirely</div>
+                <div class="quiz-option" data-correct="false">Gamma was neutral throughout</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q5">
+                <h4>Q5: In negative gamma, what should you do with your position sizing?</h4>
+                <div class="quiz-option" data-correct="false">Increase size (bigger moves = bigger profits)</div>
+                <div class="quiz-option" data-correct="true">Reduce size by 30-50% (higher volatility risk)</div>
+                <div class="quiz-option" data-correct="false">Keep the same size regardless</div>
+                <div class="quiz-option" data-correct="false">Close all positions immediately</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-score" id="quizScore" style="display:none; margin-top: 20px; padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; text-align: center;">
+                <h3>Quiz Complete!</h3>
+                <p>You scored <span id="scoreValue" style="color: #10b981; font-weight: bold; font-size: 1.5rem;">0</span> / 5</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        // Copy button
+        function copyCode(btn) {
+            const code = btn.closest('.code-block-wrapper').querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        // Calculator
+        function calculateHedge() {
+            const contracts = parseFloat(document.getElementById('calcContracts').value);
+            const type = document.getElementById('calcType').value;
+            const delta = parseFloat(document.getElementById('calcDelta').value);
+            const gamma = parseFloat(document.getElementById('calcGamma').value);
+            const price = parseFloat(document.getElementById('calcPrice').value);
+            const move = parseFloat(document.getElementById('calcMove').value);
+
+            // Current hedge
+            const currentHedge = contracts * 100 * delta;
+            const currentDir = currentHedge < 0 ? 'SELL' : 'BUY';
+
+            // After move
+            let newDelta = delta + (gamma * move);
+            if (type === 'call') newDelta = Math.max(0, Math.min(1, newDelta));
+            else newDelta = Math.max(-1, Math.min(0, newDelta));
+
+            const newHedge = contracts * 100 * newDelta;
+            const incrementalFlow = newHedge - currentHedge;
+            const flowDir = incrementalFlow < 0 ? 'SELL' : 'BUY';
+
+            const gammaExp = contracts * 100 * gamma;
+            const regime = gammaExp < 0 ? 'NEGATIVE GAMMA (Destabilizing)' : 'POSITIVE GAMMA (Stabilizing)';
+            const regimeColor = gammaExp < 0 ? '#ef4444' : '#10b981';
+
+            const result = document.getElementById('hedgeResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h4 style="color: #10b981; margin-bottom: 10px;">Dealer Hedge Analysis</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div><strong style="color: #94a3b8;">Current Hedge:</strong><br>${currentDir} ${Math.abs(currentHedge).toLocaleString()} shares</div>
+                    <div><strong style="color: #94a3b8;">Dollar Amount:</strong><br>$${(Math.abs(currentHedge) * price).toLocaleString()}</div>
+                    <div><strong style="color: #94a3b8;">After $${move} Move:</strong><br>New Delta: ${newDelta.toFixed(4)}</div>
+                    <div><strong style="color: #94a3b8;">Incremental Flow:</strong><br>${flowDir} ${Math.abs(incrementalFlow).toLocaleString()} shares</div>
+                </div>
+                <div style="margin-top: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center;">
+                    <strong style="color: ${regimeColor};">${regime}</strong><br>
+                    <span style="color: #94a3b8;">Gamma Exposure: ${gammaExp.toLocaleString()}</span>
+                </div>
+            `;
+        }
+
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart 1: Hedging Flow Simulation
+            const prices = [];
+            const flow = [];
+            const cumulative = [];
+            let total = 0;
+            const baseDelta = 0.50;
+            const gamma = 0.05;
+            const contracts = -10000;
+
+            for (let p = 445; p <= 455; p += 0.5) {
+                prices.push('$' + p);
+                const priceChange = p - 445;
+                const delta = Math.min(1, baseDelta + gamma * (p - 450));
+                const effectiveDelta = Math.max(0, delta);
+                const hedge = contracts * 100 * effectiveDelta;
+                if (prices.length === 1) {
+                    flow.push(0);
+                } else {
+                    const prevDelta = Math.max(0, Math.min(1, baseDelta + gamma * (p - 0.5 - 450)));
+                    const prevHedge = contracts * 100 * prevDelta;
+                    const incremental = hedge - prevHedge;
+                    flow.push(Math.round(incremental));
+                    total += incremental;
+                }
+                cumulative.push(Math.round(hedge));
+            }
+
+            new Chart(document.getElementById('hedgingFlowChart'), {
+                type: 'bar',
+                data: {
+                    labels: prices,
+                    datasets: [
+                        {
+                            label: 'Incremental Flow (shares)',
+                            data: flow,
+                            backgroundColor: flow.map(f => f < 0 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(16, 185, 129, 0.7)'),
+                            borderColor: flow.map(f => f < 0 ? '#ef4444' : '#10b981'),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Total Hedge Position (shares)',
+                            data: cumulative,
+                            type: 'line',
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'Dealer Hedging Flow: Short 10K SPY Calls (Negative Gamma)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            position: 'left',
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Incremental Shares', color: '#94a3b8' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: { color: '#6366f1' },
+                            grid: { display: false },
+                            title: { display: true, text: 'Total Hedge', color: '#6366f1' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'SPY Price', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Gamma Regime and Price Behavior
+            const days = Array.from({length: 30}, (_, i) => `Day ${i+1}`);
+            const posGammaPrice = [450];
+            const negGammaPrice = [450];
+            for (let i = 1; i < 30; i++) {
+                const shock = (Math.random() - 0.5) * 4;
+                // Positive gamma: price reverts
+                const posMove = shock * 0.5 - (posGammaPrice[i-1] - 450) * 0.15;
+                posGammaPrice.push(posGammaPrice[i-1] + posMove);
+                // Negative gamma: price trends
+                const negMove = shock * 1.5 + (negGammaPrice[i-1] - 450) * 0.05;
+                negGammaPrice.push(negGammaPrice[i-1] + negMove);
+            }
+
+            new Chart(document.getElementById('regimeChart'), {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [
+                        {
+                            label: 'Positive Gamma (Stable)',
+                            data: posGammaPrice.map(p => +p.toFixed(2)),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Negative Gamma (Volatile)',
+                            data: negGammaPrice.map(p => +p.toFixed(2)),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Starting Price',
+                            data: Array(30).fill(450),
+                            borderColor: '#475569',
+                            borderWidth: 1,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'Price Behavior by Gamma Regime (Simulated)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'SPY Price ($)', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: Dealer Behavior at Price Levels
+            const strikes = ['$440', '$442', '$444', '$446', '$448', '$450', '$452', '$454', '$456', '$458', '$460'];
+            const dealerBuy = [15000, 12000, 8000, 5000, 2000, 0, 0, 0, 0, 0, 0];
+            const dealerSell = [0, 0, 0, 0, 0, 0, -3000, -8000, -15000, -22000, -30000];
+
+            new Chart(document.getElementById('dealerBehaviorChart'), {
+                type: 'bar',
+                data: {
+                    labels: strikes,
+                    datasets: [
+                        {
+                            label: 'Dealer Buys (Support)',
+                            data: dealerBuy,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Dealer Sells (Resistance)',
+                            data: dealerSell,
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'Dealer Hedging Flow by Price Level (Short Gamma)', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Shares Flow', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Price Level', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                const options = question.querySelectorAll('.quiz-option');
+                const feedback = question.querySelector('.quiz-feedback');
+
+                if (question.classList.contains('answered')) return;
+
+                question.classList.add('answered');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+
+                const isCorrect = this.dataset.correct === 'true';
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                if (!isCorrect) {
+                    options.forEach(opt => {
+                        if (opt.dataset.correct === 'true') opt.classList.add('correct');
+                    });
+                }
+
+                feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.';
+                feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+                feedback.style.display = 'block';
+
+                checkQuizComplete();
+            });
+        });
+
+        function checkQuizComplete() {
+            const questions = document.querySelectorAll('.quiz-question');
+            const answered = document.querySelectorAll('.quiz-question.answered');
+
+            if (questions.length === answered.length) {
+                const correct = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length;
+                document.getElementById('scoreValue').textContent = correct;
+                document.getElementById('quizScore').style.display = 'block';
+            }
+        }
+
+        // Scroll animations
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Gamma Exposure (GEX) calculation from options chains. Learn to identify zero gamma levels and predict market behavior using dealer positioning.">
+    <title>8.2.2 Gamma Exposure (GEX) | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .gex-eq { font-size: 1.4rem; color: #f59e0b; text-align: center; padding: 20px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #f59e0b; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .gex-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .gex-table th, .gex-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .gex-table th { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .gex-table tr:hover { background: rgba(245, 158, 11, 0.1); }
+        .gex-positive { color: #10b981; font-weight: bold; }
+        .gex-negative { color: #ef4444; font-weight: bold; }
+        .regime-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .regime-positive { background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; }
+        .regime-negative { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; }
+        .regime-neutral { background: rgba(245, 158, 11, 0.15); border: 2px solid #f59e0b; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #f59e0b; }
+        .calc-btn { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4); }
+        .calc-result { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .strike-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin: 5px 0; align-items: center; }
+        .strike-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 8px; color: #f1f5f9; text-align: center; font-size: 0.9rem; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        .gex-meter { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; text-align: center; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .meter-bar { height: 30px; border-radius: 15px; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981); margin: 15px 0; position: relative; }
+        .meter-marker { width: 4px; height: 40px; background: white; position: absolute; top: -5px; border-radius: 2px; transition: left 0.5s; }
+        .meter-labels { display: flex; justify-content: space-between; color: #94a3b8; font-size: 0.85rem; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: 1fr; }
+            .strike-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.2.2</span>
+                    <span class="nav-module-title">Gamma Exposure (GEX)</span>
+                </div>
+                <a href="8.2.3_zero_gamma_strike_levels.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.2 Dealer Mechanics</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.2.2 Gamma Exposure (GEX)</span>
+                </div>
+                <h1>Gamma Exposure (GEX) &mdash; The Holy Grail Signal</h1>
+                <p class="module-subtitle">
+                    GEX is the single most powerful signal for predicting whether the market will be range-bound or trending.
+                    Calculate it from any options chain and know the gamma regime before you trade.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 50 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 GEX Calculator</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Signal That Predicts Market Behavior</div>
+                <p>
+                    You run a mean-reversion strategy that normally crushes it. But this week, SPY just <strong>keeps trending</strong>&mdash;
+                    no pullbacks, no mean reversion. You're bleeding money. What happened? GEX flipped negative. Dealers are now
+                    <strong>amplifying</strong> moves instead of dampening them. A single GEX check would have told you to
+                    <strong>switch to momentum</strong> and ride the trend instead of fighting it.
+                </p>
+            </div>
+
+            <div class="gex-eq">
+                GEX = &Sigma;(OI &times; 100 &times; Gamma &times; Spot &times; Multiplier) &nbsp; for all strikes
+            </div>
+            <p style="text-align: center; color: #94a3b8;">GEX quantifies the total gamma exposure of dealers across all strikes</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Market Regime Detector</h4>
+                    <p>Positive GEX = range-bound. Negative GEX = trending. This one metric tells you which strategy to run.</p>
+                </div>
+                <div class="card">
+                    <h4>Volatility Predictor</h4>
+                    <p>High positive GEX = low realized vol. High negative GEX = explosive moves. Better than VIX for near-term vol.</p>
+                </div>
+                <div class="card">
+                    <h4>Support/Resistance Levels</h4>
+                    <p>Strikes with high GEX act as magnets. Dealers create support and resistance through mechanical hedging.</p>
+                </div>
+                <div class="card">
+                    <h4>Crash Warning System</h4>
+                    <p>When GEX is deeply negative and price is falling, dealer selling amplifies the crash. GEX warns before it happens.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">Real Example: February 2018 Volmageddon</div>
+                <p>
+                    GEX went deeply negative in early February 2018. The VIX spiked from 13 to 50 in two days, and SPY dropped 10%.
+                    Dealers were short gamma and their hedging <strong>accelerated the selloff</strong>. Traders monitoring GEX saw
+                    the warning signs days before&mdash;GEX was declining while SPY was still near highs. Those who reduced exposure
+                    avoided the carnage.
+                </p>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">#1</div>
+                    <div class="metric-label">Regime Signal</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">80%+</div>
+                    <div class="metric-label">Regime Accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Daily</div>
+                    <div class="metric-label">Update Frequency</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Free</div>
+                    <div class="metric-label">Data Availability</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <h3>What Is GEX?</h3>
+            <p>
+                Gamma Exposure (GEX) measures the <strong>total gamma dealers must hedge</strong> across all options strikes.
+                It aggregates the gamma from every call and put at every strike price, weighted by open interest.
+                The result tells you the net gamma position of dealers&mdash;and therefore how they will behave as prices move.
+            </p>
+
+            <h3>The Call/Put GEX Asymmetry</h3>
+            <p>
+                This is the critical insight: Assuming dealers are net short options (which is typical),
+                <strong>calls contribute positive GEX</strong> and <strong>puts contribute negative GEX</strong>.
+            </p>
+
+            <div class="regime-card regime-positive">
+                <h4>Calls &rarr; Positive Dealer GEX</h4>
+                <p>Dealers short calls → Stock rises → Call delta increases → Dealers SELL stock (resistance)</p>
+                <p>Dealers short calls → Stock falls → Call delta decreases → Dealers BUY stock (support)</p>
+                <p><strong>Net effect:</strong> Stabilizing. Dealers buy low, sell high. <span class="gex-positive">Range-bound behavior.</span></p>
+            </div>
+
+            <div class="regime-card regime-negative">
+                <h4>Puts &rarr; Negative Dealer GEX</h4>
+                <p>Dealers short puts → Stock falls → Put delta increases (more negative) → Dealers SELL stock (accelerates drop)</p>
+                <p>Dealers short puts → Stock rises → Put delta decreases → Dealers BUY stock (accelerates rally)</p>
+                <p><strong>Net effect:</strong> Destabilizing. Dealers sell low, buy high. <span class="gex-negative">Trending behavior.</span></p>
+            </div>
+
+            <!-- SVG Diagram: GEX Flow -->
+            <div style="margin: 30px 0;">
+                <svg viewBox="0 0 800 350" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <!-- Title -->
+                    <text x="400" y="30" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="bold">HOW GEX IS CALCULATED</text>
+                    <!-- Options Chain Box -->
+                    <rect x="20" y="50" width="220" height="120" rx="12" fill="rgba(245, 158, 11, 0.1)" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="130" y="80" text-anchor="middle" fill="#fcd34d" font-size="14" font-weight="bold">Options Chain</text>
+                    <text x="130" y="105" text-anchor="middle" fill="#94a3b8" font-size="11">All strikes &amp; expirations</text>
+                    <text x="130" y="125" text-anchor="middle" fill="#94a3b8" font-size="11">Open Interest + Greeks</text>
+                    <text x="130" y="145" text-anchor="middle" fill="#94a3b8" font-size="11">Calls &amp; Puts separately</text>
+                    <!-- Arrow -->
+                    <line x1="250" y1="110" x2="300" y2="110" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowY)"/>
+                    <!-- GEX Formula Box -->
+                    <rect x="310" y="50" width="200" height="120" rx="12" fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="410" y="80" text-anchor="middle" fill="#fcd34d" font-size="14" font-weight="bold">GEX Formula</text>
+                    <text x="410" y="105" text-anchor="middle" fill="#10b981" font-size="11">Call GEX = +OI × 100 × Γ</text>
+                    <text x="410" y="125" text-anchor="middle" fill="#ef4444" font-size="11">Put GEX = -OI × 100 × Γ</text>
+                    <text x="410" y="145" text-anchor="middle" fill="#f59e0b" font-size="11">Net GEX = Call + Put</text>
+                    <!-- Arrow -->
+                    <line x1="520" y1="110" x2="570" y2="110" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowY)"/>
+                    <!-- Result Box -->
+                    <rect x="580" y="50" width="200" height="120" rx="12" fill="rgba(245, 158, 11, 0.1)" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="680" y="80" text-anchor="middle" fill="#fcd34d" font-size="14" font-weight="bold">Market Regime</text>
+                    <text x="680" y="105" text-anchor="middle" fill="#10b981" font-size="11">GEX &gt; 0 → Range-Bound</text>
+                    <text x="680" y="125" text-anchor="middle" fill="#ef4444" font-size="11">GEX &lt; 0 → Trending</text>
+                    <text x="680" y="145" text-anchor="middle" fill="#f59e0b" font-size="11">GEX ≈ 0 → Breakout Zone</text>
+                    <!-- Bottom: Zero Gamma Explanation -->
+                    <rect x="150" y="210" width="500" height="120" rx="12" fill="rgba(99, 102, 241, 0.1)" stroke="#6366f1" stroke-width="2"/>
+                    <text x="400" y="240" text-anchor="middle" fill="#a5b4fc" font-size="14" font-weight="bold">ZERO GAMMA POINT</text>
+                    <text x="400" y="265" text-anchor="middle" fill="#94a3b8" font-size="12">The price level where Net GEX = 0</text>
+                    <text x="400" y="290" text-anchor="middle" fill="#94a3b8" font-size="12">Above zero gamma → Positive GEX regime (stable)</text>
+                    <text x="400" y="310" text-anchor="middle" fill="#94a3b8" font-size="12">Below zero gamma → Negative GEX regime (volatile)</text>
+                    <defs>
+                        <marker id="arrowY" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/></marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <h3>The GEX Meter</h3>
+            <div class="gex-meter">
+                <h4 style="color: #f59e0b; margin-bottom: 5px;">Current GEX Regime Indicator</h4>
+                <div class="meter-bar">
+                    <div class="meter-marker" id="gexMarker" style="left: 65%;"></div>
+                </div>
+                <div class="meter-labels">
+                    <span>Deep Negative<br>(Crash Risk)</span>
+                    <span>Negative<br>(Trending)</span>
+                    <span>Neutral<br>(Breakout)</span>
+                    <span>Positive<br>(Stable)</span>
+                    <span>Deep Positive<br>(Pinned)</span>
+                </div>
+                <p style="color: #94a3b8; margin-top: 15px; font-size: 0.9rem;">
+                    Move the GEX value in the calculator below to see how the meter changes
+                </p>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <h3>GEX Formula</h3>
+            <div class="gex-eq">
+                GEX<sub>strike</sub> = OI &times; 100 &times; &Gamma; &times; Spot Price &times; Multiplier
+            </div>
+            <p>Where:</p>
+            <ul style="color: #94a3b8;">
+                <li><strong>OI</strong> = Open interest at that strike</li>
+                <li><strong>100</strong> = Shares per contract</li>
+                <li><strong>&Gamma;</strong> = Gamma at that strike</li>
+                <li><strong>Spot Price</strong> = Current stock price (normalizes to dollar gamma)</li>
+                <li><strong>Multiplier</strong> = +1 for calls, -1 for puts (assuming dealers short)</li>
+            </ul>
+
+            <h3>Aggregate GEX</h3>
+            <div class="gex-eq">
+                Net GEX = &Sigma; Call GEX<sub>i</sub> + &Sigma; Put GEX<sub>i</sub> &nbsp;&nbsp;(across all strikes i)
+            </div>
+
+            <h3>Worked Example: SPY Options Chain GEX</h3>
+            <table class="gex-table">
+                <thead>
+                    <tr><th>Strike</th><th>Type</th><th>OI</th><th>Gamma</th><th>GEX Contribution</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$440</td><td>Call</td><td>50,000</td><td>0.030</td><td class="gex-positive">+$60.75M</td></tr>
+                    <tr><td>$445</td><td>Call</td><td>75,000</td><td>0.040</td><td class="gex-positive">+$121.5M</td></tr>
+                    <tr><td>$450</td><td>Call</td><td>100,000</td><td>0.050</td><td class="gex-positive">+$202.5M</td></tr>
+                    <tr><td>$455</td><td>Call</td><td>60,000</td><td>0.040</td><td class="gex-positive">+$97.2M</td></tr>
+                    <tr><td>$460</td><td>Call</td><td>30,000</td><td>0.020</td><td class="gex-positive">+$24.3M</td></tr>
+                    <tr style="border-top: 2px solid #f59e0b;"><td>$440</td><td>Put</td><td>25,000</td><td>0.030</td><td class="gex-negative">-$30.4M</td></tr>
+                    <tr><td>$445</td><td>Put</td><td>40,000</td><td>0.040</td><td class="gex-negative">-$64.8M</td></tr>
+                    <tr><td>$450</td><td>Put</td><td>80,000</td><td>0.050</td><td class="gex-negative">-$162.0M</td></tr>
+                    <tr><td>$455</td><td>Put</td><td>50,000</td><td>0.040</td><td class="gex-negative">-$81.0M</td></tr>
+                    <tr><td>$460</td><td>Put</td><td>20,000</td><td>0.020</td><td class="gex-negative">-$16.2M</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <div class="info-box-title">Calculation</div>
+                <p>
+                    <strong>Total Call GEX:</strong> $60.75M + $121.5M + $202.5M + $97.2M + $24.3M = <span class="gex-positive">+$506.25M</span><br>
+                    <strong>Total Put GEX:</strong> -$30.4M - $64.8M - $162.0M - $81.0M - $16.2M = <span class="gex-negative">-$354.4M</span><br><br>
+                    <strong>Net GEX = +$506.25M - $354.4M = <span style="color: #10b981; font-size: 1.2rem;">+$151.85M (Positive Gamma)</span></strong><br><br>
+                    <strong>Interpretation:</strong> Dealers are in positive gamma territory. Market will be range-bound.
+                    Use mean reversion, fade rallies, buy dips. Expect low realized volatility.
+                </p>
+            </div>
+        </section>
+
+        <!-- PART 4: NUMERICAL EXAMPLE -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Complete Numerical Example</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Scenario: GEX Analysis for QQQ</div>
+                <p><strong>QQQ at $380</strong> | Analyze the next monthly expiration to determine trading regime.</p>
+            </div>
+
+            <h3>Step 1: Gather Options Chain Data</h3>
+            <table class="gex-table">
+                <thead>
+                    <tr><th>Strike</th><th>Call OI</th><th>Call Γ</th><th>Put OI</th><th>Put Γ</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$370</td><td>30,000</td><td>0.020</td><td>45,000</td><td>0.020</td></tr>
+                    <tr><td>$375</td><td>50,000</td><td>0.035</td><td>35,000</td><td>0.035</td></tr>
+                    <tr><td>$380</td><td>80,000</td><td>0.050</td><td>70,000</td><td>0.050</td></tr>
+                    <tr><td>$385</td><td>45,000</td><td>0.035</td><td>25,000</td><td>0.035</td></tr>
+                    <tr><td>$390</td><td>20,000</td><td>0.020</td><td>15,000</td><td>0.020</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Step 2: Calculate GEX per Strike</h3>
+            <table class="gex-table">
+                <thead>
+                    <tr><th>Strike</th><th>Call GEX</th><th>Put GEX</th><th>Net GEX</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>$370</td><td class="gex-positive">+$22.8M</td><td class="gex-negative">-$34.2M</td><td class="gex-negative">-$11.4M</td></tr>
+                    <tr><td>$375</td><td class="gex-positive">+$66.5M</td><td class="gex-negative">-$46.6M</td><td class="gex-positive">+$19.9M</td></tr>
+                    <tr><td>$380</td><td class="gex-positive">+$152.0M</td><td class="gex-negative">-$133.0M</td><td class="gex-positive">+$19.0M</td></tr>
+                    <tr><td>$385</td><td class="gex-positive">+$59.9M</td><td class="gex-negative">-$33.3M</td><td class="gex-positive">+$26.6M</td></tr>
+                    <tr><td>$390</td><td class="gex-positive">+$15.2M</td><td class="gex-negative">-$11.4M</td><td class="gex-positive">+$3.8M</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Step 3: Aggregate &amp; Interpret</h3>
+            <div class="regime-card regime-positive">
+                <h4>Net GEX = +$57.9M (Positive Gamma)</h4>
+                <p><strong>Regime:</strong> Positive gamma &mdash; dealers are net stabilizing</p>
+                <p><strong>Behavior:</strong> QQQ will be range-bound between $375-$385</p>
+                <p><strong>Strategy:</strong> Sell the $385 rip, buy the $375 dip. Tight stops. Sell premium.</p>
+                <p><strong>Watch:</strong> The $370 strike has negative net GEX. If QQQ breaks below $370, gamma flips negative and downside accelerates.</p>
+            </div>
+
+            <!-- Chart: GEX by Strike -->
+            <div class="chart-container">
+                <canvas id="gexByStrikeChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Production-Quality GEX Calculator</div>
+                <p>Calculate GEX from any options chain, identify the zero gamma level, and determine market regime.</p>
+            </div>
+
+            <div class="code-block-wrapper">
+                <div class="code-block-header">
+                    <span class="code-lang">Python</span>
+                    <span class="code-title">gamma_exposure_calculator.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class GEXRegime(Enum):
+    """Market regime classification based on GEX."""
+    DEEP_POSITIVE = "DEEP_POSITIVE"   # Pinned, very low vol
+    POSITIVE = "POSITIVE"              # Range-bound, mean reversion
+    NEUTRAL = "NEUTRAL"                # Transition zone
+    NEGATIVE = "NEGATIVE"              # Trending, momentum
+    DEEP_NEGATIVE = "DEEP_NEGATIVE"    # Crash risk, extreme vol
+
+
+@dataclass
+class GEXResult:
+    """Complete GEX analysis result."""
+    total_call_gex: float
+    total_put_gex: float
+    net_gex: float
+    regime: GEXRegime
+    zero_gamma_level: Optional[float]
+    max_gamma_strike: float
+    top_strikes: List[Dict]
+    recommendation: str
+
+
+def calculate_strike_gex(
+    strike: float,
+    call_oi: int,
+    put_oi: int,
+    call_gamma: float,
+    put_gamma: float,
+    spot_price: float
+) -> Dict[str, float]:
+    """
+    Calculate GEX for a single strike.
+
+    Parameters
+    ----------
+    strike : float
+        Strike price
+    call_oi, put_oi : int
+        Open interest for calls and puts
+    call_gamma, put_gamma : float
+        Gamma for calls and puts at this strike
+    spot_price : float
+        Current stock/ETF price
+
+    Returns
+    -------
+    Dict[str, float]
+        Call GEX, Put GEX, and Net GEX in dollar terms
+    """
+    # Call GEX: positive (dealers short calls → stabilizing)
+    call_gex = call_oi * 100 * call_gamma * spot_price
+
+    # Put GEX: negative (dealers short puts → destabilizing)
+    put_gex = -put_oi * 100 * put_gamma * spot_price
+
+    return {
+        'strike': strike,
+        'call_gex': round(call_gex, 2),
+        'put_gex': round(put_gex, 2),
+        'net_gex': round(call_gex + put_gex, 2)
+    }
+
+
+def calculate_aggregate_gex(
+    options_chain: pd.DataFrame,
+    spot_price: float
+) -> GEXResult:
+    """
+    Calculate aggregate GEX from a full options chain.
+
+    Parameters
+    ----------
+    options_chain : pd.DataFrame
+        Columns: strike, call_oi, put_oi, call_gamma, put_gamma
+    spot_price : float
+        Current stock/ETF price
+
+    Returns
+    -------
+    GEXResult
+        Complete GEX analysis with regime and recommendations
+    """
+    strike_results = []
+
+    for _, row in options_chain.iterrows():
+        gex = calculate_strike_gex(
+            strike=row['strike'],
+            call_oi=row['call_oi'],
+            put_oi=row['put_oi'],
+            call_gamma=row['call_gamma'],
+            put_gamma=row['put_gamma'],
+            spot_price=spot_price
+        )
+        strike_results.append(gex)
+
+    gex_df = pd.DataFrame(strike_results)
+
+    # Aggregate
+    total_call = gex_df['call_gex'].sum()
+    total_put = gex_df['put_gex'].sum()
+    net_gex = total_call + total_put
+
+    # Find zero gamma level (where cumulative GEX crosses zero)
+    gex_df_sorted = gex_df.sort_values('strike')
+    zero_gamma = find_zero_gamma(gex_df_sorted, spot_price)
+
+    # Max gamma strike (highest absolute net GEX)
+    max_idx = gex_df['net_gex'].abs().idxmax()
+    max_strike = gex_df.loc[max_idx, 'strike']
+
+    # Top 3 strikes by absolute GEX
+    top = gex_df.nlargest(3, 'net_gex')[['strike', 'net_gex']]
+    top_strikes = top.to_dict('records')
+
+    # Classify regime
+    regime = classify_gex_regime(net_gex, spot_price)
+
+    # Recommendation
+    recommendations = {
+        GEXRegime.DEEP_POSITIVE: (
+            "PINNED: Very low vol expected. Sell premium aggressively. "
+            "Expect price to stay near max gamma strike."
+        ),
+        GEXRegime.POSITIVE: (
+            "STABLE: Range-bound expected. Fade rallies, buy dips. "
+            "Mean reversion strategies. Tight stops."
+        ),
+        GEXRegime.NEUTRAL: (
+            "TRANSITION: Watch for breakout. Regime could flip. "
+            "Reduce size, wait for confirmation."
+        ),
+        GEXRegime.NEGATIVE: (
+            "TRENDING: Follow momentum. Buy breakouts, don't fade. "
+            "Wide stops. Reduce position size 30%."
+        ),
+        GEXRegime.DEEP_NEGATIVE: (
+            "CRASH RISK: Extreme caution. Dealers amplifying moves. "
+            "Reduce all exposure 50%+. Hedge with puts."
+        ),
+    }
+
+    return GEXResult(
+        total_call_gex=round(total_call, 2),
+        total_put_gex=round(total_put, 2),
+        net_gex=round(net_gex, 2),
+        regime=regime,
+        zero_gamma_level=zero_gamma,
+        max_gamma_strike=max_strike,
+        top_strikes=top_strikes,
+        recommendation=recommendations[regime]
+    )
+
+
+def find_zero_gamma(
+    gex_df: pd.DataFrame,
+    spot_price: float
+) -> Optional[float]:
+    """
+    Find the price level where net GEX crosses zero.
+
+    Parameters
+    ----------
+    gex_df : pd.DataFrame
+        Sorted by strike, with 'strike' and 'net_gex' columns
+    spot_price : float
+        Current spot price
+
+    Returns
+    -------
+    Optional[float]
+        Zero gamma price level, or None if not found
+    """
+    cumulative = 0.0
+    prev_strike = None
+    prev_cum = None
+
+    for _, row in gex_df.iterrows():
+        cumulative += row['net_gex']
+
+        if prev_cum is not None and prev_cum * cumulative &lt; 0:
+            # Sign change detected — interpolate
+            ratio = abs(prev_cum) / (abs(prev_cum) + abs(cumulative))
+            zero_level = prev_strike + ratio * (row['strike'] - prev_strike)
+            return round(zero_level, 2)
+
+        prev_strike = row['strike']
+        prev_cum = cumulative
+
+    return None
+
+
+def classify_gex_regime(
+    net_gex: float,
+    spot_price: float
+) -> GEXRegime:
+    """
+    Classify the GEX regime based on normalized GEX value.
+
+    Parameters
+    ----------
+    net_gex : float
+        Net GEX in dollars
+    spot_price : float
+        Current spot price for normalization
+
+    Returns
+    -------
+    GEXRegime
+        Classified regime
+    """
+    # Normalize GEX relative to spot price (rough heuristic)
+    normalized = net_gex / (spot_price * 1_000_000)
+
+    if normalized &gt; 5:
+        return GEXRegime.DEEP_POSITIVE
+    elif normalized &gt; 0.5:
+        return GEXRegime.POSITIVE
+    elif normalized &gt; -0.5:
+        return GEXRegime.NEUTRAL
+    elif normalized &gt; -5:
+        return GEXRegime.NEGATIVE
+    else:
+        return GEXRegime.DEEP_NEGATIVE
+
+
+def generate_gex_heatmap_data(
+    options_chain: pd.DataFrame,
+    spot_price: float,
+    price_range: Optional[np.ndarray] = None
+) -> pd.DataFrame:
+    """
+    Generate GEX data across price levels for heatmap visualization.
+
+    Parameters
+    ----------
+    options_chain : pd.DataFrame
+        Options chain data
+    spot_price : float
+        Current spot price
+    price_range : Optional[np.ndarray]
+        Custom price range to evaluate
+
+    Returns
+    -------
+    pd.DataFrame
+        GEX values at each price level
+    """
+    if price_range is None:
+        price_range = np.arange(
+            spot_price * 0.95, spot_price * 1.05, 0.5
+        )
+
+    results = []
+    for price in price_range:
+        gex_result = calculate_aggregate_gex(options_chain, price)
+        results.append({
+            'price': price,
+            'net_gex': gex_result.net_gex,
+            'regime': gex_result.regime.value
+        })
+
+    return pd.DataFrame(results)
+
+
+# ─── EXAMPLE USAGE ────────────────────────────────────
+if __name__ == "__main__":
+    # SPY options chain (simplified)
+    chain = pd.DataFrame({
+        'strike':     [440, 445, 450, 455, 460],
+        'call_oi':    [50000, 75000, 100000, 60000, 30000],
+        'put_oi':     [25000, 40000, 80000, 50000, 20000],
+        'call_gamma': [0.030, 0.040, 0.050, 0.040, 0.020],
+        'put_gamma':  [0.030, 0.040, 0.050, 0.040, 0.020]
+    })
+
+    result = calculate_aggregate_gex(chain, spot_price=450)
+
+    print("═══ GEX Analysis: SPY ═══")
+    print(f"  Call GEX    : ${result.total_call_gex:,.0f}")
+    print(f"  Put GEX     : ${result.total_put_gex:,.0f}")
+    print(f"  Net GEX     : ${result.net_gex:,.0f}")
+    print(f"  Regime      : {result.regime.value}")
+    print(f"  Zero Gamma  : ${result.zero_gamma_level}")
+    print(f"  Max Γ Strike: ${result.max_gamma_strike}")
+    print(f"  Strategy    : {result.recommendation}")
+    print(f"\n  Top Strikes:")
+    for s in result.top_strikes:
+        print(f"    ${s['strike']}: GEX ${s['net_gex']:,.0f}")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>GEX-Based Trading Workflow</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>1. Morning GEX Check</h4>
+                    <p>Before market open, calculate net GEX from options chain data. Determine if we're in positive, negative, or neutral gamma. This takes 5 minutes and sets your entire strategy for the day.</p>
+                </div>
+                <div class="card">
+                    <h4>2. Identify Key Levels</h4>
+                    <p>Find the zero gamma level and top gamma strikes. These are your support/resistance levels. Price gravitates toward max gamma strike and respects gamma walls.</p>
+                </div>
+                <div class="card">
+                    <h4>3. Select Strategy</h4>
+                    <p>Positive GEX → mean reversion, sell premium, tight stops. Negative GEX → momentum, buy breakouts, wide stops. Neutral → reduce size, wait for clarity.</p>
+                </div>
+                <div class="card">
+                    <h4>4. Monitor Intraday</h4>
+                    <p>0DTE options create massive intraday gamma. GEX can flip during the session. Re-check at 10:30 AM and 2:00 PM for regime changes.</p>
+                </div>
+            </div>
+
+            <h3>GEX Decision Matrix</h3>
+            <table class="gex-table">
+                <thead>
+                    <tr><th>GEX Regime</th><th>Expected Vol</th><th>Strategy</th><th>Position Size</th><th>Stop Width</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="gex-positive">Deep Positive</td><td>Very Low</td><td>Sell premium, iron condors</td><td>Full</td><td>Tight</td></tr>
+                    <tr><td class="gex-positive">Positive</td><td>Low-Normal</td><td>Mean reversion, fade moves</td><td>Full</td><td>Tight</td></tr>
+                    <tr><td style="color: #f59e0b; font-weight: bold;">Neutral</td><td>Normal</td><td>Reduce size, wait</td><td>50%</td><td>Medium</td></tr>
+                    <tr><td class="gex-negative">Negative</td><td>High</td><td>Momentum, breakouts</td><td>70%</td><td>Wide</td></tr>
+                    <tr><td class="gex-negative">Deep Negative</td><td>Extreme</td><td>Defensive, hedge</td><td>30-50%</td><td>Very Wide</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Chart: GEX vs Realized Volatility -->
+            <div class="chart-container">
+                <canvas id="gexVolChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+
+            <table class="gex-table">
+                <thead>
+                    <tr><th style="width:45%">&#10060; Mistake</th><th style="width:55%">&#9989; Correct Approach</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Using only one expiration for GEX</td>
+                        <td>Aggregate across ALL expirations, especially weeklies and 0DTE which carry huge gamma.</td>
+                    </tr>
+                    <tr>
+                        <td>Ignoring 0DTE options</td>
+                        <td>0DTE options have the highest gamma. They can dominate the GEX calculation intraday.</td>
+                    </tr>
+                    <tr>
+                        <td>Treating GEX as static</td>
+                        <td>GEX changes throughout the day as options are traded. Re-check at key times.</td>
+                    </tr>
+                    <tr>
+                        <td>Using GEX for individual stocks</td>
+                        <td>GEX is most reliable for liquid, index-level products (SPY, QQQ, IWM). Single stocks have noisier data.</td>
+                    </tr>
+                    <tr>
+                        <td>Ignoring the zero gamma level</td>
+                        <td>Zero gamma is the critical flip point. Price above = stable. Price below = volatile. Always know where it is.</td>
+                    </tr>
+                    <tr>
+                        <td>Not adjusting position sizing</td>
+                        <td>Negative gamma = more volatility = MUST reduce size. Same size in all regimes = blown up.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 8: SUMMARY & CHEAT SHEET -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Cheat Sheet</h2>
+
+            <h3>Key Formulas</h3>
+            <div class="gex-eq">
+                Call GEX = +OI &times; 100 &times; &Gamma; &times; Spot &nbsp;&nbsp;|&nbsp;&nbsp; Put GEX = -OI &times; 100 &times; &Gamma; &times; Spot
+            </div>
+            <div class="gex-eq">
+                Net GEX = &Sigma; Call GEX + &Sigma; Put GEX &nbsp;&nbsp;|&nbsp;&nbsp; Positive = Stable, Negative = Volatile
+            </div>
+
+            <h3>Regime Quick Reference</h3>
+            <div class="regime-card regime-positive">
+                <h4>GEX &gt; 0: Positive Gamma</h4>
+                <p>Dealers buy dips and sell rallies. Range-bound. Mean reversion. Sell premium. Tight stops. Full size.</p>
+            </div>
+            <div class="regime-card regime-neutral">
+                <h4>GEX &asymp; 0: Neutral / Transition</h4>
+                <p>Breakout zone. Could go either way. Reduce size. Watch for directional confirmation.</p>
+            </div>
+            <div class="regime-card regime-negative">
+                <h4>GEX &lt; 0: Negative Gamma</h4>
+                <p>Dealers amplify moves. Trending. Momentum strategies. Wide stops. Reduce size 30-50%.</p>
+            </div>
+
+            <h3>Daily Workflow</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Pre-Market (8:30 AM)</h4>
+                    <p>Calculate GEX from options chain. Identify regime, zero gamma level, and max gamma strike.</p>
+                </div>
+                <div class="card">
+                    <h4>Market Open (9:30 AM)</h4>
+                    <p>Apply strategy matching the regime. Set stops based on gamma environment.</p>
+                </div>
+                <div class="card">
+                    <h4>Mid-Day (12:00 PM)</h4>
+                    <p>Re-check GEX if 0DTE volume is heavy. Regime can shift intraday.</p>
+                </div>
+                <div class="card">
+                    <h4>Power Hour (3:00 PM)</h4>
+                    <p>Gamma intensifies near close. Watch for pinning to max gamma strike.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive GEX Calculator</h2>
+
+            <div class="calculator-section">
+                <h3>Quick GEX Calculator</h3>
+                <p style="color: #94a3b8; margin-bottom: 15px;">Enter options chain data to calculate GEX and determine the market regime.</p>
+                <div class="calc-grid">
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Spot Price ($)</label>
+                        <input type="number" id="gexSpot" class="calc-input" value="450" placeholder="450">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Strike Price ($)</label>
+                        <input type="number" id="gexStrike" class="calc-input" value="450" placeholder="450">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Call Open Interest</label>
+                        <input type="number" id="gexCallOI" class="calc-input" value="100000" placeholder="100000">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Put Open Interest</label>
+                        <input type="number" id="gexPutOI" class="calc-input" value="80000" placeholder="80000">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Call Gamma</label>
+                        <input type="number" id="gexCallGamma" class="calc-input" step="0.001" value="0.050" placeholder="0.050">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Put Gamma</label>
+                        <input type="number" id="gexPutGamma" class="calc-input" step="0.001" value="0.050" placeholder="0.050">
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculateGEX()">Calculate GEX</button>
+                <div class="calc-result" id="gexResult" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- CHART: GEX Profile -->
+        <section class="content-section fade-in">
+            <h2>GEX Profile by Strike</h2>
+            <p style="color: #94a3b8;">Visualizing call GEX (positive/stabilizing) vs put GEX (negative/destabilizing) across strikes.</p>
+            <div class="chart-container">
+                <canvas id="gexProfileChart"></canvas>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+
+            <div class="quiz-question" id="q1">
+                <h4>Q1: In the GEX formula, why do calls contribute POSITIVE GEX?</h4>
+                <div class="quiz-option" data-correct="false">Because call options always go up</div>
+                <div class="quiz-option" data-correct="true">Because dealers short calls must sell rallies and buy dips (stabilizing)</div>
+                <div class="quiz-option" data-correct="false">Because call gamma is always positive</div>
+                <div class="quiz-option" data-correct="false">Because retail traders are always long calls</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q2">
+                <h4>Q2: What does deeply negative GEX indicate?</h4>
+                <div class="quiz-option" data-correct="false">Market will be very stable and range-bound</div>
+                <div class="quiz-option" data-correct="false">It's a good time to sell premium</div>
+                <div class="quiz-option" data-correct="true">High volatility risk, dealers amplifying moves, potential crash conditions</div>
+                <div class="quiz-option" data-correct="false">Gamma has no effect on price action</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q3">
+                <h4>Q3: What is the zero gamma level?</h4>
+                <div class="quiz-option" data-correct="true">The price where net GEX flips from positive to negative</div>
+                <div class="quiz-option" data-correct="false">The strike price with the most open interest</div>
+                <div class="quiz-option" data-correct="false">The point where all options expire worthless</div>
+                <div class="quiz-option" data-correct="false">The VIX level at 0</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q4">
+                <h4>Q4: Why are 0DTE options critical for GEX analysis?</h4>
+                <div class="quiz-option" data-correct="false">They have the lowest gamma</div>
+                <div class="quiz-option" data-correct="false">They are cheapest to trade</div>
+                <div class="quiz-option" data-correct="true">They have extremely high gamma and can dominate the GEX calculation intraday</div>
+                <div class="quiz-option" data-correct="false">They don't affect GEX at all</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q5">
+                <h4>Q5: SPY is at $450 with +$2B GEX. It rallies to $455. What should you do?</h4>
+                <div class="quiz-option" data-correct="false">Buy more, the trend is strong</div>
+                <div class="quiz-option" data-correct="true">Look to short/fade the rally — dealers are selling into it (mean reversion)</div>
+                <div class="quiz-option" data-correct="false">Ignore GEX and follow price action only</div>
+                <div class="quiz-option" data-correct="false">Close all positions immediately</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-score" id="quizScore" style="display:none; margin-top: 20px; padding: 20px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; text-align: center;">
+                <h3>Quiz Complete!</h3>
+                <p>You scored <span id="scoreValue" style="color: #f59e0b; font-weight: bold; font-size: 1.5rem;">0</span> / 5</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        // Copy button
+        function copyCode(btn) {
+            const code = btn.closest('.code-block-wrapper').querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        // GEX Calculator
+        function calculateGEX() {
+            const spot = parseFloat(document.getElementById('gexSpot').value);
+            const strike = parseFloat(document.getElementById('gexStrike').value);
+            const callOI = parseFloat(document.getElementById('gexCallOI').value);
+            const putOI = parseFloat(document.getElementById('gexPutOI').value);
+            const callGamma = parseFloat(document.getElementById('gexCallGamma').value);
+            const putGamma = parseFloat(document.getElementById('gexPutGamma').value);
+
+            const callGEX = callOI * 100 * callGamma * spot;
+            const putGEX = -putOI * 100 * putGamma * spot;
+            const netGEX = callGEX + putGEX;
+
+            // Determine regime
+            const normalized = netGEX / (spot * 1000000);
+            let regime, regimeColor, strategy;
+            if (normalized > 5) {
+                regime = 'DEEP POSITIVE (Pinned)'; regimeColor = '#10b981';
+                strategy = 'Very low vol. Sell premium. Price pinned near max gamma.';
+            } else if (normalized > 0.5) {
+                regime = 'POSITIVE (Range-Bound)'; regimeColor = '#10b981';
+                strategy = 'Mean reversion. Fade moves. Tight stops. Full size.';
+            } else if (normalized > -0.5) {
+                regime = 'NEUTRAL (Transition)'; regimeColor = '#f59e0b';
+                strategy = 'Breakout zone. Reduce size. Wait for direction.';
+            } else if (normalized > -5) {
+                regime = 'NEGATIVE (Trending)'; regimeColor = '#ef4444';
+                strategy = 'Momentum. Follow trends. Wide stops. 70% size.';
+            } else {
+                regime = 'DEEP NEGATIVE (Crash Risk)'; regimeColor = '#ef4444';
+                strategy = 'Extreme caution. Reduce exposure 50%+. Hedge.';
+            }
+
+            // Update meter
+            const meterPct = Math.min(95, Math.max(5, (normalized + 6) / 12 * 100));
+            document.getElementById('gexMarker').style.left = meterPct + '%';
+
+            const result = document.getElementById('gexResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h4 style="color: #f59e0b; margin-bottom: 10px;">GEX Analysis for $${strike} Strike</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div style="text-align:center;"><strong style="color: #10b981;">Call GEX</strong><br>$${(callGEX / 1e6).toFixed(2)}M</div>
+                    <div style="text-align:center;"><strong style="color: #ef4444;">Put GEX</strong><br>$${(putGEX / 1e6).toFixed(2)}M</div>
+                    <div style="text-align:center;"><strong style="color: #f59e0b;">Net GEX</strong><br>$${(netGEX / 1e6).toFixed(2)}M</div>
+                </div>
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center;">
+                    <strong style="color: ${regimeColor}; font-size: 1.1rem;">${regime}</strong><br>
+                    <span style="color: #94a3b8;">${strategy}</span>
+                </div>
+            `;
+        }
+
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart 1: GEX by Strike (QQQ Example)
+            const strikes = ['$370', '$375', '$380', '$385', '$390'];
+            const callGEXData = [22.8, 66.5, 152.0, 59.9, 15.2];
+            const putGEXData = [-34.2, -46.6, -133.0, -33.3, -11.4];
+            const netGEXData = [-11.4, 19.9, 19.0, 26.6, 3.8];
+
+            new Chart(document.getElementById('gexByStrikeChart'), {
+                type: 'bar',
+                data: {
+                    labels: strikes,
+                    datasets: [
+                        {
+                            label: 'Call GEX ($M)',
+                            data: callGEXData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Put GEX ($M)',
+                            data: putGEXData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Net GEX ($M)',
+                            data: netGEXData,
+                            type: 'line',
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#f59e0b',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'QQQ GEX by Strike ($M) — Call vs Put vs Net', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'GEX ($M)', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Strike Price', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: GEX vs Realized Volatility (simulated)
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const gexValues = [3.2, -1.5, -4.8, 2.1, 4.5, 1.8, 3.0, -2.3, -0.5, -3.9, 1.4, 5.2];
+            const realizedVol = [12, 22, 38, 14, 10, 15, 11, 28, 18, 35, 16, 9];
+
+            new Chart(document.getElementById('gexVolChart'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Net GEX ($B)',
+                            data: gexValues,
+                            backgroundColor: gexValues.map(v => v > 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                            borderColor: gexValues.map(v => v > 0 ? '#10b981' : '#ef4444'),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Realized Vol (%)',
+                            data: realizedVol,
+                            type: 'line',
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#f59e0b',
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'GEX vs Realized Volatility — Negative GEX = Higher Vol', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            position: 'left',
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'GEX ($B)', color: '#94a3b8' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: { color: '#f59e0b' },
+                            grid: { display: false },
+                            title: { display: true, text: 'Realized Vol (%)', color: '#f59e0b' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: GEX Profile across strikes (SPY)
+            const spyStrikes = ['$435', '$437', '$440', '$442', '$445', '$447', '$450', '$452', '$455', '$457', '$460'];
+            const spyCallGEX = [8, 15, 45, 35, 80, 60, 150, 55, 70, 30, 18];
+            const spyPutGEX = [-5, -10, -25, -30, -55, -50, -120, -40, -25, -12, -6];
+            const spyNetGEX = spyCallGEX.map((c, i) => c + spyPutGEX[i]);
+
+            new Chart(document.getElementById('gexProfileChart'), {
+                type: 'bar',
+                data: {
+                    labels: spyStrikes,
+                    datasets: [
+                        {
+                            label: 'Net GEX ($M)',
+                            data: spyNetGEX,
+                            backgroundColor: spyNetGEX.map(v => v > 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                            borderColor: spyNetGEX.map(v => v > 0 ? '#10b981' : '#ef4444'),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        title: { display: true, text: 'SPY Net GEX Profile by Strike — Green = Support, Red = Weakness', color: '#f1f5f9' }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Net GEX ($M)', color: '#94a3b8' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Strike Price', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                const options = question.querySelectorAll('.quiz-option');
+                const feedback = question.querySelector('.quiz-feedback');
+
+                if (question.classList.contains('answered')) return;
+
+                question.classList.add('answered');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+
+                const isCorrect = this.dataset.correct === 'true';
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                if (!isCorrect) {
+                    options.forEach(opt => {
+                        if (opt.dataset.correct === 'true') opt.classList.add('correct');
+                    });
+                }
+
+                feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.';
+                feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+                feedback.style.display = 'block';
+
+                checkQuizComplete();
+            });
+        });
+
+        function checkQuizComplete() {
+            const questions = document.querySelectorAll('.quiz-question');
+            const answered = document.querySelectorAll('.quiz-question.answered');
+
+            if (questions.length === answered.length) {
+                const correct = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length;
+                document.getElementById('scoreValue').textContent = correct;
+                document.getElementById('quizScore').style.display = 'block';
+            }
+        }
+
+        // Scroll animations
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
