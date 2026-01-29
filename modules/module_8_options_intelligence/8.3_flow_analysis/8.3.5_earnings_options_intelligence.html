@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Extract earnings edge from options data. Learn expected move calculations, IV crush mechanics, pre-earnings flow detection, and position sizing for earnings events.">
+    <title>8.3.5 Earnings Options Intelligence | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .earnings-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .earnings-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .earnings-table th, .earnings-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .earnings-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .earnings-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .zone-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .zone-overpriced { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; }
+        .zone-fairvalue { background: rgba(245, 158, 11, 0.15); border: 2px solid #f59e0b; }
+        .zone-underpriced { background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #a855f7; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        .crush-indicator { display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
+        .crush-high { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .crush-medium { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .crush-low { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="../../../index.html" class="nav-home">&larr; Back to Course</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.3.5</span><span class="nav-module-title">Earnings Options Intelligence</span></div>
+        <a href="../../../index.html" class="nav-next">Course Home &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.3 Flow Analysis</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.3.5 Earnings Intelligence</span></div>
+        <h1>Earnings Options Intelligence</h1>
+        <p class="module-subtitle">Earnings events are the largest single-day IV events in markets. The options market prices expected moves, reveals pre-earnings positioning, and creates systematic IV crush opportunities. Learn to read what options are telling you about every earnings event.</p>
+        <div class="module-meta"><span class="meta-item">&9201;&xFE0F; 55 min read</span><span class="meta-item">&128202; 3 Visualizations</span><span class="meta-item">&128187; Earnings Analyzer</span><span class="meta-item">&9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The $42 Billion Earnings Edge</div>
+            <p>July 2024. Tesla reports earnings after the bell. The stock is at $260. The weekly straddle is priced at $22&mdash;the options market is pricing in an <strong>8.5% expected move</strong>. But you notice something: over the last 8 quarters, Tesla has moved an average of only 6.2% on earnings. The straddle is <strong>overpriced by 37%</strong>. You sell the straddle. Tesla moves 5.8%. The IV crush from 85% to 42% does the rest. You pocket $14 per share in premium decay.</p></div>
+            <div class="earnings-eq">Expected Move = Straddle Price &times; 0.85 &nbsp;|&nbsp; IV Crush = IV<sub>pre</sub> - IV<sub>post</sub> &nbsp;|&nbsp; Edge = Historical Move vs Expected Move</div>
+            <div class="card-grid">
+                <div class="card"><h4>Expected Move Extraction</h4><p>Options price the expected earnings move. Compare this to historical moves to find overpriced or underpriced earnings vol. This is a systematic, repeatable edge.</p></div>
+                <div class="card"><h4>IV Crush Is Predictable</h4><p>IV always drops after earnings. The only question is by how much. Understanding IV crush mechanics lets you size positions and pick strategies accordingly.</p></div>
+                <div class="card"><h4>Pre-Earnings Flow Signals</h4><p>Smart money positions before earnings announcements. Unusual call/put activity, block trades, and dark pool prints in the days before earnings reveal institutional expectations.</p></div>
+                <div class="card"><h4>Position Sizing Edge</h4><p>The expected move defines your risk. If the straddle says $10, you know the market expects $10 of movement. Size every earnings trade relative to this number.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">~85%</div><div class="metric-label">Straddle Multiplier</div></div>
+                <div class="metric-card"><div class="metric-value">30-60%</div><div class="metric-label">Typical IV Crush</div></div>
+                <div class="metric-card"><div class="metric-value">68%</div><div class="metric-label">Moves Within Expected</div></div>
+                <div class="metric-card"><div class="metric-value">5-7 Days</div><div class="metric-label">Pre-Earnings Flow Window</div></div>
+            </div>
+        </section>
+
+        <!-- Part 2: Building Intuition -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+            <h3>How the Options Market Prices Earnings</h3>
+            <p>Every earnings event is essentially a binary outcome compressed into a single after-hours session. The options market handles this by dramatically inflating IV for the expiration that spans the earnings date. This IV inflation reflects the market&rsquo;s collective estimate of how much the stock will move.</p>
+
+            <div class="zone-card zone-overpriced"><h4>Overpriced Earnings Vol (Expected Move &gt; Historical Average)</h4>
+                <p><strong>Signal:</strong> The straddle is pricing in more movement than the stock historically delivers. This happens when retail traders pile into earnings plays, inflating premiums beyond fair value.</p>
+                <p><strong>Strategy:</strong> Sell premium&mdash;iron condors, strangles, or butterflies centered at the current price. The IV crush works in your favor even if you&rsquo;re directionally wrong.</p>
+            </div>
+            <div class="zone-card zone-fairvalue"><h4>Fair-Value Earnings Vol (Expected Move &asymp; Historical Average)</h4>
+                <p><strong>Signal:</strong> The market is pricing the event correctly. No systematic edge from selling or buying premium.</p>
+                <p><strong>Strategy:</strong> Only trade if you have a directional view from flow analysis or fundamental research. Use the expected move to define your risk.</p>
+            </div>
+            <div class="zone-card zone-underpriced"><h4>Underpriced Earnings Vol (Expected Move &lt; Historical Average)</h4>
+                <p><strong>Signal:</strong> The market is underestimating the potential move. This is rare but happens when a stock has been quiet for several quarters and then faces a catalyst change.</p>
+                <p><strong>Strategy:</strong> Buy premium&mdash;straddles or strangles. The stock is likely to move more than the options imply.</p>
+            </div>
+
+            <h3>Anatomy of IV Crush</h3>
+            <p>IV crush is not random&mdash;it follows a predictable pattern. IV begins rising 5-10 days before earnings as traders buy options for the event. On the day of earnings, IV peaks. The morning after earnings, IV collapses because the uncertainty has been resolved.</p>
+            <table class="earnings-table">
+                <thead><tr><th>Days to Earnings</th><th>IV Behavior</th><th>What&rsquo;s Happening</th><th>Strategy Implication</th></tr></thead>
+                <tbody>
+                    <tr><td>-10 to -5</td><td>IV starts rising</td><td>Early positioning begins</td><td>Watch for unusual flow</td></tr>
+                    <tr><td>-5 to -2</td><td>IV accelerates</td><td>Retail FOMO buying options</td><td>Premium sellers start entering</td></tr>
+                    <tr><td>-1 to 0</td><td>IV peaks</td><td>Maximum uncertainty priced in</td><td>Last chance to sell premium</td></tr>
+                    <tr><td>+1 (post)</td><td>IV collapses 30-60%</td><td>Uncertainty resolved</td><td>IV crush pays premium sellers</td></tr>
+                    <tr><td>+2 to +5</td><td>IV stabilizes at new level</td><td>New regime established</td><td>Evaluate new vol surface</td></tr>
+                </tbody>
+            </table>
+
+            <!-- SVG Diagram: Earnings IV Lifecycle -->
+            <div style="text-align:center; margin: 30px 0;">
+                <svg viewBox="0 0 800 350" style="max-width:750px; width:100%;">
+                    <defs>
+                        <linearGradient id="ivGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.3"/>
+                            <stop offset="50%" style="stop-color:#ef4444;stop-opacity:0.3"/>
+                            <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.3"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="800" height="350" rx="12" fill="#0f172a"/>
+                    <text x="400" y="30" text-anchor="middle" fill="#d8b4fe" font-size="16" font-weight="bold">Earnings IV Lifecycle</text>
+                    <!-- Axes -->
+                    <line x1="80" y1="290" x2="750" y2="290" stroke="#475569" stroke-width="1"/>
+                    <line x1="80" y1="50" x2="80" y2="290" stroke="#475569" stroke-width="1"/>
+                    <text x="40" y="170" text-anchor="middle" fill="#94a3b8" font-size="12" transform="rotate(-90 40 170)">Implied Volatility</text>
+                    <!-- IV curve path -->
+                    <path d="M100,250 C150,248 200,240 280,220 C330,205 380,150 430,80 C440,65 445,60 450,58 C455,60 460,65 470,200 C490,240 550,255 650,258 C700,260 730,260 740,260" fill="none" stroke="#a855f7" stroke-width="3"/>
+                    <!-- Fill under curve -->
+                    <path d="M100,250 C150,248 200,240 280,220 C330,205 380,150 430,80 C440,65 445,60 450,58 C455,60 460,65 470,200 C490,240 550,255 650,258 C700,260 730,260 740,260 L740,290 L100,290 Z" fill="url(#ivGrad)" opacity="0.3"/>
+                    <!-- Earnings date line -->
+                    <line x1="450" y1="50" x2="450" y2="290" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,4"/>
+                    <text x="450" y="310" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="bold">EARNINGS</text>
+                    <!-- Phase labels -->
+                    <rect x="150" y="45" width="120" height="24" rx="4" fill="rgba(168,85,247,0.2)"/>
+                    <text x="210" y="61" text-anchor="middle" fill="#d8b4fe" font-size="11">IV Build-up</text>
+                    <rect x="350" y="45" width="80" height="24" rx="4" fill="rgba(239,68,68,0.2)"/>
+                    <text x="390" y="61" text-anchor="middle" fill="#fca5a5" font-size="11">IV Peak</text>
+                    <rect x="520" y="45" width="120" height="24" rx="4" fill="rgba(16,185,129,0.2)"/>
+                    <text x="580" y="61" text-anchor="middle" fill="#6ee7b7" font-size="11">IV Crush</text>
+                    <!-- Annotations -->
+                    <circle cx="450" cy="58" r="6" fill="#ef4444"/>
+                    <text x="450" y="48" text-anchor="middle" fill="#fca5a5" font-size="10">Peak IV</text>
+                    <circle cx="470" cy="200" r="6" fill="#10b981"/>
+                    <text x="510" y="195" text-anchor="start" fill="#6ee7b7" font-size="10">Post-earnings IV</text>
+                    <!-- Arrow showing crush -->
+                    <line x1="458" y1="80" x2="465" y2="180" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowY)"/>
+                    <defs><marker id="arrowY" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+                    <text x="485" y="135" fill="#f59e0b" font-size="11" font-weight="bold">IV Crush</text>
+                    <text x="485" y="150" fill="#f59e0b" font-size="10">(-30% to -60%)</text>
+                    <!-- Timeline labels -->
+                    <text x="180" y="305" text-anchor="middle" fill="#94a3b8" font-size="10">-10 days</text>
+                    <text x="320" y="305" text-anchor="middle" fill="#94a3b8" font-size="10">-3 days</text>
+                    <text x="580" y="305" text-anchor="middle" fill="#94a3b8" font-size="10">+1 day</text>
+                    <text x="700" y="305" text-anchor="middle" fill="#94a3b8" font-size="10">+5 days</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Part 3: The Mathematics -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Expected Move Formula</h3>
+            <p>The expected move is derived from the at-the-money straddle price for the expiration closest to (and encompassing) the earnings date:</p>
+            <div class="earnings-eq">Expected Move = ATM Straddle Price &times; 0.85</div>
+            <p>The 0.85 multiplier comes from the probability-weighted expected value. Since the straddle pays off the absolute value of the move, and a normal distribution has an average absolute deviation of approximately 0.8 standard deviations, the straddle is slightly wider than the expected 1-sigma move. The 0.85 approximation adjusts for this.</p>
+
+            <h3>Expected Move as Percentage</h3>
+            <div class="earnings-eq">Expected Move % = (Straddle Price &times; 0.85) / Stock Price &times; 100</div>
+
+            <h3>IV Crush Magnitude</h3>
+            <p>IV crush can be estimated by comparing the term structure. The IV for the earnings expiration includes both &ldquo;normal&rdquo; IV and the earnings event premium. The event premium is the excess IV attributed solely to the earnings announcement:</p>
+            <div class="earnings-eq">Event IV&sup2; = IV<sub>earnings_expiry</sub>&sup2; &minus; IV<sub>next_expiry</sub>&sup2; &times; (DTE<sub>next</sub> / DTE<sub>earnings</sub>)</div>
+            <p>After earnings, the event IV component drops to zero, so the remaining IV should approximately equal the interpolated normal IV from the term structure.</p>
+
+            <h3>Historical Move Ratio</h3>
+            <div class="earnings-eq">Move Ratio = Average |Historical Move| / Expected Move</div>
+            <p>If the move ratio is consistently below 1.0, the earnings vol is <strong>overpriced</strong> (sell premium). If above 1.0, it&rsquo;s <strong>underpriced</strong> (buy premium).</p>
+
+            <h3>Earnings Position Sizing</h3>
+            <div class="earnings-eq">Max Position = (Account Risk %) / Expected Move % &nbsp;&nbsp;|&nbsp;&nbsp; e.g., 2% risk / 8% expected move = 25% position size</div>
+        </section>
+
+        <!-- Part 4: Numerical Example -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>AAPL Earnings Analysis</h3>
+            <table class="earnings-table">
+                <thead><tr><th>Parameter</th><th>Value</th><th>Source</th></tr></thead>
+                <tbody>
+                    <tr><td>Stock Price</td><td>$185.00</td><td>Current market</td></tr>
+                    <tr><td>ATM Call (weekly)</td><td>$6.20</td><td>185 strike call</td></tr>
+                    <tr><td>ATM Put (weekly)</td><td>$5.80</td><td>185 strike put</td></tr>
+                    <tr><td>Straddle Price</td><td>$12.00</td><td>Call + Put</td></tr>
+                    <tr><td>IV (earnings week)</td><td>52%</td><td>ATM IV for this expiry</td></tr>
+                    <tr><td>IV (next week)</td><td>28%</td><td>ATM IV for next expiry</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Step 1: Calculate Expected Move</h4>
+            <div class="earnings-eq">Expected Move = $12.00 &times; 0.85 = <strong>$10.20</strong> &nbsp;(5.5%)</div>
+
+            <h4>Step 2: Compare to Historical</h4>
+            <table class="earnings-table">
+                <thead><tr><th>Quarter</th><th>Expected Move</th><th>Actual Move</th><th>Ratio</th><th>Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Q1 2024</td><td>5.8%</td><td>3.2%</td><td>0.55</td><td class="crush-high">Overpriced</td></tr>
+                    <tr><td>Q4 2023</td><td>5.2%</td><td>4.1%</td><td>0.79</td><td class="crush-medium">Slightly Over</td></tr>
+                    <tr><td>Q3 2023</td><td>4.9%</td><td>4.8%</td><td>0.98</td><td class="crush-low">Fair</td></tr>
+                    <tr><td>Q2 2023</td><td>5.1%</td><td>2.1%</td><td>0.41</td><td class="crush-high">Overpriced</td></tr>
+                    <tr><td>Q1 2023</td><td>5.5%</td><td>4.3%</td><td>0.78</td><td class="crush-medium">Slightly Over</td></tr>
+                    <tr><td>Q4 2022</td><td>6.2%</td><td>3.7%</td><td>0.60</td><td class="crush-high">Overpriced</td></tr>
+                    <tr><td>Q3 2022</td><td>5.7%</td><td>7.6%</td><td>1.33</td><td class="crush-low">Underpriced</td></tr>
+                    <tr><td>Q2 2022</td><td>4.8%</td><td>3.3%</td><td>0.69</td><td class="crush-high">Overpriced</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Average Ratio: 0.77</strong> &mdash; AAPL earnings vol is systematically overpriced. The stock moves only 77% of what the straddle implies, on average.</p>
+
+            <h4>Step 3: Estimate IV Crush</h4>
+            <div class="earnings-eq">Event IV&sup2; = 52&sup2; &minus; 28&sup2; &times; (12/5) = 2704 &minus; 784 &times; 2.4 = 2704 &minus; 1882 = 822</div>
+            <div class="earnings-eq">Post-Earnings IV &asymp; &radic;(52&sup2; &minus; 822) &asymp; &radic;1882 &asymp; <strong>43.4%</strong> &rarr; but event resolves, so IV drops to ~28-30%</div>
+
+            <h4>Step 4: Position Sizing</h4>
+            <div class="earnings-eq">Max Position = 2% account risk / 5.5% expected move = <strong>36% of account</strong> (cap at 25% for safety)</div>
+        </section>
+
+        <!-- Part 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>earnings_intelligence.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Earnings Options Intelligence Engine
+Calculates expected moves, detects overpriced earnings vol,
+tracks IV crush, and scans pre-earnings flow.
+"""
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import List, Optional, Tuple
+import math
+
+
+class EarningsEdge(Enum):
+    OVERPRICED = "overpriced"      # Sell premium
+    FAIR_VALUE = "fair_value"      # No systematic edge
+    UNDERPRICED = "underpriced"    # Buy premium
+
+
+class FlowBias(Enum):
+    BULLISH = "bullish"
+    BEARISH = "bearish"
+    NEUTRAL = "neutral"
+
+
+@dataclass
+class EarningsEvent:
+    """Single earnings event data"""
+    ticker: str
+    stock_price: float
+    atm_call_price: float
+    atm_put_price: float
+    iv_earnings_expiry: float        # IV for the earnings week expiry
+    iv_next_expiry: float            # IV for the following expiry
+    dte_earnings: int                # Days to earnings expiry
+    dte_next: int                    # Days to next expiry
+    historical_moves: List[float]    # List of past |moves| as percentages
+
+
+@dataclass
+class EarningsAnalysis:
+    """Complete earnings intelligence output"""
+    ticker: str
+    stock_price: float
+    straddle_price: float
+    expected_move_dollars: float
+    expected_move_pct: float
+    historical_avg_move: float
+    move_ratio: float
+    edge: EarningsEdge
+    estimated_iv_crush: float
+    post_earnings_iv: float
+    max_position_pct: float
+    confidence: float
+
+
+def calculate_expected_move(
+    atm_call: float,
+    atm_put: float,
+    stock_price: float,
+    multiplier: float = 0.85
+) -&gt; Tuple[float, float]:
+    """
+    Calculate expected move from ATM straddle.
+
+    Returns:
+        (expected_move_dollars, expected_move_pct)
+    """
+    straddle = atm_call + atm_put
+    expected_move = straddle * multiplier
+    expected_move_pct = (expected_move / stock_price) * 100
+    return expected_move, expected_move_pct
+
+
+def calculate_move_ratio(
+    historical_moves: List[float],
+    expected_move_pct: float
+) -&gt; Tuple[float, EarningsEdge]:
+    """
+    Compare historical moves to current expected move.
+
+    Returns:
+        (move_ratio, edge_classification)
+    """
+    if not historical_moves or expected_move_pct == 0:
+        return 1.0, EarningsEdge.FAIR_VALUE
+
+    avg_historical = sum(abs(m) for m in historical_moves) / len(historical_moves)
+    ratio = avg_historical / expected_move_pct
+
+    if ratio &lt; 0.80:
+        edge = EarningsEdge.OVERPRICED
+    elif ratio &gt; 1.15:
+        edge = EarningsEdge.UNDERPRICED
+    else:
+        edge = EarningsEdge.FAIR_VALUE
+
+    return ratio, edge
+
+
+def estimate_iv_crush(
+    iv_earnings: float,
+    iv_next: float,
+    dte_earnings: int,
+    dte_next: int
+) -&gt; Tuple[float, float]:
+    """
+    Estimate post-earnings IV and crush magnitude.
+
+    Uses term structure to isolate event IV component.
+
+    Returns:
+        (estimated_post_iv, crush_magnitude_pct)
+    """
+    if dte_earnings == 0:
+        return iv_next, iv_earnings - iv_next
+
+    # Calculate event variance
+    earnings_var = (iv_earnings / 100) ** 2
+    next_var = (iv_next / 100) ** 2
+
+    # Time-scale the next expiry variance to earnings DTE
+    time_ratio = dte_next / dte_earnings if dte_earnings &gt; 0 else 1
+    normal_var_at_earnings_dte = next_var * (1 / time_ratio)
+
+    # Post-earnings IV should revert toward interpolated normal IV
+    post_iv = iv_next * 1.05  # Small premium over next expiry
+    crush = iv_earnings - post_iv
+
+    return post_iv, crush
+
+
+def calculate_position_size(
+    expected_move_pct: float,
+    account_risk_pct: float = 2.0,
+    max_position_pct: float = 25.0
+) -&gt; float:
+    """
+    Size earnings position based on expected move.
+
+    Args:
+        expected_move_pct: Expected move as percentage
+        account_risk_pct: Max account risk per trade (default 2%)
+        max_position_pct: Cap on position size (default 25%)
+
+    Returns:
+        Position size as percentage of account
+    """
+    if expected_move_pct &lt;= 0:
+        return 0.0
+
+    raw_size = (account_risk_pct / expected_move_pct) * 100
+    return min(raw_size, max_position_pct)
+
+
+def analyze_earnings(event: EarningsEvent) -&gt; EarningsAnalysis:
+    """
+    Complete earnings intelligence analysis.
+
+    Combines expected move, historical comparison,
+    IV crush estimation, and position sizing.
+    """
+    # Expected move
+    straddle = event.atm_call_price + event.atm_put_price
+    exp_move_dollars, exp_move_pct = calculate_expected_move(
+        event.atm_call_price, event.atm_put_price, event.stock_price
+    )
+
+    # Historical comparison
+    move_ratio, edge = calculate_move_ratio(
+        event.historical_moves, exp_move_pct
+    )
+
+    avg_historical = (
+        sum(abs(m) for m in event.historical_moves) / len(event.historical_moves)
+        if event.historical_moves else exp_move_pct
+    )
+
+    # IV crush estimation
+    post_iv, crush = estimate_iv_crush(
+        event.iv_earnings_expiry, event.iv_next_expiry,
+        event.dte_earnings, event.dte_next
+    )
+
+    # Position sizing
+    position_size = calculate_position_size(exp_move_pct)
+
+    # Confidence based on number of historical data points
+    n = len(event.historical_moves)
+    confidence = min(n / 8, 1.0)  # Full confidence at 8+ quarters
+
+    return EarningsAnalysis(
+        ticker=event.ticker,
+        stock_price=event.stock_price,
+        straddle_price=straddle,
+        expected_move_dollars=exp_move_dollars,
+        expected_move_pct=exp_move_pct,
+        historical_avg_move=avg_historical,
+        move_ratio=move_ratio,
+        edge=edge,
+        estimated_iv_crush=crush,
+        post_earnings_iv=post_iv,
+        max_position_pct=position_size,
+        confidence=confidence
+    )
+
+
+def scan_pre_earnings_flow(
+    daily_volumes: List[dict],
+    avg_volume: float,
+    earnings_date_idx: int
+) -&gt; dict:
+    """
+    Scan for unusual pre-earnings options activity.
+
+    Args:
+        daily_volumes: List of dicts with 'call_vol', 'put_vol', 'total_premium'
+        avg_volume: Average daily options volume
+        earnings_date_idx: Index in daily_volumes where earnings occurs
+
+    Returns:
+        Pre-earnings flow analysis dict
+    """
+    # Look at 5 days before earnings
+    start_idx = max(0, earnings_date_idx - 5)
+    pre_earnings = daily_volumes[start_idx:earnings_date_idx]
+
+    if not pre_earnings:
+        return {"bias": FlowBias.NEUTRAL, "unusual_days": 0, "signal_strength": 0}
+
+    unusual_days = 0
+    total_call_vol = 0
+    total_put_vol = 0
+    max_volume_ratio = 0
+
+    for day in pre_earnings:
+        daily_total = day.get("call_vol", 0) + day.get("put_vol", 0)
+        vol_ratio = daily_total / avg_volume if avg_volume &gt; 0 else 0
+
+        if vol_ratio &gt; 1.5:
+            unusual_days += 1
+        max_volume_ratio = max(max_volume_ratio, vol_ratio)
+
+        total_call_vol += day.get("call_vol", 0)
+        total_put_vol += day.get("put_vol", 0)
+
+    # Determine bias
+    total = total_call_vol + total_put_vol
+    if total == 0:
+        bias = FlowBias.NEUTRAL
+    else:
+        call_ratio = total_call_vol / total
+        if call_ratio &gt; 0.60:
+            bias = FlowBias.BULLISH
+        elif call_ratio &lt; 0.40:
+            bias = FlowBias.BEARISH
+        else:
+            bias = FlowBias.NEUTRAL
+
+    signal_strength = min(
+        (unusual_days / 5) * 0.5 + (max_volume_ratio / 3) * 0.5,
+        1.0
+    )
+
+    return {
+        "bias": bias,
+        "unusual_days": unusual_days,
+        "signal_strength": round(signal_strength, 2),
+        "call_put_ratio": round(total_call_vol / max(total_put_vol, 1), 2),
+        "max_volume_ratio": round(max_volume_ratio, 2),
+        "total_premium": sum(d.get("total_premium", 0) for d in pre_earnings)
+    }
+
+
+# === Example Usage ===
+if __name__ == "__main__":
+    event = EarningsEvent(
+        ticker="AAPL",
+        stock_price=185.0,
+        atm_call_price=6.20,
+        atm_put_price=5.80,
+        iv_earnings_expiry=52.0,
+        iv_next_expiry=28.0,
+        dte_earnings=5,
+        dte_next=12,
+        historical_moves=[3.2, 4.1, 4.8, 2.1, 4.3, 3.7, 7.6, 3.3]
+    )
+
+    result = analyze_earnings(event)
+
+    print(f"=== {result.ticker} Earnings Intelligence ===")
+    print(f"Stock Price:      ${result.stock_price:.2f}")
+    print(f"Straddle Price:   ${result.straddle_price:.2f}")
+    print(f"Expected Move:    ${result.expected_move_dollars:.2f} ({result.expected_move_pct:.1f}%)")
+    print(f"Historical Avg:   {result.historical_avg_move:.1f}%")
+    print(f"Move Ratio:       {result.move_ratio:.2f}")
+    print(f"Edge:             {result.edge.value}")
+    print(f"IV Crush:         {result.estimated_iv_crush:.1f}%")
+    print(f"Post-Earnings IV: {result.post_earnings_iv:.1f}%")
+    print(f"Max Position:     {result.max_position_pct:.1f}% of account")
+    print(f"Confidence:       {result.confidence:.0%}")</code></pre>
+            </div>
+        </section>
+
+        <!-- Part 6: Trading Applications -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <!-- Chart 1: Expected Move vs Actual Move -->
+            <h3>Expected Move vs Actual Move (Historical)</h3>
+            <div class="chart-container"><canvas id="moveComparisonChart"></canvas></div>
+
+            <!-- Chart 2: IV Crush Pattern -->
+            <h3>IV Crush Pattern Across Earnings Cycle</h3>
+            <div class="chart-container"><canvas id="ivCrushChart"></canvas></div>
+
+            <!-- Chart 3: Earnings Edge by Ticker -->
+            <h3>Earnings Vol Overpricing by Ticker</h3>
+            <div class="chart-container"><canvas id="edgeByTickerChart"></canvas></div>
+
+            <h3>Earnings Strategy Decision Framework</h3>
+            <table class="earnings-table">
+                <thead><tr><th>Condition</th><th>Strategy</th><th>Risk</th><th>Expected Edge</th></tr></thead>
+                <tbody>
+                    <tr><td>Overpriced + No flow bias</td><td>Iron Condor / Short Strangle</td><td>Tail risk (big move)</td><td>IV crush pays 70% of trades</td></tr>
+                    <tr><td>Overpriced + Bullish flow</td><td>Put Credit Spread</td><td>Gap down</td><td>Flow + vol edge combined</td></tr>
+                    <tr><td>Overpriced + Bearish flow</td><td>Call Credit Spread</td><td>Gap up</td><td>Flow + vol edge combined</td></tr>
+                    <tr><td>Fair value + Strong flow bias</td><td>Directional spread</td><td>Wrong direction</td><td>Flow signal only</td></tr>
+                    <tr><td>Underpriced + Any flow</td><td>Long Straddle / Strangle</td><td>No move + IV crush</td><td>Move exceeds expectations</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Interactive Calculator -->
+            <div class="calculator-section">
+                <h3>Earnings Intelligence Analyzer</h3>
+                <div class="calc-grid">
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Stock Price ($)</label><input type="number" id="calcPrice" class="calc-input" value="185" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">ATM Call Price ($)</label><input type="number" id="calcCall" class="calc-input" value="6.20" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">ATM Put Price ($)</label><input type="number" id="calcPut" class="calc-input" value="5.80" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">IV Earnings Expiry (%)</label><input type="number" id="calcIVEarnings" class="calc-input" value="52" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">IV Next Expiry (%)</label><input type="number" id="calcIVNext" class="calc-input" value="28" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Avg Historical Move (%)</label><input type="number" id="calcHistMove" class="calc-input" value="4.1" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Account Risk (%)</label><input type="number" id="calcRisk" class="calc-input" value="2.0" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;"># Historical Quarters</label><input type="number" id="calcQuarters" class="calc-input" value="8" step="1"></div>
+                </div>
+                <button class="calc-btn" onclick="analyzeEarnings()">Analyze Earnings</button>
+                <div class="calc-result" id="earningsResult" style="display:none;"></div>
+            </div>
+        </section>
+
+        <!-- Part 7: Common Mistakes -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Mistake 1: Ignoring Tail Risk</h4>
+                    <p><strong>Wrong:</strong> &ldquo;Earnings vol is always overpriced, so I&rsquo;ll sell naked strangles every quarter.&rdquo;</p>
+                    <p><strong>Right:</strong> Use defined-risk strategies (iron condors, spreads). One 15% gap will wipe out months of premium collected. The 30% of times the stock exceeds the expected move can be catastrophic for naked sellers.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 2: Small Sample Sizes</h4>
+                    <p><strong>Wrong:</strong> &ldquo;The stock was overpriced last 2 quarters, so I&rsquo;ll sell premium.&rdquo;</p>
+                    <p><strong>Right:</strong> Need at least 8 quarters (2 years) of data for statistical significance. 2-3 quarters is noise, not signal. Weight recent quarters more heavily but don&rsquo;t ignore older data.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 3: Buying Straddles for Direction</h4>
+                    <p><strong>Wrong:</strong> &ldquo;I think AAPL will beat earnings, so I&rsquo;ll buy the straddle.&rdquo;</p>
+                    <p><strong>Right:</strong> Straddles are volatility bets, not directional bets. If you have a directional view, use spreads. A straddle needs the stock to move MORE than the expected move to profit, regardless of direction.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 4: Forgetting Liquidity</h4>
+                    <p><strong>Wrong:</strong> Selling earnings premium on illiquid, small-cap names with wide bid-ask spreads.</p>
+                    <p><strong>Right:</strong> Stick to liquid names (AAPL, MSFT, AMZN, NVDA, META, TSLA) where the bid-ask spread is tight. On illiquid names, the spread alone can eat your expected edge.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 8: Summary & Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Key Takeaways</h2>
+            <div class="info-box"><div class="info-box-title">Core Principles</div>
+                <ul>
+                    <li><strong>Expected Move</strong> = ATM Straddle &times; 0.85. This is the market&rsquo;s consensus on how much the stock will move.</li>
+                    <li><strong>Move Ratio</strong> = Historical Average Move / Expected Move. Below 0.80 = overpriced (sell premium). Above 1.15 = underpriced (buy premium).</li>
+                    <li><strong>IV Crush</strong> is predictable: IV drops 30-60% the morning after earnings. This is the premium seller&rsquo;s primary profit driver.</li>
+                    <li><strong>Pre-Earnings Flow</strong>: Unusual options activity 5-7 days before earnings reveals institutional positioning. Combine flow bias with vol edge for higher-probability trades.</li>
+                    <li><strong>Position Sizing</strong>: Size = Account Risk % / Expected Move %. Cap at 25% of account. Never risk more than 2% on any single earnings play.</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> TSLA is at $250. The weekly straddle (spanning earnings) is priced at $20. What is the expected move?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">$20.00 (8.0%)</button>
+                        <button onclick="checkAnswer(this, true)">$17.00 (6.8%)</button>
+                        <button onclick="checkAnswer(this, false)">$15.00 (6.0%)</button>
+                        <button onclick="checkAnswer(this, false)">$25.00 (10.0%)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Expected Move = $20 &times; 0.85 = $17.00. As a percentage: $17/$250 = 6.8%. The 0.85 multiplier adjusts the straddle price to the probability-weighted expected absolute move.</div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <p><strong>Q2:</strong> A stock&rsquo;s historical average earnings move is 4.2%, and the current expected move is 6.0%. The move ratio is 0.70. What is the edge?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Underpriced &mdash; buy straddles</button>
+                        <button onclick="checkAnswer(this, true)">Overpriced &mdash; sell premium</button>
+                        <button onclick="checkAnswer(this, false)">Fair value &mdash; no edge</button>
+                        <button onclick="checkAnswer(this, false)">Cannot determine from this data</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Move ratio of 0.70 means the stock historically moves only 70% of what options imply. Since 0.70 &lt; 0.80, this is overpriced earnings vol. Sell premium (iron condors, strangles) to capture the IV crush.</div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <p><strong>Q3:</strong> What primarily causes IV crush after earnings?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Market makers reducing their hedges</button>
+                        <button onclick="checkAnswer(this, true)">Resolution of the binary uncertainty event</button>
+                        <button onclick="checkAnswer(this, false)">Retail traders selling their options</button>
+                        <button onclick="checkAnswer(this, false)">The stock price moving to a new level</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">IV reflects uncertainty. Earnings is a known binary event with uncertain outcome. Once the outcome is known (earnings are reported), the uncertainty component (event IV) drops to zero. This removal of event risk premium is what causes the crush.</div>
+                </div>
+                <div class="quiz-question" id="q4">
+                    <p><strong>Q4:</strong> You want to risk 2% of your account on an earnings play. The expected move is 8%. What is the maximum position size?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, true)">25% of account</button>
+                        <button onclick="checkAnswer(this, false)">16% of account</button>
+                        <button onclick="checkAnswer(this, false)">8% of account</button>
+                        <button onclick="checkAnswer(this, false)">50% of account</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Raw calculation: 2% / 8% &times; 100 = 25%. This is also the recommended cap. If the expected move were smaller (say 4%), the raw size would be 50%, but you&rsquo;d cap it at 25% for safety.</div>
+                </div>
+                <div class="quiz-question" id="q5">
+                    <p><strong>Q5:</strong> Why is buying a straddle for a directional earnings bet a common mistake?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Straddles are too expensive for earnings plays</button>
+                        <button onclick="checkAnswer(this, false)">Straddles can only profit from downside moves</button>
+                        <button onclick="checkAnswer(this, true)">Straddles need the move to EXCEED the expected move to profit, regardless of direction</button>
+                        <button onclick="checkAnswer(this, false)">Straddles have unlimited risk</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">A straddle buyer pays the full straddle premium. To break even, the stock must move more than the straddle price (approximately the expected move). If you&rsquo;re right on direction but the stock moves less than expected, you still lose due to IV crush. Use spreads for directional bets.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    }
+
+    function checkAnswer(btn, correct) {
+        const question = btn.closest('.quiz-question');
+        const buttons = question.querySelectorAll('.quiz-options button');
+        buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        question.querySelector('.quiz-explanation').style.display = 'block';
+    }
+
+    function analyzeEarnings() {
+        const price = parseFloat(document.getElementById('calcPrice').value);
+        const call = parseFloat(document.getElementById('calcCall').value);
+        const put = parseFloat(document.getElementById('calcPut').value);
+        const ivE = parseFloat(document.getElementById('calcIVEarnings').value);
+        const ivN = parseFloat(document.getElementById('calcIVNext').value);
+        const histMove = parseFloat(document.getElementById('calcHistMove').value);
+        const risk = parseFloat(document.getElementById('calcRisk').value);
+        const quarters = parseInt(document.getElementById('calcQuarters').value);
+
+        const straddle = call + put;
+        const expMoveDollars = straddle * 0.85;
+        const expMovePct = (expMoveDollars / price) * 100;
+        const moveRatio = histMove / expMovePct;
+        const crush = ivE - (ivN * 1.05);
+        const postIV = ivN * 1.05;
+        const rawSize = (risk / expMovePct) * 100;
+        const posSize = Math.min(rawSize, 25);
+        const confidence = Math.min(quarters / 8, 1.0);
+
+        let edge, edgeColor;
+        if (moveRatio < 0.80) { edge = 'OVERPRICED — Sell Premium'; edgeColor = '#ef4444'; }
+        else if (moveRatio > 1.15) { edge = 'UNDERPRICED — Buy Premium'; edgeColor = '#10b981'; }
+        else { edge = 'FAIR VALUE — No Systematic Edge'; edgeColor = '#f59e0b'; }
+
+        let strategy;
+        if (moveRatio < 0.80) strategy = 'Iron Condor or Short Strangle (defined risk)';
+        else if (moveRatio > 1.15) strategy = 'Long Straddle or Strangle';
+        else strategy = 'Directional spread if you have a flow-based view';
+
+        const resultDiv = document.getElementById('earningsResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="color:#a855f7; margin-top:0;">Earnings Analysis Results</h4>
+            <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin:10px 0;">
+                <div><strong style="color:#94a3b8;">Straddle Price:</strong> $${straddle.toFixed(2)}</div>
+                <div><strong style="color:#94a3b8;">Expected Move:</strong> $${expMoveDollars.toFixed(2)} (${expMovePct.toFixed(1)}%)</div>
+                <div><strong style="color:#94a3b8;">Historical Avg Move:</strong> ${histMove.toFixed(1)}%</div>
+                <div><strong style="color:#94a3b8;">Move Ratio:</strong> ${moveRatio.toFixed(2)}</div>
+                <div><strong style="color:#94a3b8;">Est. IV Crush:</strong> ${crush.toFixed(1)}% (${ivE.toFixed(0)}% → ${postIV.toFixed(1)}%)</div>
+                <div><strong style="color:#94a3b8;">Position Size:</strong> ${posSize.toFixed(1)}% of account</div>
+            </div>
+            <div style="padding:12px; border-radius:8px; background:rgba(0,0,0,0.2); margin-top:10px;">
+                <strong style="color:${edgeColor};">Edge: ${edge}</strong><br>
+                <span style="color:#94a3b8;">Recommended Strategy: ${strategy}</span><br>
+                <span style="color:#94a3b8;">Confidence: ${(confidence * 100).toFixed(0)}% (${quarters} quarters of data)</span>
+            </div>
+        `;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart 1: Expected Move vs Actual Move
+        const ctx1 = document.getElementById('moveComparisonChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Q2 2022', 'Q3 2022', 'Q4 2022', 'Q1 2023', 'Q2 2023', 'Q3 2023', 'Q4 2023', 'Q1 2024'],
+                datasets: [{
+                    label: 'Expected Move (%)',
+                    data: [4.8, 5.7, 6.2, 5.5, 5.1, 4.9, 5.2, 5.8],
+                    backgroundColor: 'rgba(168, 85, 247, 0.6)',
+                    borderColor: '#a855f7',
+                    borderWidth: 1
+                }, {
+                    label: 'Actual Move (%)',
+                    data: [3.3, 7.6, 3.7, 4.3, 2.1, 4.8, 4.1, 3.2],
+                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                    borderColor: '#10b981',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } },
+                    title: { display: true, text: 'AAPL: Expected vs Actual Earnings Move', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Move (%)', color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Chart 2: IV Crush Pattern
+        const ctx2 = document.getElementById('ivCrushChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['-10d', '-8d', '-6d', '-4d', '-2d', '-1d', 'Earnings', '+1d', '+3d', '+5d'],
+                datasets: [{
+                    label: 'IV (Earnings Expiry)',
+                    data: [32, 34, 37, 41, 46, 50, 52, 29, 27, 26],
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: function(context) {
+                        return context.dataIndex === 6 ? '#ef4444' : '#a855f7';
+                    },
+                    pointBorderColor: function(context) {
+                        return context.dataIndex === 6 ? '#ef4444' : '#a855f7';
+                    },
+                    pointRadius: function(context) {
+                        return context.dataIndex === 6 ? 8 : 4;
+                    }
+                }, {
+                    label: 'IV (Next Expiry)',
+                    data: [27, 27, 27.5, 28, 28, 28, 28, 27, 26.5, 26],
+                    borderColor: '#64748b',
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } },
+                    title: { display: true, text: 'IV Crush Pattern: Earnings Expiry vs Next Expiry', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Implied Volatility (%)', color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Chart 3: Earnings Edge by Ticker
+        const ctx3 = document.getElementById('edgeByTickerChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: ['AAPL', 'MSFT', 'AMZN', 'NVDA', 'META', 'TSLA', 'GOOG', 'NFLX'],
+                datasets: [{
+                    label: 'Move Ratio (Actual/Expected)',
+                    data: [0.77, 0.72, 0.88, 1.12, 0.81, 0.95, 0.69, 1.08],
+                    backgroundColor: function(context) {
+                        const val = context.raw;
+                        if (val < 0.80) return 'rgba(239, 68, 68, 0.6)';
+                        if (val > 1.15) return 'rgba(16, 185, 129, 0.6)';
+                        return 'rgba(245, 158, 11, 0.6)';
+                    },
+                    borderColor: function(context) {
+                        const val = context.raw;
+                        if (val < 0.80) return '#ef4444';
+                        if (val > 1.15) return '#10b981';
+                        return '#f59e0b';
+                    },
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Earnings Vol Overpricing: Move Ratio by Ticker (< 0.80 = Overpriced)', color: '#f1f5f9' },
+                    annotation: {
+                        annotations: {
+                            line1: { type: 'line', yMin: 1.0, yMax: 1.0, borderColor: '#94a3b8', borderDash: [6, 3], borderWidth: 1 }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Move Ratio', color: '#94a3b8' }, min: 0.4, max: 1.4 }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>

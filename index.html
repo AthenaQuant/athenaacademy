@@ -583,6 +583,7 @@
 
         .module-card.expanded .module-content {
             max-height: 500px;
+            overflow-y: auto;
         }
 
         .submodules-list {
@@ -621,6 +622,23 @@
 
         .submodule-item span {
             font-size: 0.9rem;
+        }
+
+        .submodule-group-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 0 0.25rem 0;
+            margin-top: 0.5rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .submodule-group-title:first-child {
+            margin-top: 0;
+            border-top: none;
+            padding-top: 0.5rem;
         }
 
         /* ============================================
@@ -1254,20 +1272,28 @@
                             <div class="module-description">Use options data to make better stock/ETF decisions: IV, put/call ratio, open interest, dealer mechanics, flow analysis</div>
                             <div class="module-meta">
                                 <span class="module-count">📚 24 modules</span>
-                                <div class="progress-bar"><div class="progress-fill" style="width: 29%"></div></div>
+                                <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
                             </div>
                         </div>
                         <div class="module-toggle">▼</div>
                     </div>
                     <div class="module-content">
                         <div class="submodules-list">
+                            <div class="submodule-group-title">8.1 Options Foundations</div>
                             <a href="modules/module_8_options_intelligence/8.1_foundations/8.1.1_options_basics_for_stock_traders.html" class="submodule-item"><span>8.1.1 Options Basics for Stock Traders</span></a>
                             <a href="modules/module_8_options_intelligence/8.1_foundations/8.1.2_implied_volatility_fear_gauge.html" class="submodule-item"><span>8.1.2 Implied Volatility - Fear Gauge</span></a>
                             <a href="modules/module_8_options_intelligence/8.1_foundations/8.1.3_put_call_ratio_sentiment.html" class="submodule-item"><span>8.1.3 Put/Call Ratio Sentiment</span></a>
                             <a href="modules/module_8_options_intelligence/8.1_foundations/8.1.4_open_interest_analysis.html" class="submodule-item"><span>8.1.4 Open Interest Analysis</span></a>
+                            <div class="submodule-group-title">8.2 Dealer Mechanics & Gamma Exposure</div>
                             <a href="modules/module_8_options_intelligence/8.2_dealer_mechanics/8.2.1_dealer_hedging_impact.html" class="submodule-item"><span>8.2.1 Dealer Hedging Impact</span></a>
                             <a href="modules/module_8_options_intelligence/8.2_dealer_mechanics/8.2.2_gamma_exposure_gex.html" class="submodule-item"><span>8.2.2 Gamma Exposure (GEX)</span></a>
                             <a href="modules/module_8_options_intelligence/8.2_dealer_mechanics/8.2.3_zero_gamma_strike_levels.html" class="submodule-item"><span>8.2.3 Zero Gamma & Key Strike Levels</span></a>
+                            <div class="submodule-group-title">8.3 Flow Analysis - Following Smart Money</div>
+                            <a href="modules/module_8_options_intelligence/8.3_flow_analysis/8.3.1_unusual_options_activity.html" class="submodule-item"><span>8.3.1 Unusual Options Activity</span></a>
+                            <a href="modules/module_8_options_intelligence/8.3_flow_analysis/8.3.2_smart_money_vs_dumb_money.html" class="submodule-item"><span>8.3.2 Smart Money vs Dumb Money</span></a>
+                            <a href="modules/module_8_options_intelligence/8.3_flow_analysis/8.3.3_dark_pool_options_confluence.html" class="submodule-item"><span>8.3.3 Dark Pool Options Confluence</span></a>
+                            <a href="modules/module_8_options_intelligence/8.3_flow_analysis/8.3.4_volatility_skew_crash_indicator.html" class="submodule-item"><span>8.3.4 Volatility Skew Crash Indicator</span></a>
+                            <a href="modules/module_8_options_intelligence/8.3_flow_analysis/8.3.5_earnings_options_intelligence.html" class="submodule-item"><span>8.3.5 Earnings Options Intelligence</span></a>
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Use volatility skew to detect institutional fear and complacency. Learn to read skew as a crash indicator and identify market extremes before they reverse.">
+    <title>8.3.4 Volatility Skew Crash Indicator | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .skew-eq { font-size: 1.4rem; color: #ef4444; text-align: center; padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #ef4444; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .skew-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .skew-table th, .skew-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .skew-table th { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .skew-table tr:hover { background: rgba(239, 68, 68, 0.1); }
+        .skew-steep { color: #ef4444; font-weight: bold; }
+        .skew-normal { color: #f59e0b; font-weight: bold; }
+        .skew-flat { color: #10b981; font-weight: bold; }
+        .zone-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .zone-fear { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; }
+        .zone-normal { background: rgba(245, 158, 11, 0.15); border: 2px solid #f59e0b; }
+        .zone-complacent { background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #ef4444; }
+        .calc-btn { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4); }
+        .calc-result { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="../../../index.html" class="nav-home">← Back to Course</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.3.4</span><span class="nav-module-title">Volatility Skew Crash Indicator</span></div>
+        <a href="8.3.5_earnings_options_intelligence.html" class="nav-next">Next Module →</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">›</span><span>8.3 Flow Analysis</span><span class="breadcrumb-separator">›</span><span>8.3.4 Volatility Skew</span></div>
+        <h1>Volatility Skew as Crash &amp; Complacency Indicator</h1>
+        <p class="module-subtitle">Volatility skew reveals what institutions are actually paying for protection. Steep skew = extreme fear. Flat skew = dangerous complacency. Read the skew and you read institutional sentiment.</p>
+        <div class="module-meta"><span class="meta-item">⏱️ 50 min read</span><span class="meta-item">📊 3 Visualizations</span><span class="meta-item">💻 Skew Analyzer</span><span class="meta-item">✅ 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The Silent Warning Before Every Crash</div>
+            <p>January 2020. VIX at 12. Markets at all-time highs. Everyone is complacent. But if you checked the <strong>volatility skew</strong>, you'd see it was <strong>flattening</strong>&mdash;institutions had stopped buying crash protection. This extreme complacency is itself a warning. By February, the COVID crash began. Those who read the skew reduced exposure before the 35% drawdown.</p></div>
+            <div class="skew-eq">Skew = IV(25&Delta; Put) - IV(25&Delta; Call) &nbsp;|&nbsp; Steep = Fear &nbsp;|&nbsp; Flat = Complacency</div>
+            <div class="card-grid">
+                <div class="card"><h4>Fear Gauge (Better Than VIX)</h4><p>VIX measures overall IV. Skew measures the DIFFERENCE between put and call IV. Steep skew means institutions are paying more for downside protection.</p></div>
+                <div class="card"><h4>Crash Early Warning</h4><p>Steep skew spikes before crashes as institutions rush to buy put protection. This can lead stock declines by days.</p></div>
+                <div class="card"><h4>Complacency Detector</h4><p>Flat skew + low VIX = dangerous complacency. Nobody is hedging. The market is fragile. Corrections come from complacency.</p></div>
+                <div class="card"><h4>Contrarian Indicator</h4><p>Extremely steep skew = extreme fear = potential bottom. Extremely flat skew = extreme greed = potential top.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">5-8%</div><div class="metric-label">Normal Skew</div></div>
+                <div class="metric-card"><div class="metric-value">&gt;12%</div><div class="metric-label">Steep (Fear)</div></div>
+                <div class="metric-card"><div class="metric-value">&lt;3%</div><div class="metric-label">Flat (Complacent)</div></div>
+                <div class="metric-card"><div class="metric-value">90th %ile</div><div class="metric-label">Extreme Reading</div></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+            <h3>What Is Volatility Skew?</h3>
+            <p>In a perfect world, all options at the same expiration would have the same implied volatility. In reality, OTM puts are more expensive (higher IV) than OTM calls because institutions buy puts for crash protection. This asymmetry is the <strong>volatility skew</strong> (also called the &ldquo;smile&rdquo; or &ldquo;smirk&rdquo;).</p>
+
+            <div class="zone-card zone-fear"><h4>Steep Skew (IV Puts &gt;&gt; IV Calls)</h4>
+                <p><strong>Reading:</strong> Institutions are aggressively buying put protection. They fear a crash.</p>
+                <p><strong>Implication:</strong> Short-term bearish, but extreme readings = potential contrarian bottom.</p>
+                <p><strong>Action:</strong> Reduce long exposure. Consider hedges. If extreme, prepare to buy the fear.</p></div>
+            <div class="zone-card zone-normal"><h4>Normal Skew (Moderate Difference)</h4>
+                <p><strong>Reading:</strong> Healthy market. Normal hedging activity. No extremes.</p>
+                <p><strong>Implication:</strong> Balanced market conditions. Trade normally.</p>
+                <p><strong>Action:</strong> Use other signals for direction. Standard position sizing.</p></div>
+            <div class="zone-card zone-complacent"><h4>Flat Skew (IV Puts &asymp; IV Calls)</h4>
+                <p><strong>Reading:</strong> Nobody is buying protection. Extreme complacency.</p>
+                <p><strong>Implication:</strong> Dangerous. Corrections emerge from complacency. The market is fragile.</p>
+                <p><strong>Action:</strong> Reduce exposure. Buy cheap puts (protection is cheap now). Prepare for vol spike.</p></div>
+
+            <div style="margin: 30px 0;">
+                <svg viewBox="0 0 800 280" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <text x="400" y="25" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="bold">VOLATILITY SKEW CURVE</text>
+                    <!-- Axes -->
+                    <line x1="100" y1="240" x2="700" y2="240" stroke="#475569" stroke-width="2"/>
+                    <line x1="100" y1="50" x2="100" y2="240" stroke="#475569" stroke-width="2"/>
+                    <text x="400" y="270" text-anchor="middle" fill="#94a3b8" font-size="12">Strike Price (Moneyness)</text>
+                    <text x="50" y="145" text-anchor="middle" fill="#94a3b8" font-size="12" transform="rotate(-90, 50, 145)">Implied Volatility</text>
+                    <!-- Labels -->
+                    <text x="180" y="258" text-anchor="middle" fill="#ef4444" font-size="10">OTM Puts</text>
+                    <text x="400" y="258" text-anchor="middle" fill="#f59e0b" font-size="10">ATM</text>
+                    <text x="620" y="258" text-anchor="middle" fill="#10b981" font-size="10">OTM Calls</text>
+                    <!-- Steep skew -->
+                    <path d="M 150 80 Q 250 120, 350 160 Q 450 190, 550 200 Q 620 205, 660 195" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <text x="200" y="70" fill="#ef4444" font-size="11" font-weight="bold">Steep (Fear)</text>
+                    <!-- Normal skew -->
+                    <path d="M 150 120 Q 250 150, 350 175 Q 450 190, 550 195 Q 620 197, 660 190" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="8,4"/>
+                    <text x="300" y="140" fill="#f59e0b" font-size="11" font-weight="bold">Normal</text>
+                    <!-- Flat skew -->
+                    <path d="M 150 180 Q 250 185, 350 188 Q 450 190, 550 188 Q 620 186, 660 185" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="4,4"/>
+                    <text x="550" y="175" fill="#10b981" font-size="11" font-weight="bold">Flat (Complacent)</text>
+                    <!-- Annotation -->
+                    <line x1="150" y1="80" x2="150" y2="180" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+                    <text x="155" y="135" fill="#94a3b8" font-size="10">← Skew width</text>
+                </svg>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Skew Formula</h3>
+            <div class="skew-eq">Skew = IV(25&Delta; Put) - IV(25&Delta; Call)</div>
+            <p>The 25-delta put and 25-delta call are standardized OTM options. The difference in their implied volatilities is the skew.</p>
+            <table class="skew-table">
+                <thead><tr><th>Skew Value</th><th>Regime</th><th>Interpretation</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td class="skew-steep">&gt; 12%</td><td class="skew-steep">Extreme Fear</td><td>Institutions panicking, buying puts aggressively</td><td>Contrarian buy opportunity if other signals confirm</td></tr>
+                    <tr><td class="skew-steep">8-12%</td><td class="skew-steep">Elevated Fear</td><td>Above-normal hedging. Market nervous.</td><td>Reduce risk. Consider hedges. Watch for escalation.</td></tr>
+                    <tr><td class="skew-normal">5-8%</td><td class="skew-normal">Normal</td><td>Healthy hedging. Balanced market.</td><td>Trade normally. No extreme signal.</td></tr>
+                    <tr><td class="skew-flat">3-5%</td><td class="skew-flat">Low</td><td>Below-normal hedging. Growing complacency.</td><td>Caution. Buy cheap puts for protection.</td></tr>
+                    <tr><td class="skew-flat">&lt; 3%</td><td class="skew-flat">Extreme Complacency</td><td>Nobody hedging. Market fragile.</td><td>Warning! Reduce exposure. Buy protection.</td></tr>
+                </tbody>
+            </table>
+            <h3>Skew Percentile</h3>
+            <div class="skew-eq">Skew Percentile = (Current Skew Rank / Total Days) &times; 100%</div>
+            <p>Compare current skew to the last 252 trading days (1 year). &gt;90th percentile = extreme fear. &lt;10th percentile = extreme complacency.</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Complete Numerical Example</h2>
+            <div class="info-box"><div class="info-box-title">Scenario: SPY Skew Analysis</div><p>SPY at $450. Analyzing the 30-day options chain.</p></div>
+            <table class="skew-table">
+                <thead><tr><th>Option</th><th>Delta</th><th>Strike</th><th>IV</th></tr></thead>
+                <tbody>
+                    <tr><td>OTM Put</td><td>-0.25</td><td>$435</td><td>22.5%</td></tr>
+                    <tr><td>ATM</td><td>0.50</td><td>$450</td><td>18.0%</td></tr>
+                    <tr><td>OTM Call</td><td>0.25</td><td>$465</td><td>15.5%</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Skew = 22.5% - 15.5% = 7.0%</strong> &mdash; Normal range. Healthy hedging activity.</p>
+            <p><strong>Scenario 2 (Pre-crash):</strong> OTM Put IV jumps to 32% while Call IV stays at 16%.</p>
+            <p><strong>Skew = 32% - 16% = 16%</strong> &mdash; <span class="skew-steep">EXTREME FEAR. Institutions panic-buying puts.</span></p>
+            <p><strong>Scenario 3 (Complacency):</strong> OTM Put IV drops to 17% and Call IV at 15%.</p>
+            <p><strong>Skew = 17% - 15% = 2%</strong> &mdash; <span class="skew-flat">EXTREME COMPLACENCY. Nobody hedging. Danger!</span></p>
+            <div class="chart-container"><canvas id="skewChart"></canvas></div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header"><span>volatility_skew_analyzer.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+
+class SkewRegime(Enum):
+    """Skew regime classification."""
+    EXTREME_FEAR = "EXTREME_FEAR"
+    ELEVATED_FEAR = "ELEVATED_FEAR"
+    NORMAL = "NORMAL"
+    LOW = "LOW"
+    EXTREME_COMPLACENCY = "EXTREME_COMPLACENCY"
+
+
+@dataclass
+class SkewAnalysis:
+    """Complete skew analysis result."""
+    skew_value: float
+    skew_percentile: float
+    regime: SkewRegime
+    put_iv: float
+    call_iv: float
+    atm_iv: float
+    signal: str
+    recommendation: str
+
+
+def calculate_skew(
+    put_iv_25d: float,
+    call_iv_25d: float,
+    atm_iv: float = None
+) -> float:
+    """
+    Calculate volatility skew.
+
+    Parameters
+    ----------
+    put_iv_25d : float
+        IV of 25-delta OTM put (as percentage, e.g. 22.5)
+    call_iv_25d : float
+        IV of 25-delta OTM call
+    atm_iv : float, optional
+        ATM implied volatility
+
+    Returns
+    -------
+    float
+        Skew value (put IV - call IV)
+    """
+    return round(put_iv_25d - call_iv_25d, 2)
+
+
+def calculate_skew_percentile(
+    current_skew: float,
+    historical_skews: List[float]
+) -> float:
+    """
+    Calculate current skew's percentile vs history.
+
+    Parameters
+    ----------
+    current_skew : float
+        Current skew value
+    historical_skews : List[float]
+        Historical skew values (e.g., last 252 trading days)
+
+    Returns
+    -------
+    float
+        Percentile (0-100)
+    """
+    if not historical_skews:
+        return 50.0
+    below = sum(1 for s in historical_skews if s <= current_skew)
+    return round(below / len(historical_skews) * 100, 1)
+
+
+def classify_skew_regime(
+    skew: float,
+    percentile: float = None
+) -> SkewRegime:
+    """
+    Classify the current skew regime.
+
+    Parameters
+    ----------
+    skew : float
+        Current skew value
+    percentile : float, optional
+        Skew percentile for finer classification
+
+    Returns
+    -------
+    SkewRegime
+        Classified regime
+    """
+    if percentile is not None:
+        if percentile >= 90:
+            return SkewRegime.EXTREME_FEAR
+        elif percentile >= 75:
+            return SkewRegime.ELEVATED_FEAR
+        elif percentile <= 10:
+            return SkewRegime.EXTREME_COMPLACENCY
+        elif percentile <= 25:
+            return SkewRegime.LOW
+
+    if skew > 12:
+        return SkewRegime.EXTREME_FEAR
+    elif skew > 8:
+        return SkewRegime.ELEVATED_FEAR
+    elif skew >= 5:
+        return SkewRegime.NORMAL
+    elif skew >= 3:
+        return SkewRegime.LOW
+    return SkewRegime.EXTREME_COMPLACENCY
+
+
+def analyze_skew(
+    put_iv: float,
+    call_iv: float,
+    atm_iv: float,
+    historical_skews: List[float] = None
+) -> SkewAnalysis:
+    """
+    Complete volatility skew analysis.
+
+    Parameters
+    ----------
+    put_iv : float
+        25-delta put IV
+    call_iv : float
+        25-delta call IV
+    atm_iv : float
+        ATM implied volatility
+    historical_skews : List[float], optional
+        Historical skew values for percentile
+
+    Returns
+    -------
+    SkewAnalysis
+        Complete analysis with regime and recommendations
+    """
+    skew = calculate_skew(put_iv, call_iv)
+    percentile = (calculate_skew_percentile(skew, historical_skews)
+                  if historical_skews else None)
+    regime = classify_skew_regime(skew, percentile)
+
+    recommendations = {
+        SkewRegime.EXTREME_FEAR: (
+            "CONTRARIAN BUY: Extreme fear often marks bottoms. "
+            "Consider adding long exposure if other signals confirm."
+        ),
+        SkewRegime.ELEVATED_FEAR: (
+            "CAUTION: Institutions hedging aggressively. "
+            "Reduce risk. Watch for further deterioration."
+        ),
+        SkewRegime.NORMAL: (
+            "NEUTRAL: Healthy market conditions. "
+            "Trade normally. No extreme signal from skew."
+        ),
+        SkewRegime.LOW: (
+            "WARNING: Below-normal hedging. Complacency building. "
+            "Buy cheap put protection. Reduce leveraged longs."
+        ),
+        SkewRegime.EXTREME_COMPLACENCY: (
+            "DANGER: Nobody is hedging. Market is fragile. "
+            "Buy puts (cheap now). Reduce long exposure 30-50%."
+        ),
+    }
+
+    signals = {
+        SkewRegime.EXTREME_FEAR: "Contrarian bullish (extreme fear)",
+        SkewRegime.ELEVATED_FEAR: "Bearish / cautious",
+        SkewRegime.NORMAL: "Neutral — no signal",
+        SkewRegime.LOW: "Early warning — complacency",
+        SkewRegime.EXTREME_COMPLACENCY: "Danger — correction likely",
+    }
+
+    return SkewAnalysis(
+        skew_value=skew,
+        skew_percentile=percentile if percentile else 50.0,
+        regime=regime,
+        put_iv=put_iv,
+        call_iv=call_iv,
+        atm_iv=atm_iv,
+        signal=signals[regime],
+        recommendation=recommendations[regime]
+    )
+
+
+def track_skew_changes(
+    skew_history: pd.DataFrame,
+    lookback: int = 5
+) -> Dict[str, any]:
+    """
+    Track skew changes over time for trend detection.
+
+    Parameters
+    ----------
+    skew_history : pd.DataFrame
+        Columns: date, skew_value
+    lookback : int
+        Days to look back for trend
+
+    Returns
+    -------
+    Dict
+        Skew trend analysis
+    """
+    if len(skew_history) < lookback:
+        return {'trend': 'INSUFFICIENT DATA'}
+
+    recent = skew_history.tail(lookback)
+    current = recent['skew_value'].iloc[-1]
+    previous = recent['skew_value'].iloc[0]
+    change = current - previous
+    pct_change = (change / previous) * 100 if previous != 0 else 0
+
+    if change > 2:
+        trend = "STEEPENING (Fear increasing)"
+    elif change < -2:
+        trend = "FLATTENING (Complacency increasing)"
+    else:
+        trend = "STABLE"
+
+    return {
+        'current_skew': current,
+        'change': round(change, 2),
+        'pct_change': round(pct_change, 1),
+        'trend': trend,
+        'alert': change > 3 or change < -3
+    }
+
+
+# ─── EXAMPLE USAGE ────────────────────────────────────
+if __name__ == "__main__":
+    # Generate sample historical skews
+    np.random.seed(42)
+    historical = list(np.random.normal(7, 2.5, 252))
+
+    result = analyze_skew(
+        put_iv=22.5, call_iv=15.5, atm_iv=18.0,
+        historical_skews=historical
+    )
+    print("═══ SPY Skew Analysis ═══")
+    print(f"  Skew Value  : {result.skew_value}%")
+    print(f"  Percentile  : {result.skew_percentile}%")
+    print(f"  Regime      : {result.regime.value}")
+    print(f"  Signal      : {result.signal}")
+    print(f"  Action      : {result.recommendation}")</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+            <div class="card-grid">
+                <div class="card"><h4>1. Weekly Skew Check</h4><p>Monitor skew weekly. If it's been flattening for 2-3 weeks while VIX is low, start buying cheap put protection. Corrections emerge from complacency.</p></div>
+                <div class="card"><h4>2. Crash Protection Timing</h4><p>Buy puts when skew is flat (cheap). Sell puts when skew is steep (expensive). This is the optimal timing for portfolio hedging.</p></div>
+                <div class="card"><h4>3. Contrarian Bottom Picking</h4><p>When skew hits 90th+ percentile (extreme fear), start building long positions. Institutions are panic-hedging and the bottom is often near.</p></div>
+                <div class="card"><h4>4. VIX + Skew Combination</h4><p>Low VIX + flat skew = maximum danger. High VIX + steep skew = maximum fear (contrarian buy). This combo is more powerful than either alone.</p></div>
+            </div>
+            <div class="chart-container"><canvas id="skewVsSpyChart"></canvas></div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <table class="skew-table">
+                <thead><tr><th style="width:45%">&#10060; Mistake</th><th style="width:55%">&#9989; Correct Approach</th></tr></thead>
+                <tbody>
+                    <tr><td>Treating steep skew as immediately bearish</td><td>Steep skew = fear. But extreme fear is contrarian bullish. Check percentile for context.</td></tr>
+                    <tr><td>Ignoring flat skew because VIX is low</td><td>Flat skew + low VIX = the MOST dangerous condition. This is when corrections start.</td></tr>
+                    <tr><td>Using absolute levels without history</td><td>Skew of 8% might be high or normal depending on the regime. Always use percentile (vs 252-day history).</td></tr>
+                    <tr><td>Not distinguishing term structure</td><td>30-day skew vs 90-day skew can differ. Short-term skew is more sensitive to near-term events.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Cheat Sheet</h2>
+            <div class="skew-eq">Skew = IV(OTM Put) - IV(OTM Call) &nbsp;|&nbsp; &gt;12% = Fear &nbsp;|&nbsp; &lt;3% = Danger</div>
+            <div class="zone-card zone-fear"><h4>Steep Skew (&gt;12% or 90th+ %ile)</h4><p>Extreme fear. Contrarian buy opportunity. Institutions are panic-hedging. Bottom often near. Start building longs.</p></div>
+            <div class="zone-card zone-normal"><h4>Normal Skew (5-8%)</h4><p>Healthy market. Trade normally. No skew-based signal.</p></div>
+            <div class="zone-card zone-complacent"><h4>Flat Skew (&lt;3% or 10th %ile)</h4><p>DANGER. Nobody hedging. Buy cheap puts. Reduce exposure. Correction is brewing.</p></div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Interactive Skew Analyzer</h2>
+            <div class="calculator-section">
+                <h3>Volatility Skew Calculator</h3>
+                <div class="calc-grid">
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">25&Delta; Put IV (%)</label><input type="number" id="skPutIV" class="calc-input" step="0.1" value="22.5"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">ATM IV (%)</label><input type="number" id="skATMIV" class="calc-input" step="0.1" value="18.0"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">25&Delta; Call IV (%)</label><input type="number" id="skCallIV" class="calc-input" step="0.1" value="15.5"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">VIX Level</label><input type="number" id="skVIX" class="calc-input" step="0.1" value="15.0"></div>
+                </div>
+                <button class="calc-btn" onclick="analyzeSkew()">Analyze Skew</button>
+                <div class="calc-result" id="skewResult" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in"><h2>Historical Skew Distribution</h2><div class="chart-container"><canvas id="skewDistChart"></canvas></div></section>
+
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+            <div class="quiz-question" id="q1"><h4>Q1: What does a very flat skew (&lt;3%) indicate?</h4>
+                <div class="quiz-option" data-correct="false">Strong bullish conviction from institutions</div>
+                <div class="quiz-option" data-correct="true">Extreme complacency — nobody is buying crash protection (danger signal)</div>
+                <div class="quiz-option" data-correct="false">The market is about to rally sharply</div>
+                <div class="quiz-option" data-correct="false">Normal market conditions</div><div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q2"><h4>Q2: When is the best time to buy put protection?</h4>
+                <div class="quiz-option" data-correct="true">When skew is flat (puts are cheap) and VIX is low</div>
+                <div class="quiz-option" data-correct="false">When skew is steep (puts are expensive)</div>
+                <div class="quiz-option" data-correct="false">During a crash when everyone is buying puts</div>
+                <div class="quiz-option" data-correct="false">It doesn't matter — put prices are always the same</div><div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q3"><h4>Q3: Skew at 95th percentile. What does this likely mean?</h4>
+                <div class="quiz-option" data-correct="false">The market will crash 20% immediately</div>
+                <div class="quiz-option" data-correct="true">Extreme fear — contrarian buy opportunity if other signals confirm a bottom</div>
+                <div class="quiz-option" data-correct="false">Normal market conditions</div>
+                <div class="quiz-option" data-correct="false">Skew percentile has no meaning</div><div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q4"><h4>Q4: What is the most dangerous VIX + skew combination?</h4>
+                <div class="quiz-option" data-correct="false">High VIX + steep skew</div>
+                <div class="quiz-option" data-correct="true">Low VIX + flat skew (maximum complacency)</div>
+                <div class="quiz-option" data-correct="false">Low VIX + steep skew</div>
+                <div class="quiz-option" data-correct="false">High VIX + flat skew</div><div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q5"><h4>Q5: The skew formula measures:</h4>
+                <div class="quiz-option" data-correct="false">The absolute level of implied volatility</div>
+                <div class="quiz-option" data-correct="true">The difference between OTM put IV and OTM call IV (asymmetry in crash protection demand)</div>
+                <div class="quiz-option" data-correct="false">The VIX futures term structure</div>
+                <div class="quiz-option" data-correct="false">Historical vs implied volatility</div><div class="quiz-feedback"></div></div>
+            <div class="quiz-score" id="quizScore" style="display:none; margin-top: 20px; padding: 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; text-align: center;">
+                <h3>Quiz Complete!</h3><p>You scored <span id="scoreValue" style="color: #ef4444; font-weight: bold; font-size: 1.5rem;">0</span> / 5</p></div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        function copyCode(button) { const codeBlock = button.parentElement.nextElementSibling.querySelector('code'); navigator.clipboard.writeText(codeBlock.textContent); button.textContent = 'Copied!'; setTimeout(() => button.textContent = 'Copy', 2000); }
+
+        function analyzeSkew() {
+            const putIV = parseFloat(document.getElementById('skPutIV').value);
+            const callIV = parseFloat(document.getElementById('skCallIV').value);
+            const atmIV = parseFloat(document.getElementById('skATMIV').value);
+            const vix = parseFloat(document.getElementById('skVIX').value);
+            const skew = putIV - callIV;
+            let regime, regimeColor, action;
+            if (skew > 12) { regime = 'EXTREME FEAR'; regimeColor = '#ef4444'; action = 'Contrarian buy opportunity. Institutions panic-hedging. Bottom may be near.'; }
+            else if (skew > 8) { regime = 'ELEVATED FEAR'; regimeColor = '#f59e0b'; action = 'Reduce risk. Watch for further deterioration. Consider hedges.'; }
+            else if (skew >= 5) { regime = 'NORMAL'; regimeColor = '#94a3b8'; action = 'Trade normally. No extreme skew signal.'; }
+            else if (skew >= 3) { regime = 'LOW (Complacency Building)'; regimeColor = '#f59e0b'; action = 'Warning: Buy cheap put protection. Reduce leveraged longs.'; }
+            else { regime = 'EXTREME COMPLACENCY'; regimeColor = '#10b981'; action = 'DANGER: Nobody hedging. Buy puts NOW. Reduce exposure 30-50%.'; }
+            let combo = '';
+            if (vix < 15 && skew < 4) combo = '<br><strong style="color: #ef4444;">⚠️ LOW VIX + FLAT SKEW = MAXIMUM DANGER</strong>';
+            else if (vix > 25 && skew > 10) combo = '<br><strong style="color: #10b981;">🟢 HIGH VIX + STEEP SKEW = CONTRARIAN BUY ZONE</strong>';
+            const r = document.getElementById('skewResult'); r.style.display = 'block';
+            r.innerHTML = `<h4 style="color: #ef4444; margin-bottom: 10px;">Skew Analysis</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; text-align: center;">
+                    <div><strong style="color: #ef4444;">Put IV</strong><br>${putIV}%</div>
+                    <div><strong style="color: #f59e0b;">ATM IV</strong><br>${atmIV}%</div>
+                    <div><strong style="color: #10b981;">Call IV</strong><br>${callIV}%</div>
+                </div>
+                <div style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center; margin-bottom: 10px;">
+                    <div style="font-size: 2rem; font-weight: bold; color: ${regimeColor};">Skew: ${skew.toFixed(1)}%</div>
+                    <div style="color: ${regimeColor}; font-weight: 600;">${regime}</div>${combo}
+                </div>
+                <div style="color: #94a3b8; font-size: 0.9rem;">${action}</div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Skew scenarios chart
+            new Chart(document.getElementById('skewChart'), {
+                type: 'bar',
+                data: { labels: ['Normal Market', 'Pre-Crash (Fear)', 'Complacent Market'],
+                    datasets: [
+                        { label: 'OTM Put IV (%)', data: [22.5, 32, 17], backgroundColor: 'rgba(239, 68, 68, 0.7)' },
+                        { label: 'ATM IV (%)', data: [18, 24, 15], backgroundColor: 'rgba(245, 158, 11, 0.7)' },
+                        { label: 'OTM Call IV (%)', data: [15.5, 16, 15], backgroundColor: 'rgba(16, 185, 129, 0.7)' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'IV Across Strikes in Different Skew Regimes', color: '#f1f5f9' } },
+                    scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'IV (%)', color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } } } }
+            });
+
+            // Skew vs SPY
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const skewData = [6, 5, 14, 10, 7, 6, 5, 4, 3, 12, 8, 6];
+            const spyData = [450, 445, 410, 420, 440, 448, 455, 460, 462, 430, 440, 455];
+
+            new Chart(document.getElementById('skewVsSpyChart'), {
+                type: 'line',
+                data: { labels: months, datasets: [
+                    { label: 'Skew (%)', data: skewData, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, yAxisID: 'y', fill: true, tension: 0.3 },
+                    { label: 'SPY Price', data: spyData, borderColor: '#6366f1', borderWidth: 2, yAxisID: 'y1', fill: false, tension: 0.3 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'Skew Spikes Before SPY Drops (March, October)', color: '#f1f5f9' } },
+                    scales: { y: { ticks: { color: '#ef4444' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'Skew (%)', color: '#ef4444' } }, y1: { position: 'right', ticks: { color: '#6366f1' }, grid: { display: false }, title: { display: true, text: 'SPY ($)', color: '#6366f1' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } } } }
+            });
+
+            // Distribution chart
+            const bins = ['0-2%', '2-4%', '4-6%', '6-8%', '8-10%', '10-12%', '12-14%', '14%+'];
+            const freq = [5, 15, 25, 30, 15, 6, 3, 1];
+            new Chart(document.getElementById('skewDistChart'), {
+                type: 'bar',
+                data: { labels: bins, datasets: [{ label: 'Frequency (%)', data: freq,
+                    backgroundColor: bins.map((_, i) => i <= 1 ? 'rgba(16, 185, 129, 0.7)' : i <= 3 ? 'rgba(245, 158, 11, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                    borderColor: bins.map((_, i) => i <= 1 ? '#10b981' : i <= 3 ? '#f59e0b' : '#ef4444'), borderWidth: 1
+                }]},
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'SPY Skew Distribution (252-Day) — Green = Complacent, Red = Fear', color: '#f1f5f9' } },
+                    scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'Frequency (%)', color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'Skew Range', color: '#94a3b8' } } } }
+            });
+        });
+
+        document.querySelectorAll('.quiz-option').forEach(option => { option.addEventListener('click', function() { const question = this.closest('.quiz-question'); const options = question.querySelectorAll('.quiz-option'); const feedback = question.querySelector('.quiz-feedback'); if (question.classList.contains('answered')) return; question.classList.add('answered'); options.forEach(opt => opt.style.pointerEvents = 'none'); const isCorrect = this.dataset.correct === 'true'; this.classList.add(isCorrect ? 'correct' : 'incorrect'); if (!isCorrect) { options.forEach(opt => { if (opt.dataset.correct === 'true') opt.classList.add('correct'); }); } feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.'; feedback.style.color = isCorrect ? '#10b981' : '#ef4444'; feedback.style.display = 'block'; checkQuizComplete(); }); });
+        function checkQuizComplete() { const q = document.querySelectorAll('.quiz-question'); const a = document.querySelectorAll('.quiz-question.answered'); if (q.length === a.length) { document.getElementById('scoreValue').textContent = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length; document.getElementById('quizScore').style.display = 'block'; } }
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

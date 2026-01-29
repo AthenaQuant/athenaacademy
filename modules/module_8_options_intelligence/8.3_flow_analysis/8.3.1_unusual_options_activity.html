@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detect unusual options activity (UOA) to predict stock moves. Learn to identify institutional trades, sweeps, and large premium flow before stocks move.">
+    <title>8.3.1 Unusual Options Activity | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .flow-eq { font-size: 1.4rem; color: #10b981; text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .flow-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .flow-table th, .flow-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .flow-table th { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .flow-table tr:hover { background: rgba(16, 185, 129, 0.1); }
+        .signal-bullish { color: #10b981; font-weight: bold; }
+        .signal-bearish { color: #ef4444; font-weight: bold; }
+        .signal-neutral { color: #f59e0b; font-weight: bold; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #10b981; }
+        .calc-btn { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); }
+        .calc-result { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .alert-box { padding: 20px; border-radius: 12px; margin: 15px 0; border-left: 4px solid; }
+        .alert-bullish { background: rgba(16, 185, 129, 0.1); border-color: #10b981; }
+        .alert-bearish { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+        .alert-info { background: rgba(99, 102, 241, 0.1); border-color: #6366f1; }
+        .flow-card { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 20px; margin: 15px 0; border: 1px solid rgba(148, 163, 184, 0.15); }
+        .flow-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .badge-sweep { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-block { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+        .badge-large { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        @media (max-width: 768px) {
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.3.1</span>
+                    <span class="nav-module-title">Unusual Options Activity</span>
+                </div>
+                <a href="8.3.2_smart_money_vs_dumb_money.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.3 Flow Analysis</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.3.1 Unusual Options Activity</span>
+                </div>
+                <h1>Unusual Options Activity (UOA) Detection</h1>
+                <p class="module-subtitle">
+                    Detect large institutional options trades before they move stocks. Follow the smart money flow
+                    for 1-3 day advance notice of major moves. The options market shows you what big players are doing.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 55 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Flow Analyzer</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1: WHY SHOULD I CARE? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">The Trade You Never Saw Coming</div>
+                <p>
+                    You're watching AAPL, price flat all day. Nothing happening on the chart. Unknown to you, a hedge fund
+                    just bought <strong>20,000 call options</strong> aggressively, paying $3M in premium at the ask price.
+                    Next day AAPL surges 5%. You missed it. If you were monitoring options flow, you would have seen that
+                    $3M bet and added AAPL to your bullish watchlist <strong>24 hours before the move</strong>.
+                </p>
+            </div>
+
+            <div class="flow-eq">
+                Unusual Options Activity → Institutional Positioning → Stock Price Movement (1-3 Days)
+            </div>
+            <p style="text-align: center; color: #94a3b8;">Large options trades reveal institutional intent before it shows up in stock price</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Early Warning System</h4>
+                    <p>Institutions use options to position before big moves. Their trades show up in flow data 1-3 days before the stock moves.</p>
+                </div>
+                <div class="card">
+                    <h4>Leverage Reveals Conviction</h4>
+                    <p>A $2M options bet controls $40M+ in stock. When someone makes that bet aggressively, they have high conviction.</p>
+                </div>
+                <div class="card">
+                    <h4>Information Edge</h4>
+                    <p>Institutions have better research, models, and networks. Following their options flow gives you a piece of their edge.</p>
+                </div>
+                <div class="card">
+                    <h4>Confirmation Tool</h4>
+                    <p>Already bullish on a stock? Heavy call flow confirms your thesis. No flow? Maybe wait for better setup.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">Real Example: NVDA Before AI Rally (June 2023)</div>
+                <p>
+                    In late May 2023, unusual call buying appeared in NVDA &mdash; <strong>$50M+ in call premium</strong> over
+                    three days, mostly at ask (aggressive). Contracts were targeting $350-$400 strikes. At the time, NVDA
+                    was at $305. A week later, NVDA reported earnings and guidance showing massive AI demand. The stock
+                    surged to $420. Those who tracked the flow had 1-2 weeks of advance notice.
+                </p>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1-3 Days</div>
+                    <div class="metric-label">Advance Notice</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$500K+</div>
+                    <div class="metric-label">Institutional Size</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">70%+</div>
+                    <div class="metric-label">Aggressive Fill Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3+ Legs</div>
+                    <div class="metric-label">Sweep Detection</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: BUILDING INTUITION -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+
+            <h3>Why Do Institutions Use Options?</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Leverage</h4>
+                    <p>Control $1M of stock with $50K in options. If right, returns are 10-20x. This is why large players use options for directional bets.</p>
+                </div>
+                <div class="card">
+                    <h4>Lower Market Impact</h4>
+                    <p>Buying 100,000 shares moves the stock. Buying 1,000 call contracts achieves similar exposure with less visible footprint.</p>
+                </div>
+                <div class="card">
+                    <h4>Defined Risk</h4>
+                    <p>Maximum loss = premium paid. If wrong, you lose $500K instead of potentially more on stock. Risk is capped.</p>
+                </div>
+                <div class="card">
+                    <h4>Time Targeting</h4>
+                    <p>Options let you bet on WHEN a move happens, not just IF. Upcoming earnings catalyst? Buy options expiring right after.</p>
+                </div>
+            </div>
+
+            <h3>Types of Unusual Activity</h3>
+
+            <div class="flow-card">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span class="flow-badge badge-block">BLOCK TRADE</span>
+                    <strong style="color: #f1f5f9;">Single Large Order (500+ Contracts)</strong>
+                </div>
+                <p style="color: #94a3b8;">One big order executed at once. Indicates a single institution taking a position. The larger the block, the more significant. Example: 5,000 TSLA $250 calls in one print.</p>
+            </div>
+
+            <div class="flow-card">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span class="flow-badge badge-sweep">SWEEP</span>
+                    <strong style="color: #f1f5f9;">Multi-Exchange Aggressive Buying (3+ Legs)</strong>
+                </div>
+                <p style="color: #94a3b8;">The most bullish signal. Institution hits the ask price across multiple exchanges simultaneously, sweeping all available liquidity. Shows extreme urgency. Example: 3 fills in 5 seconds across CBOE, ISE, and PHLX.</p>
+            </div>
+
+            <div class="flow-card">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span class="flow-badge badge-large">LARGE PREMIUM</span>
+                    <strong style="color: #f1f5f9;">Trades &gt;$1M in Single Transaction</strong>
+                </div>
+                <p style="color: #94a3b8;">Size matters. When someone puts $1M+ on a single options trade, it is almost certainly institutional. Retail traders rarely make $1M bets. Follow the size.</p>
+            </div>
+
+            <!-- SVG Diagram: Aggressive vs Passive Buying -->
+            <div style="margin: 30px 0;">
+                <svg viewBox="0 0 800 300" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <text x="400" y="30" text-anchor="middle" fill="#10b981" font-size="16" font-weight="bold">AGGRESSIVE vs PASSIVE OPTIONS BUYING</text>
+                    <!-- Aggressive Side -->
+                    <rect x="20" y="50" width="360" height="230" rx="16" fill="rgba(16, 185, 129, 0.1)" stroke="#10b981" stroke-width="2"/>
+                    <text x="200" y="80" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">AGGRESSIVE (At Ask)</text>
+                    <text x="200" y="105" text-anchor="middle" fill="#6ee7b7" font-size="12">High Conviction Signal</text>
+                    <text x="40" y="135" fill="#94a3b8" font-size="11">• Pays full ask price (no patience)</text>
+                    <text x="40" y="160" fill="#94a3b8" font-size="11">• Sweeps multiple exchanges</text>
+                    <text x="40" y="185" fill="#94a3b8" font-size="11">• Fills immediately (urgency)</text>
+                    <text x="40" y="210" fill="#94a3b8" font-size="11">• Often before catalysts</text>
+                    <text x="40" y="235" fill="#94a3b8" font-size="11">• Signal: VERY BULLISH</text>
+                    <rect x="40" y="248" width="320" height="22" rx="4" fill="rgba(16, 185, 129, 0.3)"/>
+                    <text x="200" y="263" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">Aggressiveness: 70-100%</text>
+                    <!-- Passive Side -->
+                    <rect x="420" y="50" width="360" height="230" rx="16" fill="rgba(148, 163, 184, 0.1)" stroke="#475569" stroke-width="2"/>
+                    <text x="600" y="80" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="bold">PASSIVE (At Bid)</text>
+                    <text x="600" y="105" text-anchor="middle" fill="#64748b" font-size="12">Lower Conviction / Selling</text>
+                    <text x="440" y="135" fill="#94a3b8" font-size="11">• Waits at bid price (patient)</text>
+                    <text x="440" y="160" fill="#94a3b8" font-size="11">• Single exchange fill</text>
+                    <text x="440" y="185" fill="#94a3b8" font-size="11">• Takes time to fill</text>
+                    <text x="440" y="210" fill="#94a3b8" font-size="11">• Could be closing position</text>
+                    <text x="440" y="235" fill="#94a3b8" font-size="11">• Signal: Neutral / Less Significant</text>
+                    <rect x="440" y="248" width="320" height="22" rx="4" fill="rgba(148, 163, 184, 0.2)"/>
+                    <text x="600" y="263" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">Aggressiveness: 0-30%</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- PART 3: THE MATHEMATICS -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <h3>Volume Ratio (Detecting Unusual Volume)</h3>
+            <div class="flow-eq">
+                Volume Ratio = Today's Volume / 20-Day Average Volume
+            </div>
+            <table class="flow-table">
+                <thead>
+                    <tr><th>Volume Ratio</th><th>Classification</th><th>Significance</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>0.5 - 1.5</td><td>Normal</td><td>No unusual activity</td></tr>
+                    <tr><td>1.5 - 2.0</td><td>Elevated</td><td>Worth monitoring</td></tr>
+                    <tr><td class="signal-bullish">2.0 - 5.0</td><td class="signal-bullish">Unusual</td><td>Likely institutional</td></tr>
+                    <tr><td class="signal-bullish">&gt; 5.0</td><td class="signal-bullish">Very Unusual</td><td>Strong institutional signal</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Premium Calculation</h3>
+            <div class="flow-eq">
+                Total Premium = Contracts &times; Option Price &times; 100
+            </div>
+            <p>
+                <strong>Example:</strong> 1,000 calls at $5.00 each = 1,000 &times; $5.00 &times; 100 = <strong>$500,000</strong> (institutional size)
+            </p>
+
+            <h3>Aggressiveness Indicator</h3>
+            <div class="flow-eq">
+                Aggressiveness = (Execution Price - Bid) / (Ask - Bid) &times; 100%
+            </div>
+            <table class="flow-table">
+                <thead>
+                    <tr><th>Aggressiveness</th><th>Fill Location</th><th>Interpretation</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="signal-bullish">90-100%</td><td>At/near Ask</td><td>Very aggressive &mdash; urgent buying, high conviction</td></tr>
+                    <tr><td>60-89%</td><td>Above mid</td><td>Moderately aggressive &mdash; willing to pay up</td></tr>
+                    <tr><td>40-59%</td><td>Near mid</td><td>Neutral &mdash; patient buyer or market maker fill</td></tr>
+                    <tr><td class="signal-bearish">0-39%</td><td>At/near Bid</td><td>Passive &mdash; selling or no urgency</td></tr>
+                </tbody>
+            </table>
+            <p>
+                <strong>Example:</strong> Bid $4.90, Ask $5.10, Filled at $5.05<br>
+                Aggressiveness = ($5.05 - $4.90) / ($5.10 - $4.90) = $0.15 / $0.20 = <strong>75% (Aggressive)</strong>
+            </p>
+
+            <h3>Urgency Score</h3>
+            <div class="flow-eq">
+                Urgency Score = (Premium / $100K) &times; (Aggressiveness / 50) &times; (30 / DTE)
+            </div>
+            <p style="color: #94a3b8;">Higher score = more significant. Combines size, urgency, and time sensitivity into one metric.</p>
+        </section>
+
+        <!-- PART 4: NUMERICAL EXAMPLE -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Complete Numerical Example</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Scenario: TSLA Unusual Activity Detection</div>
+                <p><strong>Date:</strong> January 15, 10:30 AM | <strong>TSLA:</strong> $242</p>
+            </div>
+
+            <div class="alert-box alert-bullish">
+                <strong style="color: #10b981; font-size: 1.1rem;">UNUSUAL ACTIVITY DETECTED</strong><br>
+                <strong>Trade:</strong> 5,000 TSLA $250 Calls | 14 DTE | Premium: $3.50<br>
+                <strong>Bid/Ask:</strong> $3.40 / $3.60 | <strong>Execution:</strong> $3.58
+            </div>
+
+            <h3>Step 1: Calculate Total Premium</h3>
+            <p>5,000 &times; $3.50 &times; 100 = <strong>$1,750,000</strong> &mdash; Clearly institutional size</p>
+
+            <h3>Step 2: Calculate Aggressiveness</h3>
+            <p>($3.58 - $3.40) / ($3.60 - $3.40) = $0.18 / $0.20 = <strong>90% (VERY Aggressive)</strong></p>
+            <p style="color: #94a3b8;">Buyer paid near the ask &mdash; desperate to get filled, high conviction</p>
+
+            <h3>Step 3: Analyze Strike Selection</h3>
+            <p>$250 strike vs $242 stock = 3.3% OTM &mdash; <strong>Bullish but realistic target</strong></p>
+            <p style="color: #94a3b8;">Not a far-OTM lottery ticket (those are retail). Realistic institutional target.</p>
+
+            <h3>Step 4: Calculate Urgency Score</h3>
+            <p>($1,750,000 / $100,000) &times; (90 / 50) &times; (30 / 14) = 17.5 &times; 1.8 &times; 2.14 = <strong>67.4 (VERY HIGH)</strong></p>
+
+            <h3>Step 5: Interpretation</h3>
+            <table class="flow-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Reading</th></tr></thead>
+                <tbody>
+                    <tr><td>Total Premium</td><td>$1,750,000</td><td class="signal-bullish">Institutional Size</td></tr>
+                    <tr><td>Aggressiveness</td><td>90%</td><td class="signal-bullish">Very Aggressive</td></tr>
+                    <tr><td>OTM %</td><td>3.3%</td><td>Realistic Target</td></tr>
+                    <tr><td>DTE</td><td>14 days</td><td>Near-term conviction</td></tr>
+                    <tr><td>Urgency Score</td><td>67.4</td><td class="signal-bullish">VERY UNUSUAL</td></tr>
+                    <tr style="background: rgba(16, 185, 129, 0.15);"><td><strong>Signal</strong></td><td colspan="2"><strong class="signal-bullish">Institution betting $1.75M TSLA reaches $250+ in 2 weeks</strong></td></tr>
+                </tbody>
+            </table>
+
+            <div class="alert-box alert-bullish">
+                <strong style="color: #10b981;">Result:</strong> TSLA rallied to $255 within 10 days. The institution was right.
+                Stock traders who added TSLA to their bullish watchlist after seeing this flow captured the move.
+            </div>
+
+            <!-- Chart: Flow Timeline -->
+            <div class="chart-container">
+                <canvas id="flowTimelineChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 5: PYTHON IMPLEMENTATION -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+
+            <div class="info-box">
+                <div class="info-box-title">Production-Quality UOA Detector</div>
+                <p>Complete Python implementation for detecting and analyzing unusual options activity on any stock.</p>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>unusual_options_detector.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+from enum import Enum
+
+
+class FlowSignal(Enum):
+    """Classification of options flow signal."""
+    VERY_BULLISH = "VERY_BULLISH"
+    BULLISH = "BULLISH"
+    NEUTRAL = "NEUTRAL"
+    BEARISH = "BEARISH"
+    VERY_BEARISH = "VERY_BEARISH"
+
+
+@dataclass
+class OptionsFlow:
+    """Represents a single options trade flow."""
+    symbol: str
+    timestamp: datetime
+    option_type: str        # 'call' or 'put'
+    strike: float
+    expiration: datetime
+    contracts: int
+    premium_per_contract: float
+    bid: float
+    ask: float
+    execution_price: float
+    stock_price: float
+
+
+@dataclass
+class FlowAnalysis:
+    """Result of flow analysis."""
+    total_premium: float
+    aggressiveness: float
+    days_to_expiration: int
+    otm_percent: float
+    moneyness: str
+    urgency_score: float
+    significance: str
+    signal: FlowSignal
+
+
+def calculate_flow_metrics(flow: OptionsFlow) -> FlowAnalysis:
+    """
+    Calculate comprehensive metrics for a single options flow.
+
+    Parameters
+    ----------
+    flow : OptionsFlow
+        Options trade flow data
+
+    Returns
+    -------
+    FlowAnalysis
+        Complete flow analysis with signal
+    """
+    # Total premium
+    total_premium = flow.contracts * flow.premium_per_contract * 100
+
+    # Aggressiveness (0-100%)
+    spread = flow.ask - flow.bid
+    if spread > 0:
+        aggressiveness = ((flow.execution_price - flow.bid) / spread) * 100
+    else:
+        aggressiveness = 50.0
+
+    # Days to expiration
+    dte = (flow.expiration - flow.timestamp).days
+
+    # OTM percentage
+    if flow.option_type == 'call':
+        otm_pct = ((flow.strike - flow.stock_price) / flow.stock_price) * 100
+    else:
+        otm_pct = ((flow.stock_price - flow.strike) / flow.stock_price) * 100
+
+    # Moneyness classification
+    if abs(otm_pct) < 2:
+        moneyness = "ATM"
+    elif otm_pct > 0:
+        moneyness = "OTM"
+    else:
+        moneyness = "ITM"
+
+    # Urgency score
+    urgency = (total_premium / 100_000) * (aggressiveness / 50) * (30 / max(dte, 1))
+
+    # Significance
+    significance = _classify_significance(urgency, total_premium)
+
+    # Signal
+    signal = _determine_signal(
+        flow.option_type, aggressiveness, total_premium, urgency
+    )
+
+    return FlowAnalysis(
+        total_premium=round(total_premium, 2),
+        aggressiveness=round(aggressiveness, 1),
+        days_to_expiration=dte,
+        otm_percent=round(otm_pct, 2),
+        moneyness=moneyness,
+        urgency_score=round(urgency, 2),
+        significance=significance,
+        signal=signal
+    )
+
+
+def _classify_significance(urgency: float, premium: float) -> str:
+    """Classify trade significance level."""
+    if premium > 1_000_000 and urgency > 10:
+        return "VERY UNUSUAL - Institutional conviction"
+    elif premium > 500_000 and urgency > 5:
+        return "UNUSUAL - Worth monitoring"
+    elif premium > 250_000:
+        return "NOTABLE - Above average size"
+    return "NORMAL - Retail/small size"
+
+
+def _determine_signal(
+    option_type: str,
+    aggressiveness: float,
+    premium: float,
+    urgency: float
+) -> FlowSignal:
+    """Determine the trading signal from flow characteristics."""
+    is_aggressive = aggressiveness > 70
+    is_large = premium > 500_000
+
+    if option_type == 'call':
+        if is_aggressive and is_large and urgency > 10:
+            return FlowSignal.VERY_BULLISH
+        elif is_aggressive or is_large:
+            return FlowSignal.BULLISH
+    elif option_type == 'put':
+        if is_aggressive and is_large and urgency > 10:
+            return FlowSignal.VERY_BEARISH
+        elif is_aggressive or is_large:
+            return FlowSignal.BEARISH
+
+    return FlowSignal.NEUTRAL
+
+
+def detect_sweeps(
+    trades: List[OptionsFlow],
+    time_window_sec: int = 60
+) -> List[Dict]:
+    """
+    Detect multi-exchange sweep orders.
+
+    A sweep is when an institution hits the ask across multiple
+    exchanges simultaneously — the most aggressive (and bullish)
+    type of options order.
+
+    Parameters
+    ----------
+    trades : List[OptionsFlow]
+        List of options trades
+    time_window_sec : int
+        Time window in seconds to group trades
+
+    Returns
+    -------
+    List[Dict]
+        Detected sweeps with aggregated details
+    """
+    if not trades:
+        return []
+
+    sweeps = []
+    sorted_trades = sorted(trades, key=lambda t: t.timestamp)
+    used = set()
+
+    for i, trade in enumerate(sorted_trades):
+        if i in used:
+            continue
+
+        window_end = trade.timestamp + timedelta(seconds=time_window_sec)
+        group = [trade]
+        used.add(i)
+
+        for j in range(i + 1, len(sorted_trades)):
+            if j in used:
+                continue
+            t = sorted_trades[j]
+            if t.timestamp > window_end:
+                break
+            if (t.strike == trade.strike and
+                t.expiration == trade.expiration and
+                t.option_type == trade.option_type and
+                t.symbol == trade.symbol):
+                group.append(t)
+                used.add(j)
+
+        if len(group) >= 3:
+            total_contracts = sum(t.contracts for t in group)
+            total_premium = sum(
+                t.contracts * t.premium_per_contract * 100 for t in group
+            )
+            aggressiveness_values = []
+            for t in group:
+                spread = t.ask - t.bid
+                if spread > 0:
+                    aggressiveness_values.append(
+                        (t.execution_price - t.bid) / spread * 100
+                    )
+            avg_agg = np.mean(aggressiveness_values) if aggressiveness_values else 50
+
+            sweeps.append({
+                'symbol': trade.symbol,
+                'timestamp': trade.timestamp.isoformat(),
+                'option_type': trade.option_type,
+                'strike': trade.strike,
+                'expiration': trade.expiration.isoformat(),
+                'num_legs': len(group),
+                'total_contracts': total_contracts,
+                'total_premium': round(total_premium, 2),
+                'avg_aggressiveness': round(avg_agg, 1),
+                'signal': (FlowSignal.VERY_BULLISH.value
+                          if trade.option_type == 'call'
+                          else FlowSignal.VERY_BEARISH.value)
+            })
+
+    return sweeps
+
+
+def analyze_daily_flow(
+    flows: List[OptionsFlow],
+    avg_daily_volume: int
+) -> Dict[str, any]:
+    """
+    Analyze full day's options flow for a symbol.
+
+    Parameters
+    ----------
+    flows : List[OptionsFlow]
+        All options trades for the day
+    avg_daily_volume : int
+        Historical 20-day average daily volume
+
+    Returns
+    -------
+    Dict
+        Daily flow analysis with signal and interpretation
+    """
+    calls = [f for f in flows if f.option_type == 'call']
+    puts = [f for f in flows if f.option_type == 'put']
+
+    call_vol = sum(f.contracts for f in calls)
+    put_vol = sum(f.contracts for f in puts)
+    total_vol = call_vol + put_vol
+
+    vol_ratio = total_vol / avg_daily_volume if avg_daily_volume > 0 else 0
+    pc_ratio = put_vol / call_vol if call_vol > 0 else 0
+
+    call_prem = sum(f.contracts * f.premium_per_contract * 100 for f in calls)
+    put_prem = sum(f.contracts * f.premium_per_contract * 100 for f in puts)
+
+    # Count aggressive trades
+    def is_aggressive(f):
+        spread = f.ask - f.bid
+        return spread > 0 and ((f.execution_price - f.bid) / spread) > 0.7
+
+    agg_calls = sum(1 for f in calls if is_aggressive(f))
+    agg_puts = sum(1 for f in puts if is_aggressive(f))
+
+    # Signal determination
+    if vol_ratio > 2 and pc_ratio < 0.5 and call_prem > 1_000_000:
+        signal, confidence = "STRONG BULLISH", "HIGH"
+    elif vol_ratio > 1.5 and pc_ratio < 0.7:
+        signal, confidence = "BULLISH", "MODERATE"
+    elif vol_ratio > 2 and pc_ratio > 1.5 and put_prem > 1_000_000:
+        signal, confidence = "STRONG BEARISH", "HIGH"
+    elif vol_ratio > 1.5 and pc_ratio > 1.3:
+        signal, confidence = "BEARISH", "MODERATE"
+    else:
+        signal, confidence = "NEUTRAL", "LOW"
+
+    return {
+        'total_volume': total_vol,
+        'volume_ratio': round(vol_ratio, 2),
+        'put_call_ratio': round(pc_ratio, 2),
+        'call_premium': round(call_prem, 2),
+        'put_premium': round(put_prem, 2),
+        'aggressive_calls': agg_calls,
+        'aggressive_puts': agg_puts,
+        'signal': signal,
+        'confidence': confidence
+    }
+
+
+# ─── EXAMPLE USAGE ────────────────────────────────────
+if __name__ == "__main__":
+    # Analyze a single unusual trade
+    tsla_flow = OptionsFlow(
+        symbol="TSLA",
+        timestamp=datetime(2024, 1, 15, 10, 30),
+        option_type="call",
+        strike=250,
+        expiration=datetime(2024, 1, 29),
+        contracts=5000,
+        premium_per_contract=3.50,
+        bid=3.40,
+        ask=3.60,
+        execution_price=3.58,
+        stock_price=242
+    )
+
+    result = calculate_flow_metrics(tsla_flow)
+    print("═══ TSLA Unusual Activity Analysis ═══")
+    print(f"  Premium      : ${result.total_premium:,.0f}")
+    print(f"  Aggressive   : {result.aggressiveness}%")
+    print(f"  OTM          : {result.otm_percent}% ({result.moneyness})")
+    print(f"  DTE          : {result.days_to_expiration} days")
+    print(f"  Urgency      : {result.urgency_score}")
+    print(f"  Significance : {result.significance}")
+    print(f"  Signal       : {result.signal.value}")
+
+    # Detect sweep
+    sweep_trades = [
+        OptionsFlow("AAPL", datetime(2024,1,15,14,25,10), "call", 180,
+                   datetime(2024,2,1), 500, 2.50, 2.45, 2.55, 2.54, 175),
+        OptionsFlow("AAPL", datetime(2024,1,15,14,25,15), "call", 180,
+                   datetime(2024,2,1), 800, 2.51, 2.46, 2.56, 2.55, 175),
+        OptionsFlow("AAPL", datetime(2024,1,15,14,25,22), "call", 180,
+                   datetime(2024,2,1), 600, 2.52, 2.47, 2.57, 2.56, 175),
+    ]
+    sweeps = detect_sweeps(sweep_trades)
+    if sweeps:
+        s = sweeps[0]
+        print(f"\n═══ SWEEP DETECTED: AAPL ═══")
+        print(f"  Legs     : {s['num_legs']}")
+        print(f"  Contracts: {s['total_contracts']}")
+        print(f"  Premium  : ${s['total_premium']:,.0f}")
+        print(f"  Signal   : {s['signal']}")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6: TRADING APPLICATIONS -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>UOA Trading Workflow</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>1. Morning Flow Scan</h4>
+                    <p>Review previous day's unusual activity. Filter for premium &gt;$500K, aggressiveness &gt;70%, and volume ratio &gt;2x. Build your watchlist from these signals.</p>
+                </div>
+                <div class="card">
+                    <h4>2. Intraday Monitoring</h4>
+                    <p>Watch real-time flow during market hours. Sweeps and large blocks appearing in real-time are the most actionable. Alert on trades &gt;$1M premium.</p>
+                </div>
+                <div class="card">
+                    <h4>3. Technical Confirmation</h4>
+                    <p>Heavy call flow + technical breakout = high-probability long. Don't buy on flow alone&mdash;wait for price to confirm the direction with a clean technical entry.</p>
+                </div>
+                <div class="card">
+                    <h4>4. Position Sizing</h4>
+                    <p>Increase position size when flow confirms your thesis. $2M+ aggressive call flow on your bullish setup? Size up. No flow confirmation? Standard size.</p>
+                </div>
+            </div>
+
+            <h3>Example Workflow</h3>
+            <div class="alert-box alert-bullish">
+                <strong style="color: #10b981;">Step-by-Step: NVDA Trade</strong><br><br>
+                <strong>1.</strong> Flow scanner shows NVDA unusual call buying ($2M premium, 85% aggressive)<br>
+                <strong>2.</strong> Check chart &mdash; NVDA consolidating near $300, forming bull flag<br>
+                <strong>3.</strong> Add to bullish watchlist with entry trigger at $305 (breakout)<br>
+                <strong>4.</strong> Next day: NVDA breaks $305 on volume &mdash; ENTER LONG<br>
+                <strong>5.</strong> Set stop at $295 (below consolidation), target $320 (2:1 R:R)<br>
+                <strong>6.</strong> Result: NVDA hits $325 in 5 days &mdash; $20 profit per share with flow confirmation
+            </div>
+
+            <!-- Chart: Aggressiveness Distribution -->
+            <div class="chart-container">
+                <canvas id="aggressivenessChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PART 7: COMMON MISTAKES -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+
+            <table class="flow-table">
+                <thead>
+                    <tr><th style="width:45%">&#10060; Mistake</th><th style="width:55%">&#9989; Correct Approach</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Blindly following every unusual trade</td>
+                        <td>Many large trades are hedges or closing positions. Look for aggressive OPENING trades at ask price.</td>
+                    </tr>
+                    <tr>
+                        <td>Assuming put buying = bearish</td>
+                        <td>Institutions buy puts as portfolio protection, not because they're bearish. Check if it's hedging vs directional.</td>
+                    </tr>
+                    <tr>
+                        <td>Chasing after the stock already moved</td>
+                        <td>If flow was 6 hours ago and the stock already moved 3%, you missed it. Wait for the next setup.</td>
+                    </tr>
+                    <tr>
+                        <td>Using flow on illiquid options</td>
+                        <td>Stick to liquid names: SPY, QQQ, AAPL, TSLA, NVDA, AMZN, META, MSFT. Illiquid flow is unreliable.</td>
+                    </tr>
+                    <tr>
+                        <td>Thinking institutions are always right</td>
+                        <td>Institutions are wrong 30-40% of the time. Use flow as one signal, not the only signal. Always have a stop loss.</td>
+                    </tr>
+                    <tr>
+                        <td>Ignoring time frame (DTE)</td>
+                        <td>0-7 DTE = short-term bet. 30+ DTE = longer conviction. Match your trade horizon to the flow's DTE.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 8: SUMMARY & CHEAT SHEET -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Cheat Sheet</h2>
+
+            <h3>Flow Signal Reference</h3>
+            <table class="flow-table">
+                <thead>
+                    <tr><th>Flow Type</th><th>Signal</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Aggressive Calls (at ask)</td><td class="signal-bullish">Bullish</td><td>Add to long watchlist</td></tr>
+                    <tr><td>Call Sweep (3+ legs)</td><td class="signal-bullish">VERY Bullish</td><td>High-conviction long setup</td></tr>
+                    <tr><td>Large Premium (&gt;$1M calls)</td><td class="signal-bullish">Institutional Bullish</td><td>Monitor closely for entry</td></tr>
+                    <tr><td>Aggressive Puts (at ask)</td><td class="signal-bearish">Bearish OR Hedge</td><td>Check context, be cautious</td></tr>
+                    <tr><td>Put Sweep (3+ legs)</td><td class="signal-bearish">VERY Bearish</td><td>Consider shorts or exit longs</td></tr>
+                    <tr><td>Balanced / Small Size</td><td class="signal-neutral">Neutral</td><td>No actionable signal</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Key Formulas</h3>
+            <div class="flow-eq">Premium = Contracts &times; Price &times; 100 &nbsp;|&nbsp; Aggressiveness = (Exec - Bid) / (Ask - Bid)</div>
+            <div class="flow-eq">Urgency = (Premium / $100K) &times; (Aggr / 50) &times; (30 / DTE)</div>
+
+            <h3>Trading Wisdom</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Follow Size</h4>
+                    <p>$1M+ trades are institutional. They have better info. When they bet big aggressively, pay attention.</p>
+                </div>
+                <div class="card">
+                    <h4>Sweeps Are King</h4>
+                    <p>Multi-exchange sweeps are the most aggressive order type. When you see a sweep, someone is URGENT.</p>
+                </div>
+                <div class="card">
+                    <h4>Confirm with Chart</h4>
+                    <p>Flow + technical breakout = best trades. Don't trade flow alone. Wait for price confirmation.</p>
+                </div>
+                <div class="card">
+                    <h4>Timing Matters</h4>
+                    <p>Flow typically leads price by 1-3 days. Act within that window or wait for the next signal.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive UOA Analyzer</h2>
+
+            <div class="calculator-section">
+                <h3>Options Flow Analyzer</h3>
+                <p style="color: #94a3b8; margin-bottom: 15px;">Enter trade data to analyze whether it qualifies as unusual options activity.</p>
+                <div class="calc-grid">
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Contracts</label>
+                        <input type="number" id="uoaContracts" class="calc-input" value="5000" placeholder="5000">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Option Type</label>
+                        <select id="uoaType" class="calc-input">
+                            <option value="call">Call</option>
+                            <option value="put">Put</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Option Price ($)</label>
+                        <input type="number" id="uoaPrice" class="calc-input" step="0.01" value="3.50" placeholder="3.50">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Bid ($)</label>
+                        <input type="number" id="uoaBid" class="calc-input" step="0.01" value="3.40" placeholder="3.40">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Ask ($)</label>
+                        <input type="number" id="uoaAsk" class="calc-input" step="0.01" value="3.60" placeholder="3.60">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Execution Price ($)</label>
+                        <input type="number" id="uoaExec" class="calc-input" step="0.01" value="3.58" placeholder="3.58">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Strike ($)</label>
+                        <input type="number" id="uoaStrike" class="calc-input" value="250" placeholder="250">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Stock Price ($)</label>
+                        <input type="number" id="uoaStock" class="calc-input" value="242" placeholder="242">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Days to Expiration</label>
+                        <input type="number" id="uoaDTE" class="calc-input" value="14" placeholder="14">
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.9rem;">Avg Daily Volume</label>
+                        <input type="number" id="uoaAvgVol" class="calc-input" value="50000" placeholder="50000">
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="analyzeUOA()">Analyze Flow</button>
+                <div class="calc-result" id="uoaResult" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Chart: Premium Breakdown -->
+        <section class="content-section fade-in">
+            <h2>Options Flow Premium Breakdown</h2>
+            <p style="color: #94a3b8;">Sample daily flow for a mega-cap stock showing call vs put premium distribution.</p>
+            <div class="chart-container">
+                <canvas id="premiumChart"></canvas>
+            </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+
+            <div class="quiz-question" id="q1">
+                <h4>Q1: What makes a sweep the most bullish type of options order?</h4>
+                <div class="quiz-option" data-correct="false">It's the cheapest way to buy options</div>
+                <div class="quiz-option" data-correct="true">The buyer aggressively hits the ask across multiple exchanges simultaneously, showing extreme urgency</div>
+                <div class="quiz-option" data-correct="false">Sweeps always make money</div>
+                <div class="quiz-option" data-correct="false">Sweeps are only used by retail traders</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q2">
+                <h4>Q2: An options trade has aggressiveness of 15%. What does this mean?</h4>
+                <div class="quiz-option" data-correct="false">The buyer is very urgent and bullish</div>
+                <div class="quiz-option" data-correct="true">The trade was filled near the bid — passive, likely selling or closing</div>
+                <div class="quiz-option" data-correct="false">The trade was too small to matter</div>
+                <div class="quiz-option" data-correct="false">The buyer got a great fill at the ask</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q3">
+                <h4>Q3: Someone buys 2,000 puts on AAPL for $1.5M. Is this always bearish?</h4>
+                <div class="quiz-option" data-correct="false">Yes, large put buying is always bearish</div>
+                <div class="quiz-option" data-correct="true">Not necessarily — it could be portfolio protection (hedging a long stock position)</div>
+                <div class="quiz-option" data-correct="false">No, puts have nothing to do with direction</div>
+                <div class="quiz-option" data-correct="false">Yes, but only if they're ITM puts</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q4">
+                <h4>Q4: You see unusual call flow on TSLA at 10 AM. TSLA has already rallied 4% by 2 PM. What should you do?</h4>
+                <div class="quiz-option" data-correct="false">Buy immediately — the flow was right</div>
+                <div class="quiz-option" data-correct="true">Don't chase — the move already happened. Wait for the next setup</div>
+                <div class="quiz-option" data-correct="false">Short TSLA because it went up too much</div>
+                <div class="quiz-option" data-correct="false">Ignore flow signals entirely going forward</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-question" id="q5">
+                <h4>Q5: What is the best way to use options flow for stock trading?</h4>
+                <div class="quiz-option" data-correct="false">Trade every unusual flow signal immediately</div>
+                <div class="quiz-option" data-correct="false">Only use flow, ignore all other analysis</div>
+                <div class="quiz-option" data-correct="true">Combine flow with technical analysis — flow for direction, technicals for entry</div>
+                <div class="quiz-option" data-correct="false">Only follow put flow, ignore call flow</div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-score" id="quizScore" style="display:none; margin-top: 20px; padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; text-align: center;">
+                <h3>Quiz Complete!</h3>
+                <p>You scored <span id="scoreValue" style="color: #10b981; font-weight: bold; font-size: 1.5rem;">0</span> / 5</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent);
+            button.textContent = 'Copied!';
+            setTimeout(() => button.textContent = 'Copy', 2000);
+        }
+
+        function analyzeUOA() {
+            const contracts = parseFloat(document.getElementById('uoaContracts').value);
+            const type = document.getElementById('uoaType').value;
+            const price = parseFloat(document.getElementById('uoaPrice').value);
+            const bid = parseFloat(document.getElementById('uoaBid').value);
+            const ask = parseFloat(document.getElementById('uoaAsk').value);
+            const exec = parseFloat(document.getElementById('uoaExec').value);
+            const strike = parseFloat(document.getElementById('uoaStrike').value);
+            const stock = parseFloat(document.getElementById('uoaStock').value);
+            const dte = parseFloat(document.getElementById('uoaDTE').value);
+            const avgVol = parseFloat(document.getElementById('uoaAvgVol').value);
+
+            const premium = contracts * price * 100;
+            const spread = ask - bid;
+            const aggressiveness = spread > 0 ? ((exec - bid) / spread) * 100 : 50;
+            const otm = type === 'call' ? ((strike - stock) / stock) * 100 : ((stock - strike) / stock) * 100;
+            const urgency = (premium / 100000) * (aggressiveness / 50) * (30 / Math.max(dte, 1));
+            const volRatio = contracts / avgVol;
+
+            let significance, sigColor;
+            if (premium > 1000000 && urgency > 10) { significance = 'VERY UNUSUAL — Institutional Conviction'; sigColor = '#10b981'; }
+            else if (premium > 500000 && urgency > 5) { significance = 'UNUSUAL — Worth Monitoring'; sigColor = '#f59e0b'; }
+            else if (premium > 250000) { significance = 'NOTABLE — Above Average'; sigColor = '#6366f1'; }
+            else { significance = 'NORMAL — Retail/Small Size'; sigColor = '#94a3b8'; }
+
+            let signal, signalColor;
+            if (type === 'call' && aggressiveness > 70 && premium > 500000) { signal = 'VERY BULLISH'; signalColor = '#10b981'; }
+            else if (type === 'call' && (aggressiveness > 70 || premium > 500000)) { signal = 'BULLISH'; signalColor = '#6ee7b7'; }
+            else if (type === 'put' && aggressiveness > 70 && premium > 500000) { signal = 'VERY BEARISH'; signalColor = '#ef4444'; }
+            else if (type === 'put' && (aggressiveness > 70 || premium > 500000)) { signal = 'BEARISH'; signalColor = '#fca5a5'; }
+            else { signal = 'NEUTRAL'; signalColor = '#94a3b8'; }
+
+            const result = document.getElementById('uoaResult');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h4 style="color: #10b981; margin-bottom: 10px;">UOA Analysis</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                    <div style="text-align:center;"><strong style="color: #94a3b8;">Premium</strong><br><span style="color: #f1f5f9; font-size: 1.1rem;">$${(premium).toLocaleString()}</span></div>
+                    <div style="text-align:center;"><strong style="color: #94a3b8;">Aggressiveness</strong><br><span style="color: ${aggressiveness > 70 ? '#10b981' : '#94a3b8'}; font-size: 1.1rem;">${aggressiveness.toFixed(1)}%</span></div>
+                    <div style="text-align:center;"><strong style="color: #94a3b8;">Urgency Score</strong><br><span style="color: #f1f5f9; font-size: 1.1rem;">${urgency.toFixed(1)}</span></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div style="text-align:center;"><strong style="color: #94a3b8;">OTM %</strong><br>${otm.toFixed(2)}%</div>
+                    <div style="text-align:center;"><strong style="color: #94a3b8;">Vol Ratio</strong><br>${(volRatio * 100).toFixed(1)}% of daily avg</div>
+                </div>
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center; margin-bottom: 8px;">
+                    <strong style="color: ${sigColor};">${significance}</strong>
+                </div>
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center;">
+                    <strong style="color: ${signalColor}; font-size: 1.2rem;">Signal: ${signal}</strong>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart 1: Flow Timeline
+            const hours = ['9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
+            const callPremium = [200, 350, 1750, 400, 150, 300, 200, 500, 300, 200, 800, 400, 350, 250];
+            const putPremium = [100, 150, 200, 100, 200, 150, 100, 100, 250, 150, 100, 200, 100, 150];
+
+            new Chart(document.getElementById('flowTimelineChart'), {
+                type: 'bar',
+                data: {
+                    labels: hours,
+                    datasets: [
+                        { label: 'Call Premium ($K)', data: callPremium, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: '#10b981', borderWidth: 1 },
+                        { label: 'Put Premium ($K)', data: putPremium, backgroundColor: 'rgba(239, 68, 68, 0.7)', borderColor: '#ef4444', borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'TSLA Options Flow Timeline — $1.75M Block at 10:30 AM', color: '#f1f5f9' } },
+                    scales: {
+                        y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'Premium ($K)', color: '#94a3b8' } },
+                        x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+
+            // Chart 2: Aggressiveness Distribution
+            new Chart(document.getElementById('aggressivenessChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Very Aggressive (80-100%)', 'Aggressive (60-79%)', 'Moderate (40-59%)', 'Passive (0-39%)'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: ['#10b981', '#6ee7b7', '#f59e0b', '#ef4444'],
+                        borderColor: 'rgba(0,0,0,0.3)', borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' }, position: 'bottom' },
+                        title: { display: true, text: 'Aggressiveness Distribution of Unusual Trades', color: '#f1f5f9' }
+                    }
+                }
+            });
+
+            // Chart 3: Premium Breakdown
+            const symbols = ['AAPL', 'TSLA', 'NVDA', 'AMZN', 'META', 'MSFT', 'SPY', 'QQQ'];
+            const callPrem = [4.2, 8.5, 12.3, 3.8, 5.1, 3.2, 15.4, 8.7];
+            const putPrem = [2.1, 3.2, 2.8, 2.5, 1.8, 1.5, 8.2, 4.1];
+
+            new Chart(document.getElementById('premiumChart'), {
+                type: 'bar',
+                data: {
+                    labels: symbols,
+                    datasets: [
+                        { label: 'Call Premium ($M)', data: callPrem, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: '#10b981', borderWidth: 1 },
+                        { label: 'Put Premium ($M)', data: putPrem, backgroundColor: 'rgba(239, 68, 68, 0.7)', borderColor: '#ef4444', borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'Daily Options Premium by Symbol ($M) — Calls Dominate', color: '#f1f5f9' } },
+                    scales: {
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'Premium ($M)', color: '#94a3b8' } },
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                    }
+                }
+            });
+        });
+
+        // Quiz functionality
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                const options = question.querySelectorAll('.quiz-option');
+                const feedback = question.querySelector('.quiz-feedback');
+                if (question.classList.contains('answered')) return;
+                question.classList.add('answered');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+                const isCorrect = this.dataset.correct === 'true';
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+                if (!isCorrect) { options.forEach(opt => { if (opt.dataset.correct === 'true') opt.classList.add('correct'); }); }
+                feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.';
+                feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+                feedback.style.display = 'block';
+                checkQuizComplete();
+            });
+        });
+        function checkQuizComplete() {
+            const questions = document.querySelectorAll('.quiz-question');
+            const answered = document.querySelectorAll('.quiz-question.answered');
+            if (questions.length === answered.length) {
+                const correct = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length;
+                document.getElementById('scoreValue').textContent = correct;
+                document.getElementById('quizScore').style.display = 'block';
+            }
+        }
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

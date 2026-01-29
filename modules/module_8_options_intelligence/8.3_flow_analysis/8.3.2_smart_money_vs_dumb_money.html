@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Classify options flow as smart money or dumb money. Learn to distinguish institutional from retail flow and follow high-conviction institutional trades.">
+    <title>8.3.2 Smart Money vs Dumb Money | Quantitative Trading Mastery</title>
+
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+
+    <style>
+        .smart-eq { font-size: 1.4rem; color: #6366f1; text-align: center; padding: 20px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #6366f1; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .smart-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .smart-table th, .smart-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .smart-table th { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+        .smart-table tr:hover { background: rgba(99, 102, 241, 0.1); }
+        .smart-money { color: #10b981; font-weight: bold; }
+        .dumb-money { color: #ef4444; font-weight: bold; }
+        .zone-card { padding: 20px; border-radius: 12px; margin: 10px 0; }
+        .zone-smart { background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; }
+        .zone-dumb { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #6366f1; }
+        .calc-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); }
+        .calc-result { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .score-meter { height: 30px; border-radius: 15px; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981); margin: 15px 0; position: relative; }
+        .score-marker { width: 4px; height: 40px; background: white; position: absolute; top: -5px; border-radius: 2px; transition: left 0.5s; }
+        .chart-container { position: relative; height: 400px; }
+        .chart-container canvas { max-height: 350px; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header">
+        <div class="container">
+            <div class="nav-content">
+                <a href="../../../index.html" class="nav-home">← Back to Course</a>
+                <div class="nav-module-info">
+                    <span class="nav-module-number">Module 8.3.2</span>
+                    <span class="nav-module-title">Smart Money vs Dumb Money</span>
+                </div>
+                <a href="8.3.3_dark_pool_options_confluence.html" class="nav-next">Next Module →</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="module-hero">
+        <div class="container">
+            <div class="module-hero-content">
+                <div class="module-breadcrumb">
+                    <span>Module 8: Options Market Intelligence</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.3 Flow Analysis</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span>8.3.2 Smart Money vs Dumb Money</span>
+                </div>
+                <h1>Smart Money vs Dumb Money Flow Classification</h1>
+                <p class="module-subtitle">
+                    Not all options flow is equal. Learn to distinguish institutional &ldquo;smart money&rdquo; from retail &ldquo;dumb money&rdquo;
+                    and follow the traders with better information, models, and discipline.
+                </p>
+                <div class="module-meta">
+                    <span class="meta-item">⏱️ 50 min read</span>
+                    <span class="meta-item">📊 3 Visualizations</span>
+                    <span class="meta-item">💻 Flow Classifier</span>
+                    <span class="meta-item">✅ 5 Quiz Questions</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <!-- PART 1 -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning">
+                <div class="info-box-title">Following the Wrong Crowd</div>
+                <p>You see massive call volume on a meme stock. Thousands of contracts. You jump in. The stock drops 20%.
+                What happened? That flow was <strong>retail dumb money</strong>&mdash;small traders buying far-OTM weekly calls
+                as lottery tickets. Meanwhile, <strong>smart money institutions</strong> were quietly selling calls against their stock
+                (covered calls), profiting from the premium. Knowing who is trading is as important as knowing what they're trading.</p>
+            </div>
+            <div class="smart-eq">Smart Money Score = Size + Execution + Structure + Timing</div>
+            <div class="card-grid">
+                <div class="card"><h4>Size Discrimination</h4><p>Trades &gt;$500K are almost certainly institutional. Retail traders rarely risk this much on a single trade.</p></div>
+                <div class="card"><h4>Execution Quality</h4><p>Smart money uses patient limit orders and complex strategies. Dumb money hits market orders and buys at ask.</p></div>
+                <div class="card"><h4>Structure Analysis</h4><p>Multi-leg spreads and risk-defined structures = institutional. Naked OTM calls/puts = retail speculation.</p></div>
+                <div class="card"><h4>Timing Patterns</h4><p>Smart money positions early (30+ DTE). Dumb money buys 0-7 DTE lottery tickets right before expiration.</p></div>
+            </div>
+            <div class="info-box">
+                <div class="info-box-title">Real Example: GME January 2021</div>
+                <p>Retail traders piled into far-OTM GME calls ($800 strike when stock was $40). This was <strong>dumb money flow</strong>.
+                Smart money had positioned earlier in $20-$40 calls with 60+ DTE. The smart money made 10-50x returns.
+                Retail latecomers buying $800 calls lost everything. Same stock, wildly different outcomes based on execution quality.</p>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">$500K+</div><div class="metric-label">Smart Money Threshold</div></div>
+                <div class="metric-card"><div class="metric-value">60-70%</div><div class="metric-label">Smart Money Win Rate</div></div>
+                <div class="metric-card"><div class="metric-value">30+</div><div class="metric-label">DTE (Institutional)</div></div>
+                <div class="metric-card"><div class="metric-value">5-10%</div><div class="metric-label">OTM (Realistic)</div></div>
+            </div>
+        </section>
+
+        <!-- PART 2 -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+            <h3>Smart Money Characteristics</h3>
+            <div class="zone-card zone-smart">
+                <h4>Institutional / Smart Money</h4>
+                <p><strong>Size:</strong> $500K-$50M+ per trade</p>
+                <p><strong>Execution:</strong> Patient limit orders, often between bid/ask, dark pools</p>
+                <p><strong>Structure:</strong> Spreads, collars, risk reversals (defined risk)</p>
+                <p><strong>DTE:</strong> 30-180 days (gives thesis time to play out)</p>
+                <p><strong>Strike:</strong> ATM or slightly OTM (5-15%), realistic targets</p>
+                <p><strong>Timing:</strong> Early in a trend, before catalysts, during quiet periods</p>
+            </div>
+            <div class="zone-card zone-dumb">
+                <h4>Retail / Dumb Money</h4>
+                <p><strong>Size:</strong> $100-$10K per trade</p>
+                <p><strong>Execution:</strong> Market orders, hitting ask, chasing after moves</p>
+                <p><strong>Structure:</strong> Naked calls/puts, no hedge (unlimited risk)</p>
+                <p><strong>DTE:</strong> 0-7 days (lottery tickets, time decay eats premium)</p>
+                <p><strong>Strike:</strong> Far OTM (30%+), unrealistic &ldquo;moonshot&rdquo; targets</p>
+                <p><strong>Timing:</strong> After big moves (FOMO), chasing meme stocks</p>
+            </div>
+            <!-- SVG -->
+            <div style="margin: 30px 0;">
+                <svg viewBox="0 0 800 280" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <text x="400" y="30" text-anchor="middle" fill="#6366f1" font-size="16" font-weight="bold">SMART MONEY SCORING FRAMEWORK</text>
+                    <rect x="20" y="50" width="170" height="90" rx="12" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+                    <text x="105" y="75" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">SIZE</text>
+                    <text x="105" y="95" text-anchor="middle" fill="#94a3b8" font-size="10">&gt;$500K = +30 pts</text>
+                    <text x="105" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">&gt;$1M = +50 pts</text>
+                    <text x="105" y="129" text-anchor="middle" fill="#94a3b8" font-size="10">&lt;$50K = 0 pts</text>
+                    <text x="210" y="95" fill="#6366f1" font-size="20">+</text>
+                    <rect x="225" y="50" width="170" height="90" rx="12" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+                    <text x="310" y="75" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">EXECUTION</text>
+                    <text x="310" y="95" text-anchor="middle" fill="#94a3b8" font-size="10">At mid = +20 pts</text>
+                    <text x="310" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">Sweep = +10 pts</text>
+                    <text x="310" y="129" text-anchor="middle" fill="#94a3b8" font-size="10">Market order = 0</text>
+                    <text x="415" y="95" fill="#6366f1" font-size="20">+</text>
+                    <rect x="430" y="50" width="170" height="90" rx="12" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+                    <text x="515" y="75" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">STRUCTURE</text>
+                    <text x="515" y="95" text-anchor="middle" fill="#94a3b8" font-size="10">Spread = +20 pts</text>
+                    <text x="515" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">ATM/near = +10 pts</text>
+                    <text x="515" y="129" text-anchor="middle" fill="#94a3b8" font-size="10">Far OTM naked = -20</text>
+                    <text x="620" y="95" fill="#6366f1" font-size="20">+</text>
+                    <rect x="635" y="50" width="150" height="90" rx="12" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+                    <text x="710" y="75" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">TIMING</text>
+                    <text x="710" y="95" text-anchor="middle" fill="#94a3b8" font-size="10">30+ DTE = +20 pts</text>
+                    <text x="710" y="112" text-anchor="middle" fill="#94a3b8" font-size="10">Opening = +10 pts</text>
+                    <text x="710" y="129" text-anchor="middle" fill="#94a3b8" font-size="10">0DTE = -10 pts</text>
+                    <rect x="200" y="170" width="400" height="90" rx="16" fill="rgba(99, 102, 241, 0.15)" stroke="#6366f1" stroke-width="2"/>
+                    <text x="400" y="200" text-anchor="middle" fill="#a5b4fc" font-size="14" font-weight="bold">SMART MONEY SCORE</text>
+                    <text x="400" y="225" text-anchor="middle" fill="#10b981" font-size="12">70+ = High Conviction Institutional</text>
+                    <text x="400" y="245" text-anchor="middle" fill="#f59e0b" font-size="12">40-69 = Likely Institutional</text>
+                    <text x="400" y="265" text-anchor="middle" fill="#ef4444" font-size="12">&lt;40 = Likely Retail / Low Conviction</text>
+                    <line x1="400" y1="145" x2="400" y2="170" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowP)"/>
+                    <defs><marker id="arrowP" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/></marker></defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- PART 3 -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Smart Money Score Formula</h3>
+            <div class="smart-eq">Smart Money Score = Size Score + Execution Score + Structure Score + Timing Score</div>
+            <table class="smart-table">
+                <thead><tr><th>Component</th><th>Criteria</th><th>Points</th></tr></thead>
+                <tbody>
+                    <tr><td rowspan="3"><strong>Size</strong></td><td>Premium &gt; $1M</td><td class="smart-money">+50</td></tr>
+                    <tr><td>Premium $500K-$1M</td><td class="smart-money">+30</td></tr>
+                    <tr><td>Premium &lt; $50K</td><td>0</td></tr>
+                    <tr><td rowspan="3"><strong>Execution</strong></td><td>Filled between bid/ask (patient)</td><td class="smart-money">+20</td></tr>
+                    <tr><td>Sweep (aggressive but informed)</td><td class="smart-money">+10</td></tr>
+                    <tr><td>Market order at ask (retail)</td><td>0</td></tr>
+                    <tr><td rowspan="3"><strong>Structure</strong></td><td>Multi-leg spread (defined risk)</td><td class="smart-money">+20</td></tr>
+                    <tr><td>ATM or near-ATM single leg</td><td class="smart-money">+10</td></tr>
+                    <tr><td>Far OTM naked (lottery)</td><td class="dumb-money">-20</td></tr>
+                    <tr><td rowspan="3"><strong>Timing</strong></td><td>DTE &gt; 30 (conviction)</td><td class="smart-money">+20</td></tr>
+                    <tr><td>Opening new position</td><td class="smart-money">+10</td></tr>
+                    <tr><td>0DTE (lottery ticket)</td><td class="dumb-money">-10</td></tr>
+                </tbody>
+            </table>
+            <div class="info-box">
+                <div class="info-box-title">Example Scoring</div>
+                <p><strong>Trade A (Smart):</strong> $2M call spread, filled at mid, 45 DTE, ATM strike<br>
+                Size: +50 | Execution: +20 | Structure: +20 | Timing: +20 = <span class="smart-money">Score: 110 (INSTITUTIONAL)</span></p>
+                <p><strong>Trade B (Dumb):</strong> $500 naked call, market order, 2 DTE, 50% OTM<br>
+                Size: 0 | Execution: 0 | Structure: -20 | Timing: -10 = <span class="dumb-money">Score: -30 (RETAIL GAMBLE)</span></p>
+            </div>
+        </section>
+
+        <!-- PART 4 -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Complete Numerical Example</h2>
+            <div class="info-box"><div class="info-box-title">Scenario: Classifying AAPL Flow</div>
+            <p>Three trades on AAPL ($175). Which ones should you follow?</p></div>
+
+            <table class="smart-table">
+                <thead><tr><th>Trade</th><th>Size</th><th>Strike</th><th>DTE</th><th>Execution</th><th>Structure</th><th>Score</th><th>Classification</th></tr></thead>
+                <tbody>
+                    <tr><td>A</td><td>$1.5M</td><td>$180 (2.9% OTM)</td><td>45</td><td>Mid-price, limit</td><td>Call spread</td><td class="smart-money">100</td><td class="smart-money">SMART MONEY</td></tr>
+                    <tr><td>B</td><td>$800</td><td>$220 (25.7% OTM)</td><td>3</td><td>Market order</td><td>Naked call</td><td class="dumb-money">-30</td><td class="dumb-money">DUMB MONEY</td></tr>
+                    <tr><td>C</td><td>$300K</td><td>$170 (2.9% ITM)</td><td>60</td><td>At ask, sweep</td><td>Single call</td><td style="color: #f59e0b; font-weight: bold;">50</td><td style="color: #f59e0b;">LIKELY INSTITUTIONAL</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Action:</strong> Follow Trade A (highest conviction). Monitor Trade C. Ignore Trade B entirely.</p>
+            <div class="chart-container"><canvas id="scoreChart"></canvas></div>
+        </section>
+
+        <!-- PART 5 -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>smart_money_classifier.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+from enum import Enum
+
+
+class MoneyType(Enum):
+    """Classification of flow origin."""
+    SMART_MONEY = "SMART_MONEY"
+    LIKELY_INSTITUTIONAL = "LIKELY_INSTITUTIONAL"
+    UNCERTAIN = "UNCERTAIN"
+    LIKELY_RETAIL = "LIKELY_RETAIL"
+    DUMB_MONEY = "DUMB_MONEY"
+
+
+@dataclass
+class FlowTrade:
+    """Options trade for classification."""
+    symbol: str
+    premium: float          # Total dollar premium
+    strike: float
+    stock_price: float
+    dte: int                # Days to expiration
+    option_type: str        # 'call' or 'put'
+    execution: str          # 'mid', 'ask', 'bid', 'sweep'
+    is_spread: bool         # Multi-leg structure
+    is_opening: bool        # Opening new position
+
+
+@dataclass
+class ClassificationResult:
+    """Result of smart/dumb money classification."""
+    score: int
+    classification: MoneyType
+    size_score: int
+    execution_score: int
+    structure_score: int
+    timing_score: int
+    confidence: str
+    recommendation: str
+
+
+def classify_flow(trade: FlowTrade) -> ClassificationResult:
+    """
+    Classify an options trade as smart or dumb money.
+
+    Parameters
+    ----------
+    trade : FlowTrade
+        Options trade data
+
+    Returns
+    -------
+    ClassificationResult
+        Complete classification with score breakdown
+    """
+    # Size score
+    if trade.premium >= 1_000_000:
+        size_score = 50
+    elif trade.premium >= 500_000:
+        size_score = 30
+    elif trade.premium >= 100_000:
+        size_score = 15
+    elif trade.premium >= 50_000:
+        size_score = 5
+    else:
+        size_score = 0
+
+    # Execution score
+    execution_map = {'mid': 20, 'sweep': 10, 'ask': 5, 'bid': 0}
+    execution_score = execution_map.get(trade.execution, 0)
+
+    # Structure score
+    otm_pct = abs(trade.strike - trade.stock_price) / trade.stock_price * 100
+    if trade.is_spread:
+        structure_score = 20
+    elif otm_pct <= 5:
+        structure_score = 10
+    elif otm_pct <= 15:
+        structure_score = 5
+    elif otm_pct > 30:
+        structure_score = -20
+    else:
+        structure_score = 0
+
+    # Timing score
+    if trade.dte >= 60:
+        timing_score = 20
+    elif trade.dte >= 30:
+        timing_score = 15
+    elif trade.dte >= 14:
+        timing_score = 5
+    elif trade.dte <= 1:
+        timing_score = -10
+    else:
+        timing_score = 0
+
+    if trade.is_opening:
+        timing_score += 10
+
+    total = size_score + execution_score + structure_score + timing_score
+
+    # Classify
+    if total >= 70:
+        classification = MoneyType.SMART_MONEY
+        confidence = "HIGH"
+        recommendation = "Follow this trade. High institutional conviction."
+    elif total >= 40:
+        classification = MoneyType.LIKELY_INSTITUTIONAL
+        confidence = "MODERATE"
+        recommendation = "Worth monitoring. Likely institutional."
+    elif total >= 10:
+        classification = MoneyType.UNCERTAIN
+        confidence = "LOW"
+        recommendation = "Ambiguous. Need additional signals."
+    elif total >= -10:
+        classification = MoneyType.LIKELY_RETAIL
+        confidence = "MODERATE"
+        recommendation = "Likely retail. Fade or ignore."
+    else:
+        classification = MoneyType.DUMB_MONEY
+        confidence = "HIGH"
+        recommendation = "Retail gamble. Contrarian fade opportunity."
+
+    return ClassificationResult(
+        score=total,
+        classification=classification,
+        size_score=size_score,
+        execution_score=execution_score,
+        structure_score=structure_score,
+        timing_score=timing_score,
+        confidence=confidence,
+        recommendation=recommendation
+    )
+
+
+def analyze_flow_batch(
+    trades: List[FlowTrade]
+) -> Dict[str, any]:
+    """
+    Analyze a batch of trades to determine net smart money direction.
+
+    Parameters
+    ----------
+    trades : List[FlowTrade]
+        List of options trades to analyze
+
+    Returns
+    -------
+    Dict
+        Aggregate smart money analysis
+    """
+    smart_bullish = 0.0
+    smart_bearish = 0.0
+    dumb_bullish = 0.0
+    dumb_bearish = 0.0
+
+    for trade in trades:
+        result = classify_flow(trade)
+        is_bullish = trade.option_type == 'call'
+
+        if result.score >= 40:
+            if is_bullish:
+                smart_bullish += trade.premium
+            else:
+                smart_bearish += trade.premium
+        elif result.score < 10:
+            if is_bullish:
+                dumb_bullish += trade.premium
+            else:
+                dumb_bearish += trade.premium
+
+    net_smart = smart_bullish - smart_bearish
+    net_dumb = dumb_bullish - dumb_bearish
+
+    # Best signal: smart money bullish, dumb money bearish
+    if net_smart > 0 and net_dumb < 0:
+        signal = "STRONG BUY — Smart bullish, dumb bearish"
+    elif net_smart < 0 and net_dumb > 0:
+        signal = "STRONG SELL — Smart bearish, dumb bullish"
+    elif net_smart > 0:
+        signal = "BULLISH — Smart money buying"
+    elif net_smart < 0:
+        signal = "BEARISH — Smart money selling"
+    else:
+        signal = "NEUTRAL — No clear smart money direction"
+
+    return {
+        'smart_bullish_premium': round(smart_bullish, 2),
+        'smart_bearish_premium': round(smart_bearish, 2),
+        'dumb_bullish_premium': round(dumb_bullish, 2),
+        'dumb_bearish_premium': round(dumb_bearish, 2),
+        'net_smart_money': round(net_smart, 2),
+        'net_dumb_money': round(net_dumb, 2),
+        'signal': signal
+    }
+
+
+# ─── EXAMPLE USAGE ────────────────────────────────────
+if __name__ == "__main__":
+    trades = [
+        FlowTrade("AAPL", 1_500_000, 180, 175, 45, "call", "mid", True, True),
+        FlowTrade("AAPL", 800, 220, 175, 3, "call", "ask", False, True),
+        FlowTrade("AAPL", 300_000, 170, 175, 60, "call", "sweep", False, True),
+    ]
+
+    for i, trade in enumerate(trades):
+        result = classify_flow(trade)
+        print(f"\nTrade {chr(65+i)}: ${trade.premium:,.0f} {trade.option_type}")
+        print(f"  Score   : {result.score}")
+        print(f"  Class   : {result.classification.value}")
+        print(f"  Action  : {result.recommendation}")
+
+    batch = analyze_flow_batch(trades)
+    print(f"\n═══ Aggregate Signal ═══")
+    print(f"  {batch['signal']}")</code></pre>
+            </div>
+        </section>
+
+        <!-- PART 6 -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+            <div class="card-grid">
+                <div class="card"><h4>1. Filter Your Flow Feed</h4><p>Score every trade in your flow scanner. Only alert on scores 40+. This eliminates 80% of noise (retail flow) and focuses on institutional signals.</p></div>
+                <div class="card"><h4>2. Contrarian Dumb Money</h4><p>When retail is extremely bullish (heavy dumb money calls) but smart money is absent or bearish, consider fading. Retail extremes often mark tops.</p></div>
+                <div class="card"><h4>3. Confluence Signals</h4><p>Best trade: Smart money bullish + dumb money bearish. Institutions buying while retail panics = high-probability long. This divergence is powerful.</p></div>
+                <div class="card"><h4>4. Earnings Season Filter</h4><p>Before earnings, smart money positions with 30+ DTE spreads. Dumb money buys 0DTE straddles. Follow the smart money's directional lean.</p></div>
+            </div>
+            <div class="chart-container"><canvas id="divergenceChart"></canvas></div>
+        </section>
+
+        <!-- PART 7 -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <table class="smart-table">
+                <thead><tr><th style="width:45%">&#10060; Mistake</th><th style="width:55%">&#9989; Correct Approach</th></tr></thead>
+                <tbody>
+                    <tr><td>Treating all large volume as smart money</td><td>Volume alone is insufficient. Score using size + execution + structure + timing.</td></tr>
+                    <tr><td>Following meme stock flow as if it's institutional</td><td>Meme stocks are dominated by retail. Focus on SPY, QQQ, and mega-caps for reliable smart money signals.</td></tr>
+                    <tr><td>Ignoring the contrarian dumb money signal</td><td>When retail is extremely one-sided, it often marks a reversal. Track dumb money as a contrarian indicator.</td></tr>
+                    <tr><td>Assuming smart money is always right</td><td>Smart money wins 60-70% of the time, not 100%. Always use stops and manage risk.</td></tr>
+                    <tr><td>Not distinguishing opening vs closing trades</td><td>Opening trades = new conviction. Closing trades = taking profits. Only follow opening positions.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PART 8 -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Cheat Sheet</h2>
+            <div class="smart-eq">Smart Money Score: 70+ = Follow | 40-69 = Monitor | &lt;40 = Ignore or Fade</div>
+            <div class="zone-card zone-smart">
+                <h4>Smart Money Fingerprint</h4>
+                <p>$500K+ premium | Spread structures | 30+ DTE | ATM/near-ATM | Patient execution | Opening positions</p>
+            </div>
+            <div class="zone-card zone-dumb">
+                <h4>Dumb Money Fingerprint</h4>
+                <p>&lt;$10K premium | Naked options | 0-7 DTE | Far OTM | Market orders | FOMO chasing</p>
+            </div>
+            <div class="card-grid">
+                <div class="card"><h4>Best Signal</h4><p>Smart money bullish + dumb money bearish = strongest buy signal. Institutions buying what retail is panicking about.</p></div>
+                <div class="card"><h4>Worst Signal</h4><p>Dumb money extremely bullish + smart money absent = danger. Retail euphoria often marks tops.</p></div>
+            </div>
+        </section>
+
+        <!-- CALCULATOR -->
+        <section class="content-section fade-in">
+            <h2>Interactive Smart Money Classifier</h2>
+            <div class="calculator-section">
+                <h3>Flow Classification Tool</h3>
+                <p style="color: #94a3b8; margin-bottom: 15px;">Enter trade details to classify as smart or dumb money.</p>
+                <div class="calc-grid">
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">Total Premium ($)</label><input type="number" id="smPremium" class="calc-input" value="500000"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">Strike ($)</label><input type="number" id="smStrike" class="calc-input" value="180"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">Stock Price ($)</label><input type="number" id="smStock" class="calc-input" value="175"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">DTE</label><input type="number" id="smDTE" class="calc-input" value="45"></div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">Execution</label>
+                        <select id="smExec" class="calc-input"><option value="mid">Mid-Price (Patient)</option><option value="sweep">Sweep</option><option value="ask">At Ask</option><option value="bid">At Bid</option></select>
+                    </div>
+                    <div><label style="color: #94a3b8; font-size: 0.9rem;">Structure</label>
+                        <select id="smStructure" class="calc-input"><option value="spread">Spread (Multi-leg)</option><option value="single">Single Leg</option><option value="naked_otm">Naked Far OTM</option></select>
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="classifyFlow()">Classify Flow</button>
+                <div class="calc-result" id="smResult" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Smart vs Dumb Money Flow Over Time</h2>
+            <div class="chart-container"><canvas id="timelineChart"></canvas></div>
+        </section>
+
+        <!-- QUIZ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+            <div class="quiz-question" id="q1"><h4>Q1: A $2M call spread with 60 DTE at mid-price is most likely:</h4>
+                <div class="quiz-option" data-correct="true">Smart money / institutional trade</div>
+                <div class="quiz-option" data-correct="false">Retail speculation</div>
+                <div class="quiz-option" data-correct="false">Market maker hedging</div>
+                <div class="quiz-option" data-correct="false">Cannot determine from this information</div>
+                <div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q2"><h4>Q2: What is the best smart money + dumb money combination for a BUY signal?</h4>
+                <div class="quiz-option" data-correct="false">Both smart and dumb money bullish</div>
+                <div class="quiz-option" data-correct="true">Smart money bullish, dumb money bearish (divergence)</div>
+                <div class="quiz-option" data-correct="false">Both smart and dumb money bearish</div>
+                <div class="quiz-option" data-correct="false">Smart money bearish, dumb money bullish</div>
+                <div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q3"><h4>Q3: Someone buys 10 far-OTM weekly calls for $500. This is:</h4>
+                <div class="quiz-option" data-correct="false">Smart money positioning</div>
+                <div class="quiz-option" data-correct="true">Dumb money / retail lottery ticket</div>
+                <div class="quiz-option" data-correct="false">Institutional hedging</div>
+                <div class="quiz-option" data-correct="false">A sweep order</div>
+                <div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q4"><h4>Q4: Why is DTE important for classifying smart money?</h4>
+                <div class="quiz-option" data-correct="false">Shorter DTE is always better</div>
+                <div class="quiz-option" data-correct="true">Smart money uses 30+ DTE to give their thesis time; retail buys 0-7 DTE lottery tickets</div>
+                <div class="quiz-option" data-correct="false">DTE has no relevance to classification</div>
+                <div class="quiz-option" data-correct="false">Institutional traders only trade 0DTE</div>
+                <div class="quiz-feedback"></div></div>
+            <div class="quiz-question" id="q5"><h4>Q5: Heavy retail call buying on a meme stock (score: -20) suggests:</h4>
+                <div class="quiz-option" data-correct="false">Strong buy signal — follow the crowd</div>
+                <div class="quiz-option" data-correct="false">Smart money is accumulating quietly</div>
+                <div class="quiz-option" data-correct="true">Potential contrarian fade — retail euphoria often marks tops</div>
+                <div class="quiz-option" data-correct="false">The stock will definitely go up</div>
+                <div class="quiz-feedback"></div></div>
+            <div class="quiz-score" id="quizScore" style="display:none; margin-top: 20px; padding: 20px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; text-align: center;">
+                <h3>Quiz Complete!</h3><p>You scored <span id="scoreValue" style="color: #6366f1; font-weight: bold; font-size: 1.5rem;">0</span> / 5</p></div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        function copyCode(button) { const codeBlock = button.parentElement.nextElementSibling.querySelector('code'); navigator.clipboard.writeText(codeBlock.textContent); button.textContent = 'Copied!'; setTimeout(() => button.textContent = 'Copy', 2000); }
+
+        function classifyFlow() {
+            const premium = parseFloat(document.getElementById('smPremium').value);
+            const strike = parseFloat(document.getElementById('smStrike').value);
+            const stock = parseFloat(document.getElementById('smStock').value);
+            const dte = parseFloat(document.getElementById('smDTE').value);
+            const exec = document.getElementById('smExec').value;
+            const structure = document.getElementById('smStructure').value;
+            let sizeScore = premium >= 1000000 ? 50 : premium >= 500000 ? 30 : premium >= 100000 ? 15 : premium >= 50000 ? 5 : 0;
+            let execScore = {mid: 20, sweep: 10, ask: 5, bid: 0}[exec] || 0;
+            const otm = Math.abs(strike - stock) / stock * 100;
+            let structScore = structure === 'spread' ? 20 : structure === 'naked_otm' ? -20 : otm <= 5 ? 10 : otm <= 15 ? 5 : 0;
+            let timeScore = dte >= 60 ? 20 : dte >= 30 ? 15 : dte >= 14 ? 5 : dte <= 1 ? -10 : 0;
+            const total = sizeScore + execScore + structScore + timeScore;
+            let classification, classColor;
+            if (total >= 70) { classification = 'SMART MONEY (Institutional)'; classColor = '#10b981'; }
+            else if (total >= 40) { classification = 'LIKELY INSTITUTIONAL'; classColor = '#6366f1'; }
+            else if (total >= 10) { classification = 'UNCERTAIN'; classColor = '#f59e0b'; }
+            else if (total >= -10) { classification = 'LIKELY RETAIL'; classColor = '#f97316'; }
+            else { classification = 'DUMB MONEY (Retail Gamble)'; classColor = '#ef4444'; }
+            const result = document.getElementById('smResult');
+            result.style.display = 'block';
+            result.innerHTML = `<h4 style="color: #6366f1; margin-bottom: 10px;">Classification Result</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; text-align: center;">
+                    <div><strong style="color: #94a3b8; font-size: 0.8rem;">Size</strong><br><span style="color: ${sizeScore > 0 ? '#10b981' : '#94a3b8'};">${sizeScore}</span></div>
+                    <div><strong style="color: #94a3b8; font-size: 0.8rem;">Execution</strong><br><span style="color: ${execScore > 0 ? '#10b981' : '#94a3b8'};">${execScore}</span></div>
+                    <div><strong style="color: #94a3b8; font-size: 0.8rem;">Structure</strong><br><span style="color: ${structScore > 0 ? '#10b981' : structScore < 0 ? '#ef4444' : '#94a3b8'};">${structScore}</span></div>
+                    <div><strong style="color: #94a3b8; font-size: 0.8rem;">Timing</strong><br><span style="color: ${timeScore > 0 ? '#10b981' : timeScore < 0 ? '#ef4444' : '#94a3b8'};">${timeScore}</span></div>
+                </div>
+                <div style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: ${classColor};">${total}</div>
+                    <div style="color: ${classColor}; font-weight: 600; font-size: 1.1rem;">${classification}</div>
+                </div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart 1: Score comparison
+            new Chart(document.getElementById('scoreChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Trade A\n($1.5M Spread)', 'Trade B\n($800 Naked)', 'Trade C\n($300K Single)'],
+                    datasets: [
+                        { label: 'Size', data: [50, 0, 15], backgroundColor: 'rgba(16, 185, 129, 0.7)' },
+                        { label: 'Execution', data: [20, 0, 10], backgroundColor: 'rgba(99, 102, 241, 0.7)' },
+                        { label: 'Structure', data: [20, -20, 10], backgroundColor: 'rgba(245, 158, 11, 0.7)' },
+                        { label: 'Timing', data: [30, -10, 20], backgroundColor: 'rgba(139, 92, 246, 0.7)' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'Smart Money Score Breakdown by Trade', color: '#f1f5f9' } },
+                    scales: { y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }, x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } } } }
+            });
+
+            // Chart 2: Smart vs Dumb divergence
+            const days = Array.from({length: 20}, (_, i) => `Day ${i+1}`);
+            const smartFlow = [2, 3, 5, 4, 8, 12, 15, 14, 18, 20, 22, 19, 16, 20, 25, 28, 30, 27, 25, 22];
+            const dumbFlow = [5, 8, 12, 15, 10, 8, 5, 3, 2, -1, -3, -5, -2, 1, 3, 5, 2, -1, -3, -5];
+            const price = [175, 175, 176, 175, 177, 178, 180, 181, 183, 185, 187, 188, 186, 188, 190, 193, 195, 194, 192, 190];
+
+            new Chart(document.getElementById('divergenceChart'), {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [
+                        { label: 'Smart Money Flow ($M)', data: smartFlow, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, yAxisID: 'y', fill: true, tension: 0.3 },
+                        { label: 'Dumb Money Flow ($M)', data: dumbFlow, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, yAxisID: 'y', fill: true, tension: 0.3 },
+                        { label: 'AAPL Price', data: price, borderColor: '#6366f1', borderWidth: 2, yAxisID: 'y1', fill: false, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'Smart Money Rising + Dumb Money Falling = AAPL Rallies', color: '#f1f5f9' } },
+                    scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' }, title: { display: true, text: 'Flow ($M)', color: '#94a3b8' } }, y1: { position: 'right', ticks: { color: '#6366f1' }, grid: { display: false }, title: { display: true, text: 'Price ($)', color: '#6366f1' } }, x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: 'rgba(148, 163, 184, 0.1)' } } } }
+            });
+
+            // Chart 3: Timeline
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            new Chart(document.getElementById('timelineChart'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: 'Smart Money ($M)', data: [45, 52, 38, 60, 55, 48, 42, 65, 58, 70, 62, 55], backgroundColor: 'rgba(16, 185, 129, 0.7)' },
+                        { label: 'Dumb Money ($M)', data: [30, 25, 50, 20, 22, 35, 55, 18, 28, 15, 20, 40], backgroundColor: 'rgba(239, 68, 68, 0.7)' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } }, title: { display: true, text: 'Monthly Smart vs Dumb Money Premium ($M)', color: '#f1f5f9' } },
+                    scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } } } }
+            });
+        });
+
+        document.querySelectorAll('.quiz-option').forEach(option => { option.addEventListener('click', function() { const question = this.closest('.quiz-question'); const options = question.querySelectorAll('.quiz-option'); const feedback = question.querySelector('.quiz-feedback'); if (question.classList.contains('answered')) return; question.classList.add('answered'); options.forEach(opt => opt.style.pointerEvents = 'none'); const isCorrect = this.dataset.correct === 'true'; this.classList.add(isCorrect ? 'correct' : 'incorrect'); if (!isCorrect) { options.forEach(opt => { if (opt.dataset.correct === 'true') opt.classList.add('correct'); }); } feedback.textContent = isCorrect ? 'Correct!' : 'Incorrect. See the correct answer above.'; feedback.style.color = isCorrect ? '#10b981' : '#ef4444'; feedback.style.display = 'block'; checkQuizComplete(); }); });
+        function checkQuizComplete() { const q = document.querySelectorAll('.quiz-question'); const a = document.querySelectorAll('.quiz-question.answered'); if (q.length === a.length) { document.getElementById('scoreValue').textContent = document.querySelectorAll('.quiz-option.correct:not(.incorrect)').length; document.getElementById('quizScore').style.display = 'block'; } }
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
