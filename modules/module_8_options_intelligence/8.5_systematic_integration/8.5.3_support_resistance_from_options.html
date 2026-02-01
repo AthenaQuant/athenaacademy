@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Extract dynamic support and resistance levels from options data. Learn to use open interest, gamma walls, and dealer hedging flows to identify key price levels that move markets.">
+    <title>8.5.3 Support & Resistance from Options | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .sr-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .sr-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .sr-table th, .sr-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .sr-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .sr-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .level-card { padding: 20px; border-radius: 12px; margin: 10px 0; border-left: 4px solid; }
+        .level-resistance { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .level-support { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .level-zero { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #a855f7; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        .chart-container canvas { max-height: 350px; }
+        .strength-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
+        .strength-strong { background: rgba(168, 85, 247, 0.3); color: #d8b4fe; }
+        .strength-moderate { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .strength-weak { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="8.5.2_options_signals_in_algorithms.html" class="nav-home">&larr; Previous: Signals in Algorithms</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.5.3</span><span class="nav-module-title">Support & Resistance</span></div>
+        <a href="8.5.4_complete_options_enhanced_system.html" class="nav-next">Next: Complete System &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.5 Systematic Integration</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.5.3 Support & Resistance</span></div>
+        <h1>Dynamic Support & Resistance from Options</h1>
+        <p class="module-subtitle">Traditional support and resistance is subjective—traders draw lines and hope they hold. Options data reveals ACTUAL levels where institutional hedging creates supply and demand imbalances. Learn to extract gamma walls, pin levels, and dealer hedging points that move billions in stock positions.</p>
+        <div class="module-meta"><span class="meta-item">&#9201;&#xFE0F; 55 min read</span><span class="meta-item">&#128202; 4 Visualizations</span><span class="meta-item">&#128187; Level Strength Calculator</span><span class="meta-item">&#9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The $510 Gamma Wall That Stopped NVDA</div>
+            <p>June 2024. NVDA rallies from $480 to $509.80 intraday. You check the options chain: $510 strike has 285,000 call contracts in open interest—a massive gamma wall. At $509.80, the stock reverses hard, dropping to $505 by close. Why? At $510, market makers are short 285K calls. As stock approaches $510, they must sell 28.5 million shares to hedge their delta exposure. This selling pressure creates a ceiling.</p>
+            <p><strong>Next day:</strong> Stock gaps down to $498. But $500 strike has 180,000 put contracts—a put wall (support). Stock bounces off $500 repeatedly. Dealers are short puts, so they BUY stock as price falls to $500, creating a floor. You trade this range: buy near $500, sell near $510. Three round trips in two weeks.</p></div>
+            <div class="sr-eq">High Call OI = Resistance (Dealers Sell Stock) &nbsp;|&nbsp; High Put OI = Support (Dealers Buy Stock)</div>
+            <div class="card-grid">
+                <div class="card"><h4>Objective Levels</h4><p>Not subjective chart patterns. These are quantifiable levels where billions in dealer hedging occurs. High OI = real supply/demand imbalances. The math doesn't lie.</p></div>
+                <div class="card"><h4>Dynamic Updates</h4><p>Unlike static trendlines, options levels update daily. OI changes, strikes roll, gamma shifts. Your support/resistance adapts with the market, not stuck in the past.</p></div>
+                <div class="card"><h4>Predictive Power</h4><p>Options positions are forward-looking. They tell you where hedging flows will occur BEFORE price gets there. Traditional S/R is reactive—options S/R is predictive.</p></div>
+                <div class="card"><h4>Trade Execution Edge</h4><p>Know where to take profit (at gamma walls), where to enter (at put walls), and where to avoid (near zero gamma). Precision entry and exit points, not guesswork.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">75%</div><div class="metric-label">Accuracy of Major Walls</div></div>
+                <div class="metric-card"><div class="metric-value">$2-5B</div><div class="metric-label">Hedging Flow per Wall</div></div>
+                <div class="metric-card"><div class="metric-value">Daily</div><div class="metric-label">Level Updates</div></div>
+                <div class="metric-card"><div class="metric-value">100K+</div><div class="metric-label">OI for Strong Wall</div></div>
+            </div>
+        </section>
+
+        <!-- Part 2: Building Intuition -->
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition</h2>
+            <h3>How Dealer Hedging Creates Support and Resistance</h3>
+            <p>Market makers sell options to retail and institutions. When they sell an option, they're exposed to directional risk. To neutralize this risk, they hedge by buying or selling the underlying stock. This hedging creates massive supply and demand at specific price levels.</p>
+
+            <div class="level-card level-resistance"><h4>Call Walls (Resistance)</h4>
+                <p><strong>Setup:</strong> High open interest in call options at a strike (e.g., 100,000 contracts at $510)</p>
+                <p><strong>Dealer Position:</strong> Dealers are SHORT these calls (they sold them to customers)</p>
+                <p><strong>Hedging Behavior:</strong> As stock approaches $510, calls go from OTM to ATM. Delta increases from 0.3 → 0.5 → 0.7. Dealers must SELL more stock to maintain delta neutrality.</p>
+                <p><strong>Result:</strong> Selling pressure increases as stock approaches $510, creating a ceiling (resistance)</p>
+                <p><strong>Example:</strong> 100K calls × 100 shares × 0.5 delta = <strong>5 million shares</strong> dealers must sell</p>
+            </div>
+
+            <div class="level-card level-support"><h4>Put Walls (Support)</h4>
+                <p><strong>Setup:</strong> High open interest in put options at a strike (e.g., 120,000 contracts at $500)</p>
+                <p><strong>Dealer Position:</strong> Dealers are SHORT these puts</p>
+                <p><strong>Hedging Behavior:</strong> As stock falls toward $500, puts go from OTM to ATM. Delta increases (becomes more negative). Dealers must BUY stock to maintain delta neutrality.</p>
+                <p><strong>Result:</strong> Buying pressure increases as stock approaches $500, creating a floor (support)</p>
+                <p><strong>Example:</strong> 120K puts × 100 shares × -0.5 delta = <strong>6 million shares</strong> dealers must buy</p>
+            </div>
+
+            <div class="level-card level-zero"><h4>Zero Gamma Level (Inflection Point)</h4>
+                <p><strong>What:</strong> Price level where net gamma exposure crosses zero (positive gamma above, negative gamma below)</p>
+                <p><strong>Behavior:</strong> This is the dividing line between mean reversion (above) and momentum (below)</p>
+                <p><strong>Trading Implication:</strong> Above zero gamma = fade moves. Below zero gamma = trend follows. The level itself is highly volatile (avoid trading near it).</p>
+                <p><strong>Example:</strong> If zero gamma is $447.50 and stock is at $452, expect mean reversion. If stock breaks below $447.50, expect momentum acceleration.</p>
+            </div>
+
+            <h3>Calculating Level Strength</h3>
+            <p>Not all high-OI strikes are equal. Strength depends on:</p>
+            <ul>
+                <li><strong>Absolute OI:</strong> Higher OI = stronger level (100K+ contracts = very strong)</li>
+                <li><strong>Relative OI:</strong> OI vs average across strikes (3x average = significant)</li>
+                <li><strong>Days to Expiration (DTE):</strong> Shorter DTE = more urgent hedging (weekly expiration > monthly)</li>
+                <li><strong>Gamma Concentration:</strong> High gamma at strike = rapid delta changes = aggressive hedging</li>
+            </ul>
+
+            <div class="sr-eq">Level Strength = (OI / Avg OI) × (Gamma / Avg Gamma) × (30 / DTE)</div>
+            <p>Score > 5 = strong level, > 10 = very strong (gamma wall)</p>
+
+            <!-- SVG Diagram: Options Levels on Price Chart -->
+            <div style="text-align:center; margin: 30px 0;">
+                <svg viewBox="0 0 900 500" style="max-width:850px; width:100%;">
+                    <defs>
+                        <marker id="arrowSR" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                            <path d="M0,0 L8,4 L0,8 Z" fill="#a855f7"/>
+                        </marker>
+                    </defs>
+                    <rect x="0" y="0" width="900" height="500" rx="12" fill="#0f172a"/>
+                    <text x="450" y="30" text-anchor="middle" fill="#d8b4fe" font-size="18" font-weight="bold">Options-Derived Support & Resistance Levels</text>
+
+                    <!-- Y-axis (Price) -->
+                    <line x1="80" y1="80" x2="80" y2="450" stroke="#475569" stroke-width="2"/>
+                    <text x="40" y="265" text-anchor="middle" fill="#94a3b8" font-size="12" transform="rotate(-90 40 265)">Price</text>
+
+                    <!-- X-axis (Time) -->
+                    <line x1="80" y1="450" x2="820" y2="450" stroke="#475569" stroke-width="2"/>
+                    <text x="450" y="480" text-anchor="middle" fill="#94a3b8" font-size="12">Time</text>
+
+                    <!-- Price levels -->
+                    <line x1="80" y1="120" x2="820" y2="120" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4"/>
+                    <text x="830" y="125" fill="#ef4444" font-size="11" font-weight="bold">$520 Call Wall</text>
+                    <text x="830" y="138" fill="#94a3b8" font-size="9">140K OI - STRONG</text>
+
+                    <line x1="80" y1="180" x2="820" y2="180" stroke="#f87171" stroke-width="2" stroke-dasharray="6,3"/>
+                    <text x="830" y="185" fill="#f87171" font-size="11" font-weight="bold">$510 Call Wall</text>
+                    <text x="830" y="198" fill="#94a3b8" font-size="9">285K OI - VERY STRONG</text>
+
+                    <line x1="80" y1="280" x2="820" y2="280" stroke="#f59e0b" stroke-width="3" stroke-dasharray="4,4"/>
+                    <text x="830" y="285" fill="#f59e0b" font-size="11" font-weight="bold">$500 Zero Gamma</text>
+                    <text x="830" y="298" fill="#94a3b8" font-size="9">Inflection Point</text>
+
+                    <line x1="80" y1="350" x2="820" y2="350" stroke="#34d399" stroke-width="2" stroke-dasharray="6,3"/>
+                    <text x="830" y="355" fill="#34d399" font-size="11" font-weight="bold">$490 Put Wall</text>
+                    <text x="830" y="368" fill="#94a3b8" font-size="9">180K OI - VERY STRONG</text>
+
+                    <line x1="80" y1="410" x2="820" y2="410" stroke="#10b981" stroke-width="2" stroke-dasharray="8,4"/>
+                    <text x="830" y="415" fill="#10b981" font-size="11" font-weight="bold">$480 Put Wall</text>
+                    <text x="830" y="428" fill="#94a3b8" font-size="9">95K OI - MODERATE</text>
+
+                    <!-- Price action line -->
+                    <path d="M100,380 L150,370 L200,340 L250,320 L300,280 L350,250 L400,220 L450,190 L500,185 L550,195 L600,215 L650,240 L700,260 L750,275 L800,285"
+                          fill="none" stroke="#a855f7" stroke-width="3"/>
+
+                    <!-- Annotations -->
+                    <circle cx="500" cy="185" r="6" fill="#ef4444"/>
+                    <line x1="500" y1="185" x2="500" y2="150" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arrowSR)"/>
+                    <rect x="420" y="130" width="160" height="18" rx="4" fill="rgba(239,68,68,0.2)"/>
+                    <text x="500" y="143" text-anchor="middle" fill="#fca5a5" font-size="10">Reversal at $510 wall</text>
+
+                    <circle cx="650" cy="240" r="6" fill="#10b981"/>
+                    <line x1="650" y1="240" x2="650" y2="300" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrowSR)"/>
+                    <rect x="575" y="305" width="150" height="18" rx="4" fill="rgba(16,185,129,0.2)"/>
+                    <text x="650" y="318" text-anchor="middle" fill="#6ee7b7" font-size="10">Bounce at $490 wall</text>
+
+                    <!-- Trading zones -->
+                    <rect x="100" y="180" width="700" height="100" fill="rgba(168,85,247,0.05)" stroke="rgba(168,85,247,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+                    <text x="450" y="235" text-anchor="middle" fill="#d8b4fe" font-size="12" font-weight="bold">TRADING RANGE</text>
+                    <text x="450" y="250" text-anchor="middle" fill="#94a3b8" font-size="10">Buy $490-500, Sell $510-520</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Part 3: The Mathematics -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Dealer Hedging Flow Calculation</h3>
+            <p>To calculate how many shares dealers must hedge at each strike:</p>
+
+            <div class="sr-eq">Hedging Flow (shares) = OI × 100 × |Delta| × Direction Multiplier</div>
+            <p>Direction Multiplier: Calls = -1 (dealers sell), Puts = +1 (dealers buy)</p>
+
+            <h4>Example: $510 Call Wall</h4>
+            <table class="sr-table">
+                <thead><tr><th>Parameter</th><th>Value</th><th>Calculation</th></tr></thead>
+                <tbody>
+                    <tr><td>Open Interest</td><td>285,000 contracts</td><td>From options chain</td></tr>
+                    <tr><td>Delta (at $509)</td><td>0.52</td><td>Near ATM</td></tr>
+                    <tr><td>Shares per contract</td><td>100</td><td>Standard</td></tr>
+                    <tr><td><strong>Total Hedging Flow</strong></td><td><strong>14.8M shares SELL</strong></td><td>285K × 100 × 0.52 × (-1)</td></tr>
+                </tbody>
+            </table>
+            <p>At average daily volume of 50M shares for NVDA, this is <strong>30% of daily volume</strong>—enough to stop a rally.</p>
+
+            <h3>Level Strength Score Formula</h3>
+            <div class="sr-eq">Strength = (OI<sub>strike</sub> / OI<sub>avg</sub>) × (Gamma<sub>strike</sub> / Gamma<sub>avg</sub>) × (30 / DTE)</div>
+
+            <h4>Example Calculation: $500 Put Strike</h4>
+            <ul>
+                <li>OI at $500: 180,000 contracts</li>
+                <li>Average OI across all strikes: 45,000 contracts</li>
+                <li>Gamma at $500: 0.045</li>
+                <li>Average Gamma: 0.018</li>
+                <li>DTE: 7 days (weekly expiration)</li>
+            </ul>
+            <div class="sr-eq">Strength = (180K / 45K) × (0.045 / 0.018) × (30 / 7) = 4.0 × 2.5 × 4.3 = <strong>43.0</strong></div>
+            <p><strong>Interpretation:</strong> Score > 10 = Very Strong Wall. Score of 43 is <strong>EXTREMELY STRONG</strong>—expect major support here.</p>
+
+            <h3>Pin Risk Probability</h3>
+            <p>"Pinning" occurs when stock closes exactly at a high-OI strike on expiration day. Dealers hedge to push price toward the strike.</p>
+            <div class="sr-eq">Pin Probability ≈ (1 - e<sup>-λ</sup>) where λ = (OI × Gamma) / (Float × Avg Daily Range)</div>
+            <p>High OI + high gamma + low float + low volatility = high pin probability (>40%)</p>
+
+            <h3>Breakout Threshold</h3>
+            <p>How much volume is needed to break through a gamma wall?</p>
+            <div class="sr-eq">Breakout Volume ≈ (Hedging Flow × 2) / (% of Daily Volume Allowed for Wall)</div>
+            <p>Example: 15M share wall, allow 30% of 50M daily volume → Need 100M volume day (2x normal) to break through</p>
+        </section>
+
+        <!-- Part 4: Numerical Example -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>Complete Level Analysis: SPY Options Chain</h3>
+
+            <h4>Current Market Conditions</h4>
+            <table class="sr-table">
+                <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>SPY Price</td><td>$452.30</td></tr>
+                    <tr><td>Expiration</td><td>Friday (3 DTE)</td></tr>
+                    <tr><td>Average Daily Volume</td><td>85M shares</td></tr>
+                    <tr><td>Average OI per Strike</td><td>75,000 contracts</td></tr>
+                    <tr><td>Average Gamma</td><td>0.025</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Key Strikes Analysis</h4>
+            <table class="sr-table">
+                <thead><tr><th>Strike</th><th>Type</th><th>OI</th><th>Delta</th><th>Gamma</th><th>Strength</th><th>Hedging Flow</th><th>Level Type</th></tr></thead>
+                <tbody>
+                    <tr><td>$455</td><td>Call</td><td>320,000</td><td>0.35</td><td>0.048</td><td>82.1</td><td>-11.2M shares</td><td><span class="strength-strong">STRONG RESIST</span></td></tr>
+                    <tr><td>$453</td><td>Call</td><td>185,000</td><td>0.45</td><td>0.052</td><td>51.7</td><td>-8.3M shares</td><td><span class="strength-strong">MODERATE RESIST</span></td></tr>
+                    <tr><td>$450</td><td>Put</td><td>280,000</td><td>-0.42</td><td>0.051</td><td>76.8</td><td>+11.8M shares</td><td><span class="strength-strong">STRONG SUPPORT</span></td></tr>
+                    <tr><td>$448</td><td>Put</td><td>145,000</td><td>-0.38</td><td>0.039</td><td>30.2</td><td>+5.5M shares</td><td><span class="strength-moderate">MODERATE SUPPORT</span></td></tr>
+                    <tr><td>$445</td><td>Put</td><td>95,000</td><td>-0.25</td><td>0.028</td><td>14.2</td><td>-2.4M shares</td><td><span class="strength-weak">WEAK SUPPORT</span></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Trading Plan Based on Levels</h4>
+            <div class="calc-result">
+                <h4 style="color:#a855f7; margin-top:0;">SPY Trading Strategy - Options Levels</h4>
+                <div style="padding:10px 0;">
+                    <p><strong style="color:#94a3b8;">Current Position:</strong> $452.30 (between $450 support and $453 resistance)</p>
+
+                    <p><strong style="color:#10b981;">Long Setup:</strong></p>
+                    <ul style="color:#94a3b8; font-size:0.9rem; margin-left:20px;">
+                        <li>Entry: $450.00-450.50 (at put wall support)</li>
+                        <li>Stop: $447.50 (below $448 support)</li>
+                        <li>Target 1: $453.00 (call wall resistance)</li>
+                        <li>Target 2: $455.00 (strong call wall)</li>
+                        <li>R/R: 1:1.5 to 1:3</li>
+                    </ul>
+
+                    <p><strong style="color:#ef4444;">Short Setup:</strong></p>
+                    <ul style="color:#94a3b8; font-size:0.9rem; margin-left:20px;">
+                        <li>Entry: $453.00-453.50 (at call wall resistance)</li>
+                        <li>Stop: $455.50 (above $455 strong wall)</li>
+                        <li>Target 1: $450.00 (put wall support)</li>
+                        <li>Target 2: $448.00 (moderate support)</li>
+                        <li>R/R: 1:1.2 to 1:2</li>
+                    </ul>
+
+                    <p><strong style="color:#f59e0b;">Range Trade (Preferred):</strong></p>
+                    <ul style="color:#94a3b8; font-size:0.9rem; margin-left:20px;">
+                        <li>Buy near $450, sell near $453 (quick scalps)</li>
+                        <li>Tight stops (1%) due to short DTE (3 days)</li>
+                        <li>High probability (75%+) range holds until expiration</li>
+                        <li>Friday pinning risk: likely closes $450-453 range</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>Outcome (Next 3 Days)</h4>
+            <p><strong>Tuesday:</strong> SPY rallies to $453.20, rejects off call wall. Reverses to $451.80. <em>Wall held.</em></p>
+            <p><strong>Wednesday:</strong> SPY tests $450.10 support. Bounces to $451.50. <em>Put wall support worked.</em></p>
+            <p><strong>Friday (Expiration):</strong> SPY pins at $451.00 (between walls). Closed $450.85. <em>Range trade successful, 3/3 bounces.</em></p>
+        </section>
+
+        <!-- Part 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>options_levels.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Options-Derived Support and Resistance Levels
+Extract gamma walls and dealer hedging levels from options chain
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Tuple
+from dataclasses import dataclass
+
+
+@dataclass
+class OptionsLevel:
+    """Single support/resistance level from options."""
+    strike: float
+    level_type: str  # "support" or "resistance"
+    strength: float  # Strength score
+    open_interest: int
+    delta: float
+    gamma: float
+    hedging_flow: float  # Shares dealers must buy/sell
+    dte: int
+
+
+class OptionsLevelExtractor:
+    """
+    Extract dynamic support and resistance from options data.
+
+    Uses open interest, gamma, and dealer hedging to identify
+    key price levels.
+    """
+
+    def __init__(
+        self,
+        min_strength: float = 5.0,
+        strong_threshold: float = 20.0
+    ):
+        """
+        Parameters
+        ----------
+        min_strength : float
+            Minimum strength score to consider a level
+        strong_threshold : float
+            Threshold for "strong" vs "moderate" levels
+        """
+        self.min_strength = min_strength
+        self.strong_threshold = strong_threshold
+
+    def extract_levels(
+        self,
+        options_chain: pd.DataFrame,
+        current_price: float,
+        dte: int = 7
+    ) -> List[OptionsLevel]:
+        """
+        Extract all significant support/resistance levels.
+
+        Parameters
+        ----------
+        options_chain : pd.DataFrame
+            Options chain with columns: strike, type, open_interest,
+            delta, gamma
+        current_price : float
+            Current stock price
+        dte : int
+            Days to expiration
+
+        Returns
+        -------
+        List[OptionsLevel]
+            Sorted list of levels (by proximity to current price)
+        """
+        # Calculate average OI and gamma for normalization
+        avg_oi = options_chain['open_interest'].mean()
+        avg_gamma = options_chain['gamma'].mean()
+
+        levels = []
+
+        for _, row in options_chain.iterrows():
+            # Calculate strength score
+            oi_ratio = row['open_interest'] / avg_oi if avg_oi > 0 else 1
+            gamma_ratio = abs(row['gamma']) / avg_gamma if avg_gamma > 0 else 1
+            dte_factor = 30 / max(dte, 1)
+
+            strength = oi_ratio * gamma_ratio * dte_factor
+
+            # Filter by minimum strength
+            if strength < self.min_strength:
+                continue
+
+            # Calculate hedging flow
+            hedging_flow = (
+                row['open_interest'] * 100 * abs(row['delta'])
+            )
+
+            # Determine level type
+            if row['type'] == 'call':
+                # Call walls are resistance (dealers sell to hedge)
+                level_type = "resistance"
+                hedging_flow = -hedging_flow  # Negative = selling
+            else:
+                # Put walls are support (dealers buy to hedge)
+                level_type = "support"
+                hedging_flow = +hedging_flow  # Positive = buying
+
+            level = OptionsLevel(
+                strike=row['strike'],
+                level_type=level_type,
+                strength=strength,
+                open_interest=int(row['open_interest']),
+                delta=row['delta'],
+                gamma=row['gamma'],
+                hedging_flow=hedging_flow,
+                dte=dte
+            )
+
+            levels.append(level)
+
+        # Sort by proximity to current price
+        levels.sort(key=lambda l: abs(l.strike - current_price))
+
+        return levels
+
+    def find_nearest_support(
+        self,
+        levels: List[OptionsLevel],
+        current_price: float
+    ) -> OptionsLevel:
+        """Find nearest support level below current price."""
+        supports = [
+            l for l in levels
+            if l.level_type == "support" and l.strike < current_price
+        ]
+        return supports[0] if supports else None
+
+    def find_nearest_resistance(
+        self,
+        levels: List[OptionsLevel],
+        current_price: float
+    ) -> OptionsLevel:
+        """Find nearest resistance level above current price."""
+        resistances = [
+            l for l in levels
+            if l.level_type == "resistance" and l.strike > current_price
+        ]
+        return resistances[0] if resistances else None
+
+    def get_trading_range(
+        self,
+        levels: List[OptionsLevel],
+        current_price: float
+    ) -> Tuple[float, float]:
+        """
+        Get current trading range based on nearest levels.
+
+        Returns
+        -------
+        Tuple[float, float]
+            (support_level, resistance_level)
+        """
+        support = self.find_nearest_support(levels, current_price)
+        resistance = self.find_nearest_resistance(levels, current_price)
+
+        support_price = support.strike if support else current_price * 0.98
+        resistance_price = resistance.strike if resistance else current_price * 1.02
+
+        return support_price, resistance_price
+
+    def print_levels_summary(
+        self,
+        levels: List[OptionsLevel],
+        current_price: float,
+        top_n: int = 10
+    ):
+        """Print formatted summary of top levels."""
+        print("\n" + "="*80)
+        print(f"OPTIONS-DERIVED SUPPORT & RESISTANCE LEVELS")
+        print(f"Current Price: ${current_price:.2f}")
+        print("="*80)
+
+        # Get trading range
+        support, resistance = self.get_trading_range(levels, current_price)
+        print(f"\nTRADING RANGE: ${support:.2f} (Support) - ${resistance:.2f} (Resistance)")
+        print(f"Range Width: ${resistance - support:.2f} ({(resistance - support) / current_price * 100:.2f}%)")
+
+        print(f"\nTOP {top_n} LEVELS:")
+        print("-"*80)
+        print(f"{'Strike':<10} {'Type':<12} {'Strength':<12} {'OI':<12} {'Flow (M)':<12} {'Distance':<10}")
+        print("-"*80)
+
+        for level in levels[:top_n]:
+            distance_pct = (level.strike - current_price) / current_price * 100
+
+            strength_label = (
+                "VERY STRONG" if level.strength > self.strong_threshold * 2
+                else "STRONG" if level.strength > self.strong_threshold
+                else "MODERATE"
+            )
+
+            flow_millions = level.hedging_flow / 1e6
+
+            print(
+                f"${level.strike:<9.2f} "
+                f"{level.level_type.upper():<12} "
+                f"{strength_label:<12} "
+                f"{level.open_interest:<12,} "
+                f"{flow_millions:>+11.1f} "
+                f"{distance_pct:>+9.2f}%"
+            )
+
+        print("="*80)
+
+
+# ============================================================================
+# EXAMPLE USAGE
+# ============================================================================
+
+if __name__ == "__main__":
+    # Mock options chain data
+    np.random.seed(42)
+
+    current_price = 452.30
+    strikes = np.arange(445, 460, 1)
+
+    data = []
+    for strike in strikes:
+        # Generate realistic OI with some strikes having high concentration
+        base_oi = np.random.randint(50000, 100000)
+
+        # Create some gamma walls
+        if strike in [450, 455]:  # Strong walls
+            oi_mult = 3.5
+        elif strike in [448, 453]:  # Moderate walls
+            oi_mult = 1.8
+        else:
+            oi_mult = 1.0
+
+        for opt_type in ['call', 'put']:
+            moneyness = strike / current_price
+
+            # Delta calculation
+            if opt_type == 'call':
+                delta = max(0.01, min(0.99, 0.5 + 0.3 * (1 - moneyness)))
+            else:
+                delta = -max(0.01, min(0.99, 0.5 + 0.3 * (moneyness - 1)))
+
+            # Gamma peaks at ATM
+            gamma = 0.05 * np.exp(-10 * (moneyness - 1)**2)
+
+            data.append({
+                'strike': strike,
+                'type': opt_type,
+                'open_interest': int(base_oi * oi_mult),
+                'delta': delta,
+                'gamma': gamma
+            })
+
+    options_df = pd.DataFrame(data)
+
+    # Extract levels
+    extractor = OptionsLevelExtractor(
+        min_strength=5.0,
+        strong_threshold=20.0
+    )
+
+    levels = extractor.extract_levels(
+        options_df,
+        current_price=current_price,
+        dte=3
+    )
+
+    # Print summary
+    extractor.print_levels_summary(levels, current_price, top_n=10)
+
+    # Find specific levels
+    nearest_support = extractor.find_nearest_support(levels, current_price)
+    nearest_resistance = extractor.find_nearest_resistance(levels, current_price)
+
+    print(f"\n{'='*80}")
+    print("NEAREST LEVELS FOR TRADING:")
+    print(f"{'='*80}")
+
+    if nearest_support:
+        print(f"\nNearest Support: ${nearest_support.strike:.2f}")
+        print(f"  Strength: {nearest_support.strength:.1f}")
+        print(f"  OI: {nearest_support.open_interest:,} contracts")
+        print(f"  Hedging Flow: {nearest_support.hedging_flow/1e6:+.1f}M shares (BUY)")
+
+    if nearest_resistance:
+        print(f"\nNearest Resistance: ${nearest_resistance.strike:.2f}")
+        print(f"  Strength: {nearest_resistance.strength:.1f}")
+        print(f"  OI: {nearest_resistance.open_interest:,} contracts")
+        print(f"  Hedging Flow: {nearest_resistance.hedging_flow/1e6:+.1f}M shares (SELL)")
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Part 6: Trading Applications -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>How to Trade Options Levels</h3>
+            <table class="sr-table">
+                <thead><tr><th>Strategy</th><th>Setup</th><th>Entry</th><th>Exit</th><th>Best When</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Range Trade</strong></td><td>Strong walls above & below</td><td>Buy at put wall, sell at call wall</td><td>Opposite wall or 50% range</td><td>Low vol, short DTE (< 5 days)</td></tr>
+                    <tr><td><strong>Breakout Fade</strong></td><td>Price approaches wall</td><td>Short at resistance wall, long at support wall</td><td>Wall holds, take quick profit</td><td>Strong wall (score > 30)</td></tr>
+                    <tr><td><strong>Breakout Follow</strong></td><td>Price breaks through wall</td><td>Enter after wall breaks (high volume)</td><td>Next wall or momentum exhaustion</td><td>Weak wall + high volume</td></tr>
+                    <tr><td><strong>Expiration Pin</strong></td><td>Expiration day, high OI strike</td><td>Bet on price gravitating to pin level</td><td>End of day (expiration)</td><td>Friday, low vol, very high OI</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Chart 1: Level Strength Distribution -->
+            <h3>Level Strength Distribution</h3>
+            <div class="chart-container"><canvas id="strengthChart"></canvas></div>
+
+            <!-- Chart 2: Hedging Flow by Strike -->
+            <h3>Dealer Hedging Flow by Strike</h3>
+            <div class="chart-container"><canvas id="flowChart"></canvas></div>
+
+            <!-- Chart 3: Success Rate by Level Type -->
+            <h3>Historical Success Rate by Level Type</h3>
+            <div class="chart-container"><canvas id="successChart"></canvas></div>
+
+            <!-- Interactive Calculator -->
+            <div class="calculator-section">
+                <h3>Level Strength Calculator</h3>
+                <div class="calc-grid">
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Open Interest (contracts)</label><input type="number" id="calcOI" class="calc-input" value="285000" step="1000"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Average OI</label><input type="number" id="calcAvgOI" class="calc-input" value="75000" step="1000"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Gamma (strike)</label><input type="number" id="calcGamma" class="calc-input" value="0.048" step="0.001"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Average Gamma</label><input type="number" id="calcAvgGamma" class="calc-input" value="0.025" step="0.001"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Delta (absolute)</label><input type="number" id="calcDelta" class="calc-input" value="0.52" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Days to Expiration</label><input type="number" id="calcDTE" class="calc-input" value="7" step="1"></div>
+                </div>
+                <button class="calc-btn" onclick="calculateLevel()">Calculate Level Strength</button>
+                <div class="calc-result" id="levelResult" style="display:none;"></div>
+            </div>
+        </section>
+
+        <!-- Part 7: Common Mistakes -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Mistake 1: Trading Every Level</h4>
+                    <p><strong>Wrong:</strong> "There's high OI at $505, I'll trade it."</p>
+                    <p><strong>Right:</strong> Only trade levels with strength score > 20. Weak levels (< 10) are noise. Focus on the strongest 2-3 levels above and below price.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 2: Ignoring Expiration Date</h4>
+                    <p><strong>Wrong:</strong> "High OI at $500, doesn't matter when it expires."</p>
+                    <p><strong>Right:</strong> Short-dated options (< 7 DTE) create stronger levels because hedging is more urgent. Monthly expiration OI matters less day-to-day.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 3: Fighting Strong Walls</h4>
+                    <p><strong>Wrong:</strong> "I'll buy the breakout through this massive call wall."</p>
+                    <p><strong>Right:</strong> Walls with score > 50 rarely break without massive volume (2x normal). Fade the wall instead of fighting it, or wait for confirmation of break.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 4: Static Levels</h4>
+                    <p><strong>Wrong:</strong> "I identified these levels Monday, they're good all week."</p>
+                    <p><strong>Right:</strong> Update daily! OI changes, options expire, new positions open. Levels are dynamic. Check every morning or use automated pipeline.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 5: No Volume Confirmation</h4>
+                    <p><strong>Wrong:</strong> "Price touched the wall, instant reversal."</p>
+                    <p><strong>Right:</strong> Wait for price action confirmation. Wall test + rejection candle + volume spike = high-probability reversal. Wall alone isn't enough.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 6: Forgetting Zero Gamma</h4>
+                    <p><strong>Wrong:</strong> "Use same trading style at all price levels."</p>
+                    <p><strong>Right:</strong> Above zero gamma = fade moves. Below zero gamma = follow trends. Near zero gamma = avoid (volatile). Regime matters.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 8: Summary & Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Key Takeaways</h2>
+            <div class="info-box"><div class="info-box-title">Options Levels Essentials</div>
+                <ul>
+                    <li><strong>Call Walls = Resistance:</strong> Dealers short calls → sell stock to hedge → creates ceiling</li>
+                    <li><strong>Put Walls = Support:</strong> Dealers short puts → buy stock to hedge → creates floor</li>
+                    <li><strong>Strength Formula:</strong> (OI ratio) × (Gamma ratio) × (30 / DTE). Score > 20 = strong, > 50 = very strong</li>
+                    <li><strong>Hedging Flow:</strong> OI × 100 × |Delta|. Represents millions of shares dealers must trade.</li>
+                    <li><strong>Short DTE > Long DTE:</strong> Options expiring soon create stronger levels (more urgent hedging)</li>
+                    <li><strong>Dynamic Updates:</strong> Recalculate daily. OI changes, expiration approaches, levels shift.</li>
+                    <li><strong>Zero Gamma:</strong> Inflection point between mean reversion (above) and momentum (below)</li>
+                    <li><strong>Success Rate:</strong> ~75% for strong walls (score > 30), ~55% for moderate (score 10-30)</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> Why does high call OI create resistance (not support)?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Market makers buy calls, creating buying pressure</button>
+                        <button onclick="checkAnswer(this, true)">Market makers are short calls and must sell stock to hedge</button>
+                        <button onclick="checkAnswer(this, false)">Retail traders sell their calls at resistance</button>
+                        <button onclick="checkAnswer(this, false)">Institutions use calls to create artificial ceilings</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Dealers SELL calls to customers, making them short. As price approaches the strike, delta increases, and dealers must SELL stock to maintain delta-neutral hedging. This selling pressure creates resistance. The opposite is true for puts (dealers buy stock, creating support).</div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <p><strong>Q2:</strong> A $500 strike has 180K OI, 0.045 gamma, 7 DTE. Average OI is 45K, average gamma is 0.018. What's the strength score?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">4.0 (moderate)</button>
+                        <button onclick="checkAnswer(this, false)">17.1 (strong)</button>
+                        <button onclick="checkAnswer(this, true)">43.0 (very strong)</button>
+                        <button onclick="checkAnswer(this, false)">85.7 (extreme)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Strength = (180K/45K) × (0.045/0.018) × (30/7) = 4.0 × 2.5 × 4.29 = 42.9 ≈ 43.0. This is VERY STRONG (well above the 20 threshold). Expect major support/resistance at this level.</div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <p><strong>Q3:</strong> Stock is at $452. You find resistance at $455 (score 35) and support at $450 (score 40). What's the best strategy?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Buy breakout above $455 (momentum strategy)</button>
+                        <button onclick="checkAnswer(this, true)">Range trade: buy at $450, sell at $455</button>
+                        <button onclick="checkAnswer(this, false)">Only trade if it breaks below $450</button>
+                        <button onclick="checkAnswer(this, false)">Avoid trading until levels break</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Both levels are strong (> 30). Stock is in the middle of the range. Classic range trading setup: buy near support ($450), sell near resistance ($455). High probability the range holds, especially if short DTE. Only break out of the range if massive volume confirms the break.</div>
+                </div>
+                <div class="quiz-question" id="q4">
+                    <p><strong>Q4:</strong> You see 250K call OI at $510 (delta 0.50). How many shares must dealers sell to hedge this?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">250,000 shares</button>
+                        <button onclick="checkAnswer(this, false)">2.5 million shares</button>
+                        <button onclick="checkAnswer(this, true)">12.5 million shares</button>
+                        <button onclick="checkAnswer(this, false)">25 million shares</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Hedging Flow = OI × 100 × |Delta| = 250,000 × 100 × 0.50 = 12,500,000 shares. Dealers must SELL 12.5 million shares to hedge their short call position. This is why high-OI calls create resistance—massive selling pressure.</div>
+                </div>
+                <div class="quiz-question" id="q5">
+                    <p><strong>Q5:</strong> It's Friday expiration day. Stock is at $451, and $450 strike has 300K OI. What's likely to happen?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Stock will gap away from $450 to avoid the strike</button>
+                        <button onclick="checkAnswer(this, true)">Stock will gravitate toward $450 and likely close near it ("pin")</button>
+                        <button onclick="checkAnswer(this, false)">High OI doesn't matter on expiration day</button>
+                        <button onclick="checkAnswer(this, false)">Stock will become extremely volatile around $450</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">PINNING. On expiration day, dealers manipulate (legally) toward max-pain strikes with high OI. It benefits them if options expire worthless or with minimal value. With 300K OI at $450, dealers will hedge to push price toward $450 by close. This is called "pinning" and happens frequently on high-OI strikes at expiration.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    }
+
+    function checkAnswer(btn, correct) {
+        const question = btn.closest('.quiz-question');
+        const buttons = question.querySelectorAll('.quiz-options button');
+        buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        question.querySelector('.quiz-explanation').style.display = 'block';
+    }
+
+    function calculateLevel() {
+        const oi = parseFloat(document.getElementById('calcOI').value);
+        const avgOI = parseFloat(document.getElementById('calcAvgOI').value);
+        const gamma = parseFloat(document.getElementById('calcGamma').value);
+        const avgGamma = parseFloat(document.getElementById('calcAvgGamma').value);
+        const delta = parseFloat(document.getElementById('calcDelta').value);
+        const dte = parseFloat(document.getElementById('calcDTE').value);
+
+        // Calculate strength
+        const oiRatio = oi / avgOI;
+        const gammaRatio = gamma / avgGamma;
+        const dteFactor = 30 / dte;
+        const strength = oiRatio * gammaRatio * dteFactor;
+
+        // Calculate hedging flow
+        const hedgingFlow = oi * 100 * delta / 1e6; // In millions
+
+        // Determine classification
+        let classification, color;
+        if (strength > 50) {
+            classification = 'VERY STRONG';
+            color = '#d8b4fe';
+        } else if (strength > 20) {
+            classification = 'STRONG';
+            color = '#a855f7';
+        } else if (strength > 10) {
+            classification = 'MODERATE';
+            color = '#f59e0b';
+        } else if (strength > 5) {
+            classification = 'WEAK';
+            color = '#94a3b8';
+        } else {
+            classification = 'INSIGNIFICANT';
+            color = '#64748b';
+        }
+
+        const resultDiv = document.getElementById('levelResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="color:#a855f7; margin-top:0;">Level Strength Analysis</h4>
+            <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin:10px 0;">
+                <div><strong style="color:#94a3b8;">OI Ratio:</strong> ${oiRatio.toFixed(2)}x</div>
+                <div><strong style="color:#94a3b8;">Gamma Ratio:</strong> ${gammaRatio.toFixed(2)}x</div>
+                <div><strong style="color:#94a3b8;">DTE Factor:</strong> ${dteFactor.toFixed(2)}x</div>
+                <div><strong style="color:#94a3b8;">Hedging Flow:</strong> ${hedgingFlow.toFixed(1)}M shares</div>
+                <div><strong style="color:#94a3b8;">Strength Score:</strong> <span style="color:${color}; font-weight:bold;">${strength.toFixed(1)}</span></div>
+                <div><strong style="color:#94a3b8;">Classification:</strong> <span style="color:${color}; font-weight:bold;">${classification}</span></div>
+            </div>
+            <div style="padding:12px; border-radius:8px; background:rgba(0,0,0,0.2); margin-top:10px; border-left:4px solid ${color};">
+                <strong style="color:${color};">Trading Recommendation:</strong><br>
+                <span style="color:#94a3b8;">
+                    ${strength > 50 ? 'Extremely strong level. Expect major support/resistance. High probability of holding. Trade reversals at this level with confidence.' :
+                      strength > 20 ? 'Strong level. Good probability of holding. Consider fading approaches to this level or taking profit here.' :
+                      strength > 10 ? 'Moderate level. May act as support/resistance but could break. Use with other confirmation signals.' :
+                      strength > 5 ? 'Weak level. Not reliable on its own. Only trade with strong price action confirmation.' :
+                      'Insignificant level. Do not trade based on this alone. Focus on stronger levels.'}
+                </span>
+            </div>
+        `;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart 1: Level Strength Distribution
+        const ctx1 = document.getElementById('strengthChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['445', '446', '447', '448', '449', '450', '451', '452', '453', '454', '455'],
+                datasets: [{
+                    label: 'Strength Score',
+                    data: [14, 8, 12, 30, 18, 77, 22, 19, 52, 25, 82],
+                    backgroundColor: function(context) {
+                        const val = context.raw;
+                        if (val > 50) return 'rgba(168, 85, 247, 0.8)';
+                        if (val > 20) return 'rgba(168, 85, 247, 0.6)';
+                        if (val > 10) return 'rgba(245, 158, 11, 0.6)';
+                        return 'rgba(148, 163, 184, 0.4)';
+                    },
+                    borderColor: function(context) {
+                        const val = context.raw;
+                        if (val > 50) return '#a855f7';
+                        if (val > 20) return '#a855f7';
+                        if (val > 10) return '#f59e0b';
+                        return '#94a3b8';
+                    },
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Level Strength by Strike (SPY)', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Strike Price', color: '#94a3b8' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Strength Score', color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Chart 2: Hedging Flow
+        const ctx2 = document.getElementById('flowChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['445', '448', '450', '453', '455'],
+                datasets: [{
+                    label: 'Hedging Flow (M shares)',
+                    data: [-2.4, 5.5, 11.8, -8.3, -11.2],
+                    backgroundColor: function(context) {
+                        return context.raw > 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                    },
+                    borderColor: function(context) {
+                        return context.raw > 0 ? '#10b981' : '#ef4444';
+                    },
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Dealer Hedging Flow (Positive = Buy, Negative = Sell)', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Strike Price', color: '#94a3b8' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Shares (Millions)', color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Chart 3: Success Rate
+        const ctx3 = document.getElementById('successChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['Very Strong (>50)', 'Strong (20-50)', 'Moderate (10-20)', 'Weak (<10)'],
+                datasets: [{
+                    label: 'Success Rate %',
+                    data: [78, 68, 55, 42],
+                    backgroundColor: [
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(168, 85, 247, 0.6)',
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(148, 163, 184, 0.5)'
+                    ],
+                    borderColor: ['#a855f7', '#a855f7', '#f59e0b', '#94a3b8'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' }, position: 'right' },
+                    title: { display: true, text: 'Historical Success Rate by Level Strength', color: '#f1f5f9' }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>

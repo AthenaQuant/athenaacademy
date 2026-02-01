@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master SKEW Index analysis for tail risk detection. Learn to identify crash risk vs complacency using SKEW levels combined with VIX for superior market timing and risk management.">
+    <title>8.4.2 SKEW Index & Tail Risk | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .skew-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .skew-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .skew-table th, .skew-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .skew-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .skew-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .condition-card { padding: 20px; border-radius: 12px; margin: 10px 0; border-left: 4px solid; }
+        .condition-safe { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .condition-warning { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .condition-danger { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="8.4.1_vix_volatility_regime.html" class="nav-home">&larr; Previous: VIX Regime</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.4.2</span><span class="nav-module-title">SKEW Index</span></div>
+        <a href="8.4.3_term_structure_volatility.html" class="nav-next">Next: Term Structure &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.4 Market Regime Detection</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.4.2 SKEW Index</span></div>
+        <h1>SKEW Index as Tail Risk Gauge</h1>
+        <p class="module-subtitle">VIX tells you about volatility. SKEW tells you about crash risk. When SKEW <115, the market is dangerously complacent—a crash could be brewing. When SKEW >145 with VIX elevated, everyone's hedged—often a contrarian buy signal. Learn to decode SKEW for tail risk management that institutions use.</p>
+        <div class="module-meta"><span class="meta-item">&#9201;&#xFE0F; 50 min read</span><span class="meta-item">&#128202; 3 Visualizations</span><span class="meta-item">&#128187; SKEW Analyzer</span><span class="meta-item">&#9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The Complacency Warning Nobody Saw</div>
+            <p>October 2021. Markets at all-time highs. VIX sitting at 16—perfectly normal. Most traders felt safe. But SKEW had dropped to 112—dangerously low. This meant out-of-the-money puts were CHEAP. Nobody was hedging for a crash. The market was complacent.</p>
+            <p>What happened next? November 2021: Market topped. By June 2022: S&P down 25%, Nasdaq down 35%. SKEW <115 was the early warning. VIX didn't spike until the crash was already underway.</p>
+            <p><strong>The lesson?</strong> SKEW warns you BEFORE the crash. VIX tells you DURING the crash. For risk management, you need both.</p></div>
+            <div class="skew-eq">SKEW = Tail Risk Gauge | Low SKEW = Complacency = Danger | High SKEW = Fear Priced In</div>
+            <div class="card-grid">
+                <div class="card"><h4>Early Warning System</h4><p>SKEW <115 = extreme complacency, crash risk rising. SKEW >145 = crash heavily hedged, often near bottom. SKEW leads, VIX lags.</p></div>
+                <div class="card"><h4>Measures Put Demand</h4><p>SKEW calculates from OTM put prices relative to ATM options. High SKEW = expensive tail hedges = institutions protecting downside.</p></div>
+                <div class="card"><h4>Contrarian Indicator</h4><p>SKEW + VIX both high = maximum hedging = contrarian buy. SKEW + VIX both low = complacency = reduce risk.</p></div>
+                <div class="card"><h4>Portfolio Insurance</h4><p>When SKEW <120, buy protective puts (they're cheap). When SKEW >140, hedges are expensive (often don't need them).</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">100-150</div><div class="metric-label">SKEW Range</div></div>
+                <div class="metric-card"><div class="metric-value">120-140</div><div class="metric-label">Normal SKEW</div></div>
+                <div class="metric-card"><div class="metric-value">&lt;115</div><div class="metric-label">Danger Zone</div></div>
+                <div class="metric-card"><div class="metric-value">&gt;145</div><div class="metric-label">Max Hedging</div></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition</h2>
+            <h3>What is SKEW?</h3>
+            <p>The CBOE SKEW Index measures the perceived tail risk of S&P 500 returns. Specifically, it quantifies the demand for out-of-the-money (OTM) puts relative to at-the-money options.</p>
+            <p><strong>Key concept:</strong> When investors fear a crash, they buy OTM puts (10-20% below current price) for protection. This drives up OTM put IV relative to ATM IV. SKEW captures this difference.</p>
+
+            <h3>SKEW Interpretation</h3>
+
+            <div class="condition-card condition-danger"><h4>Low SKEW (<115) - DANGER</h4>
+                <p><strong>Meaning:</strong> OTM puts are cheap. Nobody's hedging. Market complacency.</p>
+                <p><strong>Psychology:</strong> "Crash? What crash? Markets only go up!"</p>
+                <p><strong>Trading Implication:</strong> WARNING SIGN. Reduce risk, buy protective puts (they're cheap), prepare for volatility spike.</p>
+                <p><strong>Historical Pattern:</strong> SKEW <115 often precedes corrections within 3-6 months.</p>
+            </div>
+
+            <div class="condition-card condition-safe"><h4>Normal SKEW (120-140) - BALANCED</h4>
+                <p><strong>Meaning:</strong> Normal hedging activity. Market pricing reasonable tail risk.</p>
+                <p><strong>Psychology:</strong> Balanced fear and greed. Rational pricing.</p>
+                <p><strong>Trading Implication:</strong> No extreme signals. Use normal trading strategies.</p>
+            </div>
+
+            <div class="condition-card condition-warning"><h4>High SKEW (>145) - MAXIMUM HEDGING</h4>
+                <p><strong>Meaning:</strong> OTM puts are EXPENSIVE. Everyone's hedged. Maximum fear priced in.</p>
+                <p><strong>Psychology:</strong> "We need crash protection at ANY price!"</p>
+                <p><strong>Trading Implication:</strong> Often a CONTRARIAN BUY signal—especially if VIX is also high. When everyone's hedged, crashes don't happen (no forced sellers left).</p>
+                <p><strong>Historical Pattern:</strong> SKEW >145 with VIX >30 has marked market bottoms (2008, 2020).</p>
+            </div>
+
+            <h3>SKEW + VIX Combined Analysis</h3>
+            <table class="skew-table">
+                <thead><tr><th>SKEW</th><th>VIX</th><th>Market Condition</th><th>Trading Strategy</th></tr></thead>
+                <tbody>
+                    <tr><td>&lt;115</td><td>&lt;15</td><td><strong>DANGER:</strong> Extreme complacency</td><td>Reduce risk, buy puts, defensive</td></tr>
+                    <tr><td>&lt;115</td><td>15-25</td><td>Warning: Low hedging</td><td>Cautious, reduce size</td></tr>
+                    <tr><td>120-140</td><td>15-25</td><td>Normal: Balanced</td><td>Normal trading</td></tr>
+                    <tr><td>&gt;145</td><td>&gt;30</td><td><strong>CONTRARIAN BUY:</strong> Max fear</td><td>Cautiously accumulate longs</td></tr>
+                    <tr><td>&gt;145</td><td>&lt;20</td><td>Unusual: High hedging, low vol</td><td>Wait for clarity</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Why SKEW Matters More Than You Think</h3>
+            <p>Most traders watch VIX religiously but ignore SKEW. This is a mistake. Here's why:</p>
+            <ul>
+                <li><strong>VIX is reactive:</strong> Spikes AFTER volatility increases</li>
+                <li><strong>SKEW is predictive:</strong> Warns you BEFORE crashes when it's too low</li>
+                <li><strong>VIX measures magnitude:</strong> How much volatility?</li>
+                <li><strong>SKEW measures direction:</strong> What kind of volatility? (Crash vs melt-up)</li>
+            </ul>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>SKEW Calculation (Conceptual)</h3>
+            <p>SKEW measures the implied volatility skew—the difference between OTM put IV and ATM option IV.</p>
+            <div class="skew-eq">SKEW ≈ 100 + 10 × (IV<sub>OTM Put</sub> - IV<sub>ATM</sub>) / σ</div>
+            <p>Where σ is a normalizing constant. SKEW = 100 means zero skew (symmetrical distribution). SKEW >100 means negative skew (higher demand for OTM puts).</p>
+
+            <h3>SKEW Percentile</h3>
+            <div class="skew-eq">SKEW Percentile = ((Current - Min<sub>252d</sub>) / (Max<sub>252d</sub> - Min<sub>252d</sub>)) × 100</div>
+            <p>Example: SKEW 135, 1-year range [110, 155]</p>
+            <p>Percentile = (135 - 110) / (155 - 110) × 100 = <strong>55.6%</strong> (slightly above median)</p>
+
+            <h3>Crash Probability from SKEW</h3>
+            <p>While SKEW doesn't give exact probabilities, historical patterns show:</p>
+            <ul>
+                <li>SKEW <115: 30-40% chance of 10%+ correction within 6 months</li>
+                <li>SKEW 120-140: ~15-20% baseline crash probability</li>
+                <li>SKEW >145: &lt;10% crash probability (everyone already hedged)</li>
+            </ul>
+
+            <h3>Combined Risk Score</h3>
+            <div class="skew-eq">Risk Score = (150 - SKEW) + (30 - VIX)</div>
+            <p>Higher score = more complacency = higher risk</p>
+            <p>Example 1: SKEW 110, VIX 12 → Risk = 40 + 18 = <strong>58</strong> (very high risk)</p>
+            <p>Example 2: SKEW 145, VIX 35 → Risk = 5 + (-5) = <strong>0</strong> (low risk, already hedged)</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>Example 1: Pre-COVID (February 2020)</h3>
+            <table class="skew-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>SKEW</td><td>118</td><td>Below normal—some complacency</td></tr>
+                    <tr><td>VIX</td><td>14</td><td>Low volatility</td></tr>
+                    <tr><td>SPY</td><td>$338</td><td>At highs</td></tr>
+                    <tr><td>Risk Score</td><td>48</td><td>Moderately high risk</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Analysis:</strong> SKEW not extreme (<115) but combined with low VIX suggested complacency. Prudent traders reduced exposure or bought puts.</p>
+            <p><strong>Outcome:</strong> March 2020 COVID crash. SPY fell from $338 to $218 (-35%) in 3 weeks. SKEW had warned of vulnerability.</p>
+
+            <h3>Example 2: COVID Bottom (March 23, 2020)</h3>
+            <table class="skew-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>SKEW</td><td>147</td><td>Very high—maximum hedging</td></tr>
+                    <tr><td>VIX</td><td>61</td><td>Extreme fear</td></tr>
+                    <tr><td>SPY</td><td>$218</td><td>Down 35% from highs</td></tr>
+                    <tr><td>Risk Score</td><td>-28</td><td>Negative = oversold</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Analysis:</strong> SKEW >145 + VIX >60 = everyone panic-hedged = CONTRARIAN BUY signal. When maximum fear priced in, bottoms form.</p>
+            <p><strong>Outcome:</strong> March 23 was THE EXACT BOTTOM. SPY rallied to $350 by August (+60%). SKEW + VIX combo called the bottom perfectly.</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>skew_analyzer.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""SKEW Index Tail Risk Analyzer"""
+import pandas as pd
+import numpy as np
+from typing import Tuple, Dict
+from dataclasses import dataclass
+from enum import Enum
+
+class TailRiskLevel(Enum):
+    EXTREME_COMPLACENCY = "Extreme Complacency (<115)"
+    LOW_HEDGING = "Low Hedging (115-120)"
+    NORMAL = "Normal (120-140)"
+    HIGH_HEDGING = "High Hedging (140-145)"
+    MAXIMUM_HEDGING = "Maximum Hedging (>145)"
+
+@dataclass
+class SKEWAnalysis:
+    skew_level: float
+    skew_percentile: float
+    risk_level: TailRiskLevel
+    vix_level: float
+    combined_signal: str
+    risk_score: float
+    recommended_action: str
+
+def calculate_skew_percentile(
+    current_skew: float,
+    skew_history: pd.Series,
+    lookback: int = 252
+) -> float:
+    """Calculate SKEW percentile."""
+    recent = skew_history.tail(lookback)
+    if len(recent) == 0:
+        return 50.0
+
+    skew_min = recent.min()
+    skew_max = recent.max()
+
+    if skew_max == skew_min:
+        return 50.0
+
+    return ((current_skew - skew_min) / (skew_max - skew_min)) * 100
+
+def classify_tail_risk(skew: float) -> TailRiskLevel:
+    """Classify tail risk level from SKEW."""
+    if skew < 115:
+        return TailRiskLevel.EXTREME_COMPLACENCY
+    elif skew < 120:
+        return TailRiskLevel.LOW_HEDGING
+    elif skew < 140:
+        return TailRiskLevel.NORMAL
+    elif skew < 145:
+        return TailRiskLevel.HIGH_HEDGING
+    else:
+        return TailRiskLevel.MAXIMUM_HEDGING
+
+def calculate_risk_score(skew: float, vix: float) -> float:
+    """Combined risk score. Higher = more complacent = riskier."""
+    return (150 - skew) + (30 - vix)
+
+def generate_combined_signal(
+    skew: float,
+    vix: float,
+    risk_level: TailRiskLevel
+) -> Tuple[str, str]:
+    """Generate trading signal from SKEW + VIX."""
+    if skew < 115 and vix < 15:
+        return (
+            "DANGER - Extreme Complacency",
+            "DEFENSIVE: Reduce risk, buy puts, prepare for volatility spike"
+        )
+    elif skew < 120 and vix < 20:
+        return (
+            "Warning - Low Hedging",
+            "CAUTIOUS: Reduce position sizes, increase cash allocation"
+        )
+    elif skew > 145 and vix > 30:
+        return (
+            "CONTRARIAN BUY - Maximum Fear",
+            "ACCUMULATE: Start building long positions cautiously"
+        )
+    elif skew > 140 and vix > 25:
+        return (
+            "High Hedging - Near Bottom",
+            "CAUTIOUSLY BULLISH: Look for entry opportunities"
+        )
+    elif 120 <= skew <= 140 and 15 <= vix <= 25:
+        return (
+            "Normal - Balanced",
+            "NEUTRAL: Use normal trading strategies"
+        )
+    else:
+        return (
+            "Mixed Signals",
+            "WAIT: Conflicting indicators, wait for clarity"
+        )
+
+def analyze_skew(
+    skew_current: float,
+    vix_current: float,
+    skew_history: pd.Series
+) -> SKEWAnalysis:
+    """Complete SKEW analysis."""
+    skew_pct = calculate_skew_percentile(skew_current, skew_history)
+    risk_level = classify_tail_risk(skew_current)
+    risk_score = calculate_risk_score(skew_current, vix_current)
+    signal, action = generate_combined_signal(skew_current, vix_current, risk_level)
+
+    return SKEWAnalysis(
+        skew_level=skew_current,
+        skew_percentile=skew_pct,
+        risk_level=risk_level,
+        vix_level=vix_current,
+        combined_signal=signal,
+        risk_score=risk_score,
+        recommended_action=action
+    )
+
+# Example usage
+if __name__ == "__main__":
+    skew_history = pd.Series([120, 125, 130, 118, 122] * 50)
+
+    # COVID bottom example
+    analysis = analyze_skew(
+        skew_current=147,
+        vix_current=61,
+        skew_history=skew_history
+    )
+
+    print(f"SKEW: {analysis.skew_level}")
+    print(f"Risk Level: {analysis.risk_level.value}")
+    print(f"Signal: {analysis.combined_signal}")
+    print(f"Action: {analysis.recommended_action}")
+</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+            <p><strong>Morning Routine:</strong> Check SKEW + VIX daily. SKEW <115 = defensive. SKEW >145 + VIX high = contrarian opportunity.</p>
+            <p><strong>Portfolio Insurance:</strong> When SKEW <120, buy protective puts (cheap). When SKEW >140, skip puts (expensive).</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <div class="card-grid">
+                <div class="card"><h4>Ignoring SKEW</h4><p>❌ Only watch VIX. ✅ Use SKEW + VIX together for complete picture.</p></div>
+                <div class="card"><h4>Absolute vs Relative</h4><p>❌ SKEW 125 is always safe. ✅ Use percentiles—relative position matters.</p></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary & Quiz</h2>
+            <div class="info-box"><div class="info-box-title">SKEW Quick Reference</div>
+                <ul>
+                    <li><strong>SKEW <115:</strong> Danger—complacency extreme</li>
+                    <li><strong>SKEW 120-140:</strong> Normal—balanced hedging</li>
+                    <li><strong>SKEW >145:</strong> Maximum hedging—often contrarian buy</li>
+                    <li><strong>SKEW <115 + VIX <15:</strong> Extreme danger</li>
+                    <li><strong>SKEW >145 + VIX >30:</strong> Contrarian buy signal</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> SKEW is at 112, VIX at 13. What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Aggressively buy stocks</button>
+                        <button onclick="checkAnswer(this, true)">Go defensive—buy puts, reduce risk</button>
+                        <button onclick="checkAnswer(this, false)">Normal trading</button>
+                        <button onclick="checkAnswer(this, false)">Contrarian buy signal</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">SKEW <115 + VIX <15 = extreme complacency. This is DANGEROUS. Market not pricing crash risk. Reduce exposure, buy protective puts.</div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <p><strong>Q2:</strong> SKEW at 148, VIX at 55. What does this indicate?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">More crashes coming</button>
+                        <button onclick="checkAnswer(this, true)">Maximum hedging—likely near bottom (contrarian buy)</button>
+                        <button onclick="checkAnswer(this, false)">Normal market conditions</button>
+                        <button onclick="checkAnswer(this, false)">Stay in cash indefinitely</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">SKEW >145 + VIX >50 = everyone panic-hedged. Maximum fear priced in. Historically marks bottoms (March 2020, Oct 2008). Contrarian buy.</div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <p><strong>Q3:</strong> What does low SKEW (<115) indicate?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Market expects a crash</button>
+                        <button onclick="checkAnswer(this, true)">Nobody's hedging—complacency danger</button>
+                        <button onclick="checkAnswer(this, false)">Safe to be aggressive</button>
+                        <button onclick="checkAnswer(this, false)">VIX will stay low</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Low SKEW = cheap OTM puts = nobody hedging = complacency. This is a WARNING. Crashes happen when nobody expects them.</div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <p><strong>Q4:</strong> Why combine SKEW + VIX instead of using SKEW alone?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">SKEW is unreliable</button>
+                        <button onclick="checkAnswer(this, true)">They measure different things—tail risk vs volatility</button>
+                        <button onclick="checkAnswer(this, false)">VIX is more important</button>
+                        <button onclick="checkAnswer(this, false)">CBOE requires it</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">SKEW = tail risk/hedging demand. VIX = overall volatility. Together they give complete picture. SKEW <115 + VIX <15 = danger. SKEW >145 + VIX >30 = contrarian buy.</div>
+                </div>
+
+                <div class="quiz-question" id="q5">
+                    <p><strong>Q5:</strong> SKEW is at 135 (normal). Should you buy protective puts?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Yes—always hedge</button>
+                        <button onclick="checkAnswer(this, true)">Maybe—check if SKEW percentile is low for better value</button>
+                        <button onclick="checkAnswer(this, false)">No—SKEW is too high</button>
+                        <button onclick="checkAnswer(this, false)">Only if VIX is also 135</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">SKEW 135 is normal (120-140). Check percentile—if it's low relative to recent range, puts might be reasonably priced. If percentile is high, they're expensive.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(btn) {
+        const code = btn.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(code.textContent);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    }
+    function checkAnswer(btn, correct) {
+        const q = btn.closest('.quiz-question');
+        const btns = q.querySelectorAll('.quiz-options button');
+        btns.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        q.querySelector('.quiz-explanation').style.display = 'block';
+    }
+    </script>
+</body>
+</html>

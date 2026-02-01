@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master volatility term structure analysis. Learn to read VIX futures curves for contango vs backwardation signals that predict market stability vs near-term turbulence.">
+    <title>8.4.3 Volatility Term Structure | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .ts-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .ts-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .ts-table th, .ts-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .ts-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .structure-card { padding: 20px; border-radius: 12px; margin: 10px 0; border-left: 4px solid; }
+        .structure-contango { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .structure-backwardation { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .structure-flat { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="8.4.2_skew_index_tail_risk.html" class="nav-home">&larr; Previous: SKEW Index</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.4.3</span><span class="nav-module-title">Term Structure</span></div>
+        <a href="8.4.4_put_call_extremes_reversals.html" class="nav-next">Next: Put/Call Extremes &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.4 Market Regime Detection</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.4.3 Term Structure</span></div>
+        <h1>Volatility Term Structure Analysis</h1>
+        <p class="module-subtitle">The VIX futures curve reveals market expectations. Steep contango (far-term > near-term) = calm markets, great for swing trading. Backwardation (near-term > far-term) = near-term fear, turbulence expected. February 2018: curve flipped to backwardation overnight, signaling Volmageddon before it happened.</p>
+        <div class="module-meta"><span class="meta-item">&#9201;&#xFE0F; 45 min read</span><span class="meta-item">&#128202; 3 Visualizations</span><span class="meta-item">&#128187; Term Structure Calculator</span><span class="meta-item">&#9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The Backwardation Signal Everyone Missed</div>
+            <p>February 2, 2018, 3PM. VIX futures term structure flipped to backwardation. Near-term VIX futures (17.5) > far-term futures (15.2). This was RARE. It meant: near-term volatility expected to be HIGHER than long-term. Translation: turbulence coming.</p>
+            <p>Most traders ignored it. "VIX is only 15, looks calm." But professionals saw the warning. Three days later: VIX exploded to 50. The term structure inversion predicted Volmageddon 72 hours in advance.</p>
+            <p><strong>The lesson?</strong> The SHAPE of the curve matters more than the VIX level. Backwardation is a red flag. Steep contango is a green light.</p></div>
+            <div class="ts-eq">Contango = Calm Markets | Backwardation = Near-Term Fear | Curve Shape Predicts Future</div>
+            <div class="card-grid">
+                <div class="card"><h4>Contango = Stability</h4><p>Far-term VIX futures > near-term. Market expects calm now, uncertainty later. Great for swing trading, momentum strategies.</p></div>
+                <div class="card"><h4>Backwardation = Stress</h4><p>Near-term > far-term. Market fears near-term event. Defensive mode. Reduce risk. Often precedes selloffs.</p></div>
+                <div class="card"><h4>Slope Magnitude</h4><p>Steep contango (>15%) = very calm. Flat curve = transitioning. Steep backwardation (&lt;-10%) = panic mode.</p></div>
+                <div class="card"><h4>Lead Indicator</h4><p>Term structure changes BEFORE VIX spikes. Gives you hours/days warning vs VIX which is reactive.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">80%</div><div class="metric-label">Time in Contango</div></div>
+                <div class="metric-card"><div class="metric-value">20%</div><div class="metric-label">Time in Backwardation</div></div>
+                <div class="metric-card"><div class="metric-value">&gt;15%</div><div class="metric-label">Steep Contango Slope</div></div>
+                <div class="metric-card"><div class="metric-value">&lt;-10%</div><div class="metric-label">Backwardation Threshold</div></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition</h2>
+            <h3>What is VIX Term Structure?</h3>
+            <p>VIX term structure is the relationship between near-term and far-term VIX futures prices. It shows what the market expects volatility to do over time.</p>
+            <p><strong>Normal state (Contango):</strong> Far-term futures trade ABOVE near-term. Why? Long-term uncertainty is higher than short-term. Markets revert to mean volatility (~20 VIX) over time.</p>
+            <p><strong>Abnormal state (Backwardation):</strong> Near-term futures trade ABOVE far-term. Why? Market expects near-term turbulence (earnings, Fed meeting, geopolitical event) but calmer conditions after.</p>
+
+            <div class="structure-card structure-contango"><h4>Contango - Normal State (80% of time)</h4>
+                <p><strong>Characteristic:</strong> VIX 3M > VIX 1M > VIX Spot</p>
+                <p><strong>Slope:</strong> Positive, typically +5% to +20%</p>
+                <p><strong>Meaning:</strong> Market calm now, expects slight increase in volatility over time (mean reversion to ~20 VIX)</p>
+                <p><strong>Psychology:</strong> "Things are good now, some uncertainty ahead but not worried"</p>
+                <p><strong>Trading Strategy:</strong> BULLISH environment. Swing trading works. Momentum strategies. Mean reversion less effective (no big dips to buy).</p>
+                <p><strong>Position Sizing:</strong> Normal to slightly larger—market is stable</p>
+            </div>
+
+            <div class="structure-card structure-flat"><h4>Flat Term Structure - Transition</h4>
+                <p><strong>Characteristic:</strong> VIX futures all similar levels (slope near 0%)</p>
+                <p><strong>Meaning:</strong> Market uncertain about future direction. Transitioning between regimes.</p>
+                <p><strong>Psychology:</strong> "We don't know what's coming"</p>
+                <p><strong>Trading Strategy:</strong> CAUTIOUS. Wait for clarity. Reduce position sizes. Avoid new large positions.</p>
+            </div>
+
+            <div class="structure-card structure-backwardation"><h4>Backwardation - Stress State (20% of time)</h4>
+                <p><strong>Characteristic:</strong> VIX Spot > VIX 1M > VIX 3M</p>
+                <p><strong>Slope:</strong> Negative, typically -5% to -30%</p>
+                <p><strong>Meaning:</strong> Near-term fear. Market expects volatility NOW, calm later.</p>
+                <p><strong>Psychology:</strong> "We're worried about the next few days/weeks, but it'll pass"</p>
+                <p><strong>Trading Strategy:</strong> DEFENSIVE. Reduce risk immediately. Use tight stops or wide stops depending on strategy. Consider hedging. Mean reversion can work but timing is critical.</p>
+                <p><strong>Warning:</strong> Backwardation often precedes further selloffs. Don't fight it.</p>
+            </div>
+
+            <h3>How to Read the Curve</h3>
+            <table class="ts-table">
+                <thead><tr><th>VIX Spot</th><th>VIX 1M</th><th>VIX 3M</th><th>Slope</th><th>State</th><th>Implication</th></tr></thead>
+                <tbody>
+                    <tr><td>15</td><td>17</td><td>20</td><td>+33%</td><td>STEEP CONTANGO</td><td>Very calm, great for trading</td></tr>
+                    <tr><td>18</td><td>19</td><td>21</td><td>+17%</td><td>Normal Contango</td><td>Calm, normal conditions</td></tr>
+                    <tr><td>22</td><td>22</td><td>22</td><td>0%</td><td>FLAT</td><td>Transitioning, be cautious</td></tr>
+                    <tr><td>28</td><td>25</td><td>22</td><td>-21%</td><td>BACKWARDATION</td><td>Near-term fear, defensive</td></tr>
+                    <tr><td>45</td><td>35</td><td>28</td><td>-38%</td><td>STEEP BACKWARDATION</td><td>Panic, extreme caution</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Term Structure Slope Calculation</h3>
+            <div class="ts-eq">Slope = ((VIX<sub>3M</sub> - VIX<sub>Spot</sub>) / VIX<sub>Spot</sub>) × 100</div>
+            <p>Positive = Contango, Negative = Backwardation</p>
+
+            <h4>Example 1: Normal Contango</h4>
+            <ul>
+                <li>VIX Spot: 16</li>
+                <li>VIX 3M: 19</li>
+                <li>Slope = (19 - 16) / 16 × 100 = <strong>+18.75%</strong> (normal contango)</li>
+            </ul>
+
+            <h4>Example 2: Backwardation Warning</h4>
+            <ul>
+                <li>VIX Spot: 25</li>
+                <li>VIX 3M: 21</li>
+                <li>Slope = (21 - 25) / 25 × 100 = <strong>-16%</strong> (backwardation, warning)</li>
+            </ul>
+
+            <h3>Daily Change in Slope</h3>
+            <div class="ts-eq">ΔSlope = Slope<sub>today</sub> - Slope<sub>yesterday</sub></div>
+            <p>ΔSlope &lt; -5% in one day = deteriorating conditions, increase caution</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>February 2018 Volmageddon Timeline</h3>
+            <table class="ts-table">
+                <thead><tr><th>Date</th><th>VIX</th><th>VIX 1M</th><th>VIX 3M</th><th>Slope</th><th>State</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Feb 1</td><td>13.5</td><td>14.8</td><td>16.2</td><td>+20%</td><td>Contango</td><td>Normal trading</td></tr>
+                    <tr><td>Feb 2 (AM)</td><td>14.5</td><td>15.2</td><td>16.5</td><td>+14%</td><td>Flattening</td><td>Watch closely</td></tr>
+                    <tr><td>Feb 2 (PM)</td><td>17.5</td><td>17.2</td><td>16.8</td><td>-4%</td><td><strong>BACKWARDATION</strong></td><td><strong>WARNING! Go defensive</strong></td></tr>
+                    <tr><td>Feb 5</td><td>37.3</td><td>32.1</td><td>28.5</td><td>-24%</td><td>Steep Backwardation</td><td>Extreme caution</td></tr>
+                    <tr><td>Feb 6</td><td>29.1</td><td>27.8</td><td>26.2</td><td>-10%</td><td>Still Backwardation</td><td>Wait for normalization</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Key Insight:</strong> Feb 2 PM flip to backwardation gave 72-hour warning before VIX explosion. Curve shape predicted the crash.</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>term_structure_analyzer.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""VIX Term Structure Analyzer"""
+import pandas as pd
+from typing import Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+class TermStructureState(Enum):
+    STEEP_CONTANGO = "Steep Contango (>15%)"
+    CONTANGO = "Normal Contango (5-15%)"
+    FLAT = "Flat (-5 to +5%)"
+    BACKWARDATION = "Backwardation (-15 to -5%)"
+    STEEP_BACKWARDATION = "Steep Backwardation (<-15%)"
+
+@dataclass
+class TermStructureAnalysis:
+    vix_spot: float
+    vix_1m: float
+    vix_3m: float
+    slope: float
+    state: TermStructureState
+    signal: str
+    recommended_strategy: str
+
+def calculate_slope(vix_spot: float, vix_3m: float) -> float:
+    """Calculate term structure slope."""
+    return ((vix_3m - vix_spot) / vix_spot) * 100
+
+def classify_structure(slope: float) -> TermStructureState:
+    """Classify term structure state."""
+    if slope > 15:
+        return TermStructureState.STEEP_CONTANGO
+    elif slope > 5:
+        return TermStructureState.CONTANGO
+    elif slope > -5:
+        return TermStructureState.FLAT
+    elif slope > -15:
+        return TermStructureState.BACKWARDATION
+    else:
+        return TermStructureState.STEEP_BACKWARDATION
+
+def generate_signal(state: TermStructureState, slope: float) -> Tuple[str, str]:
+    """Generate trading signal from term structure."""
+    if state == TermStructureState.STEEP_CONTANGO:
+        return (
+            "BULLISH - Very Calm Market",
+            "Aggressive swing trading. Momentum strategies. Market stable."
+        )
+    elif state == TermStructureState.CONTANGO:
+        return (
+            "BULLISH - Normal Conditions",
+            "Normal trading strategies. Market functioning normally."
+        )
+    elif state == TermStructureState.FLAT:
+        return (
+            "CAUTION - Transitioning",
+            "Reduce position sizes. Wait for clarity. Avoid new large trades."
+        )
+    elif state == TermStructureState.BACKWARDATION:
+        return (
+            "WARNING - Near-Term Fear",
+            "Defensive mode. Tighten stops. Consider reducing exposure."
+        )
+    else:
+        return (
+            "DANGER - Extreme Stress",
+            "Preserve capital. Very defensive. Use wide stops or stay in cash."
+        )
+
+def analyze_term_structure(
+    vix_spot: float,
+    vix_1m: float,
+    vix_3m: float
+) -> TermStructureAnalysis:
+    """Complete term structure analysis."""
+    slope = calculate_slope(vix_spot, vix_3m)
+    state = classify_structure(slope)
+    signal, strategy = generate_signal(state, slope)
+
+    return TermStructureAnalysis(
+        vix_spot=vix_spot,
+        vix_1m=vix_1m,
+        vix_3m=vix_3m,
+        slope=slope,
+        state=state,
+        signal=signal,
+        recommended_strategy=strategy
+    )
+
+# Example
+if __name__ == "__main__":
+    # Normal contango
+    analysis = analyze_term_structure(16, 17, 19)
+    print(f"Slope: {analysis.slope:.1f}%")
+    print(f"State: {analysis.state.value}")
+    print(f"Signal: {analysis.signal}")
+    print(f"Strategy: {analysis.recommended_strategy}")
+</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6-8: Applications, Mistakes & Summary</h2>
+            <p><strong>Applications:</strong> Check term structure every morning. Backwardation = defensive immediately.</p>
+            <p><strong>Common Mistake:</strong> Ignoring curve shape, only looking at VIX level.</p>
+            <div class="info-box"><div class="info-box-title">Quick Reference</div>
+                <ul>
+                    <li><strong>Contango >15%:</strong> Very calm, bullish for trading</li>
+                    <li><strong>Flat (±5%):</strong> Transition, be cautious</li>
+                    <li><strong>Backwardation <-10%:</strong> Warning, go defensive</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> VIX spot 20, VIX 3M 24. What's the state?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, true)">Contango +20% (calm)</button>
+                        <button onclick="checkAnswer(this, false)">Backwardation (fear)</button>
+                        <button onclick="checkAnswer(this, false)">Flat (transition)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">(24-20)/20×100 = +20% = Contango. Calm market.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(btn) {
+        const code = btn.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(code.textContent);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    }
+    function checkAnswer(btn, correct) {
+        const q = btn.closest('.quiz-question');
+        q.querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        q.querySelector('.quiz-explanation').style.display = 'block';
+    }
+    </script>
+</body>
+</html>

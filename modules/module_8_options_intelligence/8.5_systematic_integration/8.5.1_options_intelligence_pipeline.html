@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build automated options intelligence pipelines. Learn data collection, processing, storage, and real-time signal generation for systematic stock trading.">
+    <title>8.5.1 Options Intelligence Pipeline | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .pipeline-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .pipeline-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .pipeline-table th, .pipeline-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: left; }
+        .pipeline-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .pipeline-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .stage-card { padding: 20px; border-radius: 12px; margin: 10px 0; border-left: 4px solid; }
+        .stage-fetch { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .stage-process { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.1); }
+        .stage-store { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .stage-analyze { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .stage-alert { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #a855f7; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        .chart-container canvas { max-height: 350px; }
+        .status-indicator { display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
+        .status-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .status-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="../../../index.html" class="nav-home">&larr; Back to Course</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.5.1</span><span class="nav-module-title">Options Intelligence Pipeline</span></div>
+        <a href="8.5.2_options_signals_in_algorithms.html" class="nav-next">Next: Signals in Algorithms &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.5 Systematic Integration</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.5.1 Pipeline Architecture</span></div>
+        <h1>Options Intelligence Pipeline</h1>
+        <p class="module-subtitle">Manual options analysis doesn't scale. Professional traders run automated pipelines that collect, process, and analyze options data 24/7. Learn to build production-grade data infrastructure that transforms raw options chains into actionable trading signals in milliseconds.</p>
+        <div class="module-meta"><span class="meta-item">&#9201;&#xFE0F; 60 min read</span><span class="meta-item">&#128202; 4 Visualizations</span><span class="meta-item">&#128187; Pipeline Calculator</span><span class="meta-item">&#9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The 30-Minute Problem</div>
+            <p>Every morning you check options data for your 20-stock watchlist. You manually open each options chain, scan for unusual volume, calculate put/call ratios, check GEX levels, and note IV percentiles. By the time you finish at 9:30 AM, the pre-market opportunities are gone. You missed NVDA's massive call sweep at 9:05 AM because you were still analyzing AAPL.</p>
+            <p><strong>The institutional solution:</strong> Automated options intelligence pipelines process 100+ symbols in under 2 minutes, detect unusual activity in real-time, and send alerts the moment significant signals appear. What takes you 30 minutes of manual work happens automatically while you sleep.</p></div>
+            <div class="pipeline-eq">Manual Analysis = Slow + Inconsistent + Incomplete &nbsp;|&nbsp; Automated Pipeline = Fast + Reliable + Comprehensive</div>
+            <div class="card-grid">
+                <div class="card"><h4>Speed Advantage</h4><p>Process 50 symbols in 2 minutes vs 30+ minutes manually. Real-time signal detection means you act on opportunities before they disappear. Millisecond latency enables algorithmic execution.</p></div>
+                <div class="card"><h4>Consistency</h4><p>Automated pipelines apply the same analysis methodology every time. No human errors, no skipped checks, no calculation mistakes. Every signal is generated using identical logic.</p></div>
+                <div class="card"><h4>Comprehensive Coverage</h4><p>Monitor unlimited symbols simultaneously. Track every strike, every expiration, every Greek. Store complete historical context. Impossible to achieve manually.</p></div>
+                <div class="card"><h4>24/7 Monitoring</h4><p>Pipeline runs continuously, detecting pre-market sweeps, after-hours activity, and overnight OI changes. You wake up to a complete intelligence report, not a blank slate.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">2 min</div><div class="metric-label">Full Watchlist Scan</div></div>
+                <div class="metric-card"><div class="metric-value">&lt;100ms</div><div class="metric-label">Per-Symbol Latency</div></div>
+                <div class="metric-card"><div class="metric-value">100%</div><div class="metric-label">Consistency Rate</div></div>
+                <div class="metric-card"><div class="metric-value">24/7</div><div class="metric-label">Monitoring Uptime</div></div>
+            </div>
+        </section>
+
+        <!-- Part 2: Building Intuition -->
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition</h2>
+            <h3>What is an Options Intelligence Pipeline?</h3>
+            <p>An options intelligence pipeline is an automated system that transforms raw options data into actionable trading signals. Think of it like a factory assembly line: raw materials (options chains) enter one end, and finished products (trading signals) emerge from the other.</p>
+
+            <div class="stage-card stage-fetch"><h4>Stage 1: Data Collection</h4>
+                <p><strong>What:</strong> Fetch real-time options chains from APIs (Polygon, CBOE, TD Ameritrade, Interactive Brokers)</p>
+                <p><strong>Input:</strong> Symbol ticker (e.g., "SPY")</p>
+                <p><strong>Output:</strong> Complete options chain (strikes, volume, OI, IV, Greeks) for all expirations</p>
+                <p><strong>Frequency:</strong> Every 1-5 minutes for active symbols, end-of-day for swing trading</p>
+            </div>
+            <div class="stage-card stage-process"><h4>Stage 2: Data Processing</h4>
+                <p><strong>What:</strong> Clean data, calculate derived metrics (GEX, unusual activity scores, IV percentiles)</p>
+                <p><strong>Input:</strong> Raw options chain</p>
+                <p><strong>Output:</strong> Processed metrics and calculated indicators</p>
+                <p><strong>Validation:</strong> Reject stale data, wide bid/ask spreads, zero volume</p>
+            </div>
+            <div class="stage-card stage-store"><h4>Stage 3: Storage</h4>
+                <p><strong>What:</strong> Save data to time-series database for historical context</p>
+                <p><strong>Why:</strong> Need history to calculate percentiles, detect regime changes, backtest strategies</p>
+                <p><strong>Database:</strong> SQLite for small-scale, TimescaleDB/InfluxDB for production</p>
+                <p><strong>Retention:</strong> 1-2 years of historical data (~250GB for 50 symbols)</p>
+            </div>
+            <div class="stage-card stage-analyze"><h4>Stage 4: Signal Analysis</h4>
+                <p><strong>What:</strong> Apply trading logic to generate signals (bullish/bearish/neutral)</p>
+                <p><strong>Inputs:</strong> Current data + historical context</p>
+                <p><strong>Output:</strong> Trading signals with confidence scores</p>
+                <p><strong>Logic:</strong> Combine GEX, flow, IV, and regime analysis (Modules 8.1-8.4)</p>
+            </div>
+            <div class="stage-card stage-alert"><h4>Stage 5: Alerting</h4>
+                <p><strong>What:</strong> Notify when significant signals detected</p>
+                <p><strong>Methods:</strong> Email, SMS, Discord, Telegram, or feed directly to trading algorithm</p>
+                <p><strong>Filters:</strong> Only alert on high-confidence signals to avoid noise</p>
+            </div>
+
+            <h3>Data Requirements</h3>
+            <table class="pipeline-table">
+                <thead><tr><th>Data Type</th><th>Source</th><th>Update Frequency</th><th>Size</th></tr></thead>
+                <tbody>
+                    <tr><td>Options Chain</td><td>Broker API / Data Provider</td><td>1-5 minutes</td><td>~50KB per symbol</td></tr>
+                    <tr><td>Stock Price</td><td>Market Data Feed</td><td>Real-time</td><td>&lt;1KB</td></tr>
+                    <tr><td>VIX / Term Structure</td><td>CBOE</td><td>1 minute</td><td>&lt;5KB</td></tr>
+                    <tr><td>Dark Pool Prints</td><td>Paid Services</td><td>Real-time</td><td>Variable</td></tr>
+                    <tr><td>Historical IV</td><td>Database (own storage)</td><td>End of day</td><td>~1MB per symbol/year</td></tr>
+                </tbody>
+            </table>
+
+            <!-- SVG Diagram: Pipeline Architecture -->
+            <div style="text-align:center; margin: 30px 0;">
+                <svg viewBox="0 0 900 500" style="max-width:850px; width:100%;">
+                    <defs>
+                        <linearGradient id="pipelineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3"/>
+                            <stop offset="25%" style="stop-color:#8b5cf6;stop-opacity:0.3"/>
+                            <stop offset="50%" style="stop-color:#10b981;stop-opacity:0.3"/>
+                            <stop offset="75%" style="stop-color:#f59e0b;stop-opacity:0.3"/>
+                            <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.3"/>
+                        </linearGradient>
+                        <marker id="arrowPipe" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#a855f7"/>
+                        </marker>
+                    </defs>
+                    <rect x="0" y="0" width="900" height="500" rx="12" fill="#0f172a"/>
+                    <text x="450" y="30" text-anchor="middle" fill="#d8b4fe" font-size="18" font-weight="bold">Options Intelligence Pipeline Architecture</text>
+
+                    <!-- Stage 1: Fetch -->
+                    <rect x="50" y="80" width="140" height="80" rx="8" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="120" y="110" text-anchor="middle" fill="#60a5fa" font-size="14" font-weight="bold">1. FETCH</text>
+                    <text x="120" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Options Chain API</text>
+                    <text x="120" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">~800 contracts</text>
+
+                    <!-- Arrow 1 -->
+                    <line x1="190" y1="120" x2="220" y2="120" stroke="#a855f7" stroke-width="2" marker-end="url(#arrowPipe)"/>
+                    <text x="205" y="110" text-anchor="middle" fill="#a855f7" font-size="9">87ms</text>
+
+                    <!-- Stage 2: Process -->
+                    <rect x="220" y="80" width="140" height="80" rx="8" fill="rgba(139,92,246,0.2)" stroke="#8b5cf6" stroke-width="2"/>
+                    <text x="290" y="110" text-anchor="middle" fill="#a78bfa" font-size="14" font-weight="bold">2. PROCESS</text>
+                    <text x="290" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Calculate Metrics</text>
+                    <text x="290" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">GEX, P/C, Unusual</text>
+
+                    <!-- Arrow 2 -->
+                    <line x1="360" y1="120" x2="390" y2="120" stroke="#a855f7" stroke-width="2" marker-end="url(#arrowPipe)"/>
+                    <text x="375" y="110" text-anchor="middle" fill="#a855f7" font-size="9">23ms</text>
+
+                    <!-- Stage 3: Store -->
+                    <rect x="390" y="80" width="140" height="80" rx="8" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2"/>
+                    <text x="460" y="110" text-anchor="middle" fill="#34d399" font-size="14" font-weight="bold">3. STORE</text>
+                    <text x="460" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Time-Series DB</text>
+                    <text x="460" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">SQLite/Postgres</text>
+
+                    <!-- Arrow 3 -->
+                    <line x1="530" y1="120" x2="560" y2="120" stroke="#a855f7" stroke-width="2" marker-end="url(#arrowPipe)"/>
+                    <text x="545" y="110" text-anchor="middle" fill="#a855f7" font-size="9">12ms</text>
+
+                    <!-- Stage 4: Analyze -->
+                    <rect x="560" y="80" width="140" height="80" rx="8" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="630" y="110" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="bold">4. ANALYZE</text>
+                    <text x="630" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Generate Signals</text>
+                    <text x="630" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">Bull/Bear/Neutral</text>
+
+                    <!-- Arrow 4 -->
+                    <line x1="700" y1="120" x2="730" y2="120" stroke="#a855f7" stroke-width="2" marker-end="url(#arrowPipe)"/>
+                    <text x="715" y="110" text-anchor="middle" fill="#a855f7" font-size="9">8ms</text>
+
+                    <!-- Stage 5: Alert -->
+                    <rect x="730" y="80" width="140" height="80" rx="8" fill="rgba(239,68,68,0.2)" stroke="#ef4444" stroke-width="2"/>
+                    <text x="800" y="110" text-anchor="middle" fill="#f87171" font-size="14" font-weight="bold">5. ALERT</text>
+                    <text x="800" y="130" text-anchor="middle" fill="#94a3b8" font-size="11">Notify / Execute</text>
+                    <text x="800" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">SMS/Email/Algo</text>
+
+                    <!-- Total time -->
+                    <rect x="350" y="190" width="200" height="35" rx="8" fill="rgba(168,85,247,0.3)" stroke="#a855f7" stroke-width="2"/>
+                    <text x="450" y="212" text-anchor="middle" fill="#d8b4fe" font-size="14" font-weight="bold">Total Pipeline: 130ms</text>
+
+                    <!-- Data flow details -->
+                    <text x="50" y="260" fill="#94a3b8" font-size="12" font-weight="bold">Data Flow Example (SPY):</text>
+
+                    <rect x="50" y="275" width="800" height="40" rx="6" fill="rgba(0,0,0,0.3)" stroke="rgba(148,163,184,0.2)" stroke-width="1"/>
+                    <text x="60" y="295" fill="#60a5fa" font-size="11">Input: SPY ticker</text>
+                    <text x="60" y="308" fill="#94a3b8" font-size="9">Requested at 10:30:00.000</text>
+
+                    <rect x="50" y="325" width="800" height="60" rx="6" fill="rgba(0,0,0,0.3)" stroke="rgba(148,163,184,0.2)" stroke-width="1"/>
+                    <text x="60" y="345" fill="#a78bfa" font-size="11">Processing: 900 options (450 calls + 450 puts)</text>
+                    <text x="60" y="358" fill="#94a3b8" font-size="9">• Call Vol: 1.25M | Put Vol: 800K | P/C: 0.64</text>
+                    <text x="60" y="371" fill="#94a3b8" font-size="9">• Net GEX: +$2.3B | Zero Gamma: $447.50 | Current: $452.30</text>
+
+                    <rect x="50" y="395" width="800" height="60" rx="6" fill="rgba(0,0,0,0.3)" stroke="rgba(148,163,184,0.2)" stroke-width="1"/>
+                    <text x="60" y="415" fill="#fbbf24" font-size="11">Output: BULLISH Signal (High Confidence)</text>
+                    <text x="60" y="428" fill="#94a3b8" font-size="9">• Regime: Positive Gamma (Mean Reversion)</text>
+                    <text x="60" y="441" fill="#94a3b8" font-size="9">• Flow: Bullish (P/C 0.64) | Unusual: $460 calls (45K vol, $1.8M premium)</text>
+
+                    <text x="850" y="480" text-anchor="end" fill="#64748b" font-size="10" font-style="italic">Completed: 10:30:00.130</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Part 3: The Mathematics -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Pipeline Performance Calculations</h3>
+            <p>Understanding the computational requirements and performance characteristics of your pipeline is critical for production deployment.</p>
+
+            <h4>Data Volume Per Symbol</h4>
+            <div class="pipeline-eq">Data Points = Strikes × Expirations × 2 (calls + puts) × Fields</div>
+            <p>Typical setup: 50 strikes × 4 expirations × 2 × 15 fields = <strong>6,000 data points</strong> per symbol</p>
+
+            <h4>Storage Requirements</h4>
+            <div class="pipeline-eq">Daily Storage = Symbols × Snapshots/Day × Size/Snapshot</div>
+            <p>Example: 50 symbols × 390 minutes × 50KB = <strong>~975 MB per day</strong></p>
+            <div class="pipeline-eq">Annual Storage = 975 MB × 252 trading days = <strong>~245 GB per year</strong></div>
+
+            <h4>Processing Latency Budget</h4>
+            <table class="pipeline-table">
+                <thead><tr><th>Stage</th><th>Target Latency</th><th>Max Acceptable</th><th>Optimization</th></tr></thead>
+                <tbody>
+                    <tr><td>API Fetch</td><td>50-100ms</td><td>200ms</td><td>Connection pooling, CDN</td></tr>
+                    <tr><td>Data Parsing</td><td>5-10ms</td><td>20ms</td><td>Efficient JSON parsing</td></tr>
+                    <tr><td>Metric Calculation</td><td>10-20ms</td><td>50ms</td><td>Vectorized operations (NumPy)</td></tr>
+                    <tr><td>Database Write</td><td>10-15ms</td><td>30ms</td><td>Batch inserts, indexing</td></tr>
+                    <tr><td>Signal Generation</td><td>5-10ms</td><td>20ms</td><td>Pre-computed lookups</td></tr>
+                    <tr><td><strong>TOTAL</strong></td><td><strong>80-155ms</strong></td><td><strong>320ms</strong></td><td></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Derived Metrics Formulas</h4>
+            <div class="pipeline-eq">Net GEX = Σ<sub>all strikes</sub> (OI × 100 × Gamma × S² × 0.01 × Direction)</div>
+            <p>Direction = +1 for calls (when dealers short), -1 for puts</p>
+
+            <div class="pipeline-eq">IV Percentile = (IV<sub>current</sub> - IV<sub>min252</sub>) / (IV<sub>max252</sub> - IV<sub>min252</sub>) × 100</div>
+
+            <div class="pipeline-eq">Unusual Activity Score = (Volume / Avg<sub>20d</sub>) × (Premium / $100K) × (1 + Aggressiveness) / √DTE</div>
+            <p>Aggressiveness = 1 if aggressive (market orders), 0.5 if passive (limit orders)</p>
+
+            <div class="pipeline-eq">Put/Call Ratio = Σ Put Volume / Σ Call Volume</div>
+
+            <h4>Data Quality Validation</h4>
+            <p>Reject data points that fail these checks:</p>
+            <ul>
+                <li><strong>Spread Check:</strong> (Ask - Bid) / Mid &lt; 0.10 (reject if spread > 10%)</li>
+                <li><strong>Volume Check:</strong> Volume > 0 (reject zero-volume options)</li>
+                <li><strong>Timestamp Check:</strong> Now - Timestamp &lt; 300 seconds (reject stale data)</li>
+                <li><strong>Price Sanity:</strong> Bid &le; Last &le; Ask (reject invalid prices)</li>
+                <li><strong>IV Sanity:</strong> 0.05 &lt; IV &lt; 3.0 (reject absurd IV values)</li>
+            </ul>
+
+            <h4>Throughput Capacity</h4>
+            <div class="pipeline-eq">Max Symbols = (Update Interval / Latency) × Parallel Workers</div>
+            <p>Example: (300 seconds / 0.13 seconds) × 5 workers = <strong>~11,500 symbols per 5-min interval</strong></p>
+            <p>In practice, limit to 50-200 symbols for reliability and API rate limits.</p>
+        </section>
+
+        <!-- Part 4: Numerical Example -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>Complete Pipeline Execution - SPY @ 10:30 AM</h3>
+
+            <h4>Stage 1: Data Collection</h4>
+            <table class="pipeline-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Details</th></tr></thead>
+                <tbody>
+                    <tr><td>API Endpoint</td><td>Polygon.io</td><td>Options chain endpoint</td></tr>
+                    <tr><td>Symbol</td><td>SPY</td><td>S&P 500 ETF</td></tr>
+                    <tr><td>Strikes Fetched</td><td>900</td><td>450 calls + 450 puts</td></tr>
+                    <tr><td>Expirations</td><td>4</td><td>This week, next week, monthly, quarterly</td></tr>
+                    <tr><td>Data Size</td><td>45 KB</td><td>Compressed JSON</td></tr>
+                    <tr><td>Latency</td><td>87 ms</td><td>Including network round-trip</td></tr>
+                    <tr><td>Status</td><td><span class="status-success">SUCCESS</span></td><td>All validations passed</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Stage 2: Data Processing</h4>
+            <table class="pipeline-table">
+                <thead><tr><th>Calculation</th><th>Result</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>Total Call Volume</td><td>1,250,000</td><td>Active call buying</td></tr>
+                    <tr><td>Total Put Volume</td><td>800,000</td><td>Moderate put activity</td></tr>
+                    <tr><td>Put/Call Ratio</td><td>0.64</td><td><strong>Bullish</strong> (below 1.0)</td></tr>
+                    <tr><td>Net GEX</td><td>+$2.3 Billion</td><td><strong>Positive Gamma</strong> regime</td></tr>
+                    <tr><td>Zero Gamma Level</td><td>$447.50</td><td>Support level</td></tr>
+                    <tr><td>Current SPY Price</td><td>$452.30</td><td>Above zero gamma (stable zone)</td></tr>
+                    <tr><td>Processing Time</td><td>23 ms</td><td>NumPy vectorized calculations</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Stage 3: Unusual Activity Detection</h4>
+            <table class="pipeline-table">
+                <thead><tr><th>Strike</th><th>Type</th><th>Volume</th><th>Avg 20D</th><th>Ratio</th><th>Premium</th><th>Signal</th></tr></thead>
+                <tbody>
+                    <tr><td>$460</td><td>Call</td><td>45,000</td><td>4,200</td><td><strong>10.7x</strong></td><td>$1,800,000</td><td><span class="status-success">UNUSUAL</span></td></tr>
+                    <tr><td>$455</td><td>Call</td><td>38,000</td><td>5,100</td><td>7.5x</td><td>$2,280,000</td><td><span class="status-success">UNUSUAL</span></td></tr>
+                    <tr><td>$450</td><td>Put</td><td>12,000</td><td>8,900</td><td>1.3x</td><td>$360,000</td><td><span class="status-warning">NORMAL</span></td></tr>
+                </tbody>
+            </table>
+            <p><strong>Key Finding:</strong> Massive call buying at $460 strike (10.7x normal volume, $1.8M premium). This suggests institutions positioning for a move to $460 within the DTE window (7 days).</p>
+
+            <h4>Stage 4: Signal Generation</h4>
+            <div class="calc-result">
+                <h4 style="color:#a855f7; margin-top:0;">SPY Intelligence Report - 10:30:00 AM</h4>
+                <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin:10px 0;">
+                    <div><strong style="color:#94a3b8;">Overall Signal:</strong> <span style="color:#10b981; font-weight:bold;">BULLISH</span></div>
+                    <div><strong style="color:#94a3b8;">Confidence:</strong> <span style="color:#10b981; font-weight:bold;">HIGH</span></div>
+                    <div><strong style="color:#94a3b8;">Gamma Regime:</strong> Positive (Mean Reversion)</div>
+                    <div><strong style="color:#94a3b8;">Put/Call Ratio:</strong> 0.64 (Bullish)</div>
+                    <div><strong style="color:#94a3b8;">Unusual Activity:</strong> 2 Significant Calls</div>
+                    <div><strong style="color:#94a3b8;">IV Percentile:</strong> 38% (Low Vol Environment)</div>
+                </div>
+                <div style="padding:12px; border-radius:8px; background:rgba(16,185,129,0.1); margin-top:10px; border-left:4px solid #10b981;">
+                    <strong style="color:#10b981;">Recommendation:</strong> Bullish bias confirmed by multiple indicators. Consider long positions with targets near $460. Positive gamma environment suggests mean-reversion behavior (buy dips, sell rips). Risk managed by stop below $447.50 (zero gamma support).
+                </div>
+            </div>
+
+            <h4>Stage 5: Database Storage</h4>
+            <table class="pipeline-table">
+                <thead><tr><th>Table</th><th>Rows Inserted</th><th>Write Time</th><th>Index Status</th></tr></thead>
+                <tbody>
+                    <tr><td>options_chain</td><td>900</td><td>10 ms</td><td>Indexed on (symbol, timestamp, strike)</td></tr>
+                    <tr><td>signals</td><td>1</td><td>2 ms</td><td>Indexed on (symbol, timestamp)</td></tr>
+                    <tr><td><strong>TOTAL</strong></td><td><strong>901</strong></td><td><strong>12 ms</strong></td><td></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Total Pipeline Performance</h4>
+            <div class="pipeline-eq">Total Time = 87ms (Fetch) + 23ms (Process) + 12ms (Store) + 8ms (Analyze) = <strong>130ms</strong></div>
+            <p><strong>Verdict:</strong> <span class="status-success">REAL-TIME CAPABLE</span> - Well under the 200ms target for day trading applications.</p>
+        </section>
+
+        <!-- Part 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>options_pipeline.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Production-Grade Options Intelligence Pipeline
+Automated data collection, processing, storage, and signal generation
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from datetime import datetime, timedelta
+import requests
+import sqlite3
+from dataclasses import dataclass, asdict
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class OptionsSnapshot:
+    """Complete options data snapshot for a symbol."""
+    symbol: str
+    timestamp: datetime
+    stock_price: float
+    options_chain: pd.DataFrame
+    vix_level: Optional[float] = None
+    vix_3month: Optional[float] = None
+
+
+@dataclass
+class OptionsSignals:
+    """Processed options intelligence signals."""
+    symbol: str
+    timestamp: datetime
+
+    # GEX signals
+    net_gex: float
+    zero_gamma_level: float
+    gamma_regime: str
+
+    # Flow signals
+    call_volume: int
+    put_volume: int
+    put_call_ratio: float
+    unusual_activity: List[Dict]
+
+    # IV signals
+    iv_rank: float
+    iv_percentile: float
+
+    # Regime
+    vix_regime: str
+
+    # Combined signal
+    overall_signal: str
+    confidence: str
+
+
+class OptionsDataPipeline:
+    """
+    Complete options intelligence data pipeline.
+
+    Fetches, processes, stores, and analyzes options data
+    to generate real-time trading signals.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        db_path: str = "options_intelligence.db",
+        max_workers: int = 5
+    ):
+        """
+        Initialize pipeline.
+
+        Parameters
+        ----------
+        api_key : str
+            API key for options data provider
+        db_path : str
+            Path to SQLite database for storage
+        max_workers : int
+            Number of parallel workers for processing
+        """
+        self.api_key = api_key
+        self.db_path = db_path
+        self.max_workers = max_workers
+        self._init_database()
+
+        logger.info(f"Pipeline initialized with {max_workers} workers")
+
+    def _init_database(self):
+        """Initialize database schema."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        # Options chain historical data
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS options_chain (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                timestamp DATETIME NOT NULL,
+                strike REAL NOT NULL,
+                expiration DATE NOT NULL,
+                option_type TEXT NOT NULL,
+                volume INTEGER,
+                open_interest INTEGER,
+                bid REAL,
+                ask REAL,
+                last REAL,
+                iv REAL,
+                delta REAL,
+                gamma REAL,
+                theta REAL,
+                vega REAL,
+                UNIQUE(symbol, timestamp, strike, expiration, option_type)
+            )
+        """)
+
+        # Create indexes for fast queries
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chain_symbol_timestamp
+            ON options_chain(symbol, timestamp)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chain_symbol_strike
+            ON options_chain(symbol, strike)
+        """)
+
+        # Processed signals
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS signals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                timestamp DATETIME NOT NULL,
+                net_gex REAL,
+                zero_gamma_level REAL,
+                put_call_ratio REAL,
+                iv_percentile REAL,
+                vix_regime TEXT,
+                overall_signal TEXT,
+                confidence TEXT,
+                call_volume INTEGER,
+                put_volume INTEGER,
+                unusual_count INTEGER,
+                UNIQUE(symbol, timestamp)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_signals_symbol_timestamp
+            ON signals(symbol, timestamp)
+        """)
+
+        # Unusual activity tracking
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS unusual_activity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                timestamp DATETIME NOT NULL,
+                strike REAL,
+                option_type TEXT,
+                volume INTEGER,
+                avg_volume REAL,
+                volume_ratio REAL,
+                premium REAL,
+                dte INTEGER,
+                score REAL
+            )
+        """)
+
+        conn.commit()
+        conn.close()
+        logger.info("Database initialized successfully")
+
+    def fetch_options_chain(
+        self,
+        symbol: str,
+        max_dte: int = 60
+    ) -> OptionsSnapshot:
+        """
+        Fetch complete options chain from API.
+
+        Parameters
+        ----------
+        symbol : str
+            Stock symbol
+        max_dte : int
+            Maximum days to expiration to fetch
+
+        Returns
+        -------
+        OptionsSnapshot
+            Complete options data snapshot
+        """
+        start_time = time.time()
+
+        try:
+            # Fetch stock price
+            stock_price = self._fetch_stock_price(symbol)
+
+            # Fetch options chain
+            options_df = self._fetch_options_data(symbol, max_dte)
+
+            # Validate data quality
+            options_df = self._validate_options_data(options_df)
+
+            fetch_time = (time.time() - start_time) * 1000
+            logger.info(
+                f"Fetched {len(options_df)} options for {symbol} "
+                f"in {fetch_time:.1f}ms"
+            )
+
+            return OptionsSnapshot(
+                symbol=symbol,
+                timestamp=datetime.now(),
+                stock_price=stock_price,
+                options_chain=options_df
+            )
+
+        except Exception as e:
+            logger.error(f"Error fetching options for {symbol}: {e}")
+            raise
+
+    def _fetch_stock_price(self, symbol: str) -> float:
+        """Fetch current stock price."""
+        # NOTE: Replace with actual API call
+        # Example structure for Polygon.io
+        try:
+            url = f"https://api.polygon.io/v2/last/trade/{symbol}"
+            response = requests.get(
+                url,
+                params={"apiKey": self.api_key},
+                timeout=5
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data['results']['p']
+        except Exception as e:
+            logger.warning(f"API fetch failed, using mock data: {e}")
+            # Mock data for testing
+            mock_prices = {
+                'SPY': 452.30, 'QQQ': 385.50, 'AAPL': 185.20,
+                'TSLA': 248.50, 'NVDA': 495.30
+            }
+            return mock_prices.get(symbol, 100.0)
+
+    def _fetch_options_data(
+        self,
+        symbol: str,
+        max_dte: int
+    ) -> pd.DataFrame:
+        """Fetch options chain data from API."""
+        # NOTE: Replace with actual API implementation
+        try:
+            url = "https://api.polygon.io/v3/reference/options/contracts"
+            response = requests.get(
+                url,
+                params={
+                    "underlying_ticker": symbol,
+                    "limit": 1000,
+                    "apiKey": self.api_key
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+
+            # Parse response into DataFrame
+            # (Implementation depends on your data provider)
+            # This is a simplified mock structure
+
+            raise NotImplementedError("Use actual API")
+
+        except Exception:
+            # Mock data for testing/demonstration
+            logger.warning(f"Using mock options data for {symbol}")
+            return self._generate_mock_options_chain(symbol, max_dte)
+
+    def _generate_mock_options_chain(
+        self,
+        symbol: str,
+        max_dte: int
+    ) -> pd.DataFrame:
+        """Generate realistic mock options data for testing."""
+        stock_price = self._fetch_stock_price(symbol)
+
+        # Generate strikes around current price
+        strikes = np.arange(
+            stock_price * 0.90,
+            stock_price * 1.10,
+            stock_price * 0.01
+        )
+
+        expirations = [
+            datetime.now() + timedelta(days=7),
+            datetime.now() + timedelta(days=14),
+            datetime.now() + timedelta(days=30),
+            datetime.now() + timedelta(days=60)
+        ]
+
+        data = []
+        for strike in strikes:
+            for expiration in expirations:
+                dte = (expiration - datetime.now()).days
+                if dte > max_dte:
+                    continue
+
+                # Calculate realistic Greeks
+                moneyness = stock_price / strike
+                iv = 0.25 + 0.10 * abs(1 - moneyness)
+
+                for opt_type in ['call', 'put']:
+                    # Mock volume with some unusual activity
+                    base_volume = np.random.randint(100, 5000)
+                    if np.random.random() < 0.05:  # 5% unusual
+                        volume = base_volume * np.random.randint(5, 15)
+                    else:
+                        volume = base_volume
+
+                    # Calculate Greeks
+                    if opt_type == 'call':
+                        delta = 0.5 + 0.3 * (moneyness - 1)
+                        delta = max(0.01, min(0.99, delta))
+                    else:
+                        delta = -0.5 - 0.3 * (moneyness - 1)
+                        delta = max(-0.99, min(-0.01, delta))
+
+                    gamma = 0.03 * np.exp(-5 * (moneyness - 1)**2)
+                    theta = -0.05 * (60 / max(dte, 1))
+                    vega = 0.15 * np.sqrt(dte / 365)
+
+                    # Option pricing (simplified)
+                    intrinsic = max(0, stock_price - strike) if opt_type == 'call' else max(0, strike - stock_price)
+                    time_value = iv * np.sqrt(dte / 365) * stock_price * 0.4
+                    mid_price = intrinsic + time_value
+
+                    data.append({
+                        'strike': round(strike, 2),
+                        'expiration': expiration,
+                        'type': opt_type,
+                        'volume': volume,
+                        'open_interest': int(volume * np.random.uniform(3, 10)),
+                        'bid': round(mid_price * 0.98, 2),
+                        'ask': round(mid_price * 1.02, 2),
+                        'last': round(mid_price, 2),
+                        'iv': round(iv, 4),
+                        'delta': round(delta, 4),
+                        'gamma': round(gamma, 4),
+                        'theta': round(theta, 4),
+                        'vega': round(vega, 4)
+                    })
+
+        return pd.DataFrame(data)
+
+    def _validate_options_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Validate and clean options data.
+
+        Removes data points that fail quality checks.
+        """
+        original_len = len(df)
+
+        # Remove zero volume
+        df = df[df['volume'] > 0].copy()
+
+        # Remove wide spreads (>10% of mid)
+        df['mid'] = (df['bid'] + df['ask']) / 2
+        df['spread_pct'] = (df['ask'] - df['bid']) / df['mid']
+        df = df[df['spread_pct'] < 0.10].copy()
+
+        # Remove invalid prices
+        df = df[
+            (df['bid'] <= df['last']) &
+            (df['last'] <= df['ask']) &
+            (df['bid'] >= 0)
+        ].copy()
+
+        # Remove absurd IV values
+        df = df[(df['iv'] > 0.05) & (df['iv'] < 3.0)].copy()
+
+        removed = original_len - len(df)
+        if removed > 0:
+            logger.info(f"Removed {removed} invalid options ({removed/original_len*100:.1f}%)")
+
+        return df.drop(columns=['mid', 'spread_pct'])
+
+    def calculate_signals(
+        self,
+        snapshot: OptionsSnapshot
+    ) -> OptionsSignals:
+        """
+        Calculate all options intelligence signals.
+
+        Parameters
+        ----------
+        snapshot : OptionsSnapshot
+            Options data snapshot
+
+        Returns
+        -------
+        OptionsSignals
+            Processed signals with trading recommendations
+        """
+        start_time = time.time()
+
+        df = snapshot.options_chain.copy()
+
+        # 1. Calculate GEX
+        net_gex, zero_gamma = self._calculate_gex(df, snapshot.stock_price)
+        gamma_regime = "POSITIVE (Mean Reversion)" if net_gex > 0 else "NEGATIVE (Momentum)"
+
+        # 2. Calculate flow metrics
+        calls = df[df['type'] == 'call']
+        puts = df[df['type'] == 'put']
+
+        call_volume = int(calls['volume'].sum())
+        put_volume = int(puts['volume'].sum())
+        pc_ratio = put_volume / call_volume if call_volume > 0 else 1.0
+
+        # 3. Detect unusual activity
+        unusual = self._detect_unusual_activity(df, snapshot.symbol)
+
+        # 4. Calculate IV metrics
+        iv_percentile, iv_rank = self._calculate_iv_metrics(
+            snapshot.symbol,
+            df['iv'].mean()
+        )
+
+        # 5. Determine regime
+        vix_regime = self._determine_vix_regime(snapshot.vix_level)
+
+        # 6. Generate combined signal
+        overall_signal, confidence = self._generate_combined_signal(
+            gamma_regime, pc_ratio, unusual, iv_percentile
+        )
+
+        calc_time = (time.time() - start_time) * 1000
+        logger.info(f"Calculated signals for {snapshot.symbol} in {calc_time:.1f}ms")
+
+        return OptionsSignals(
+            symbol=snapshot.symbol,
+            timestamp=snapshot.timestamp,
+            net_gex=net_gex,
+            zero_gamma_level=zero_gamma,
+            gamma_regime=gamma_regime,
+            call_volume=call_volume,
+            put_volume=put_volume,
+            put_call_ratio=round(pc_ratio, 3),
+            unusual_activity=unusual,
+            iv_rank=iv_rank,
+            iv_percentile=round(iv_percentile, 1),
+            vix_regime=vix_regime,
+            overall_signal=overall_signal,
+            confidence=confidence
+        )
+
+    def _calculate_gex(
+        self,
+        df: pd.DataFrame,
+        stock_price: float
+    ) -> Tuple[float, float]:
+        """
+        Calculate net gamma exposure and zero gamma level.
+
+        Returns
+        -------
+        Tuple[float, float]
+            (net_gex_billions, zero_gamma_strike)
+        """
+        # Assume dealers are short (typical market structure)
+        dealer_multiplier = -1
+
+        total_gex = 0
+        for _, row in df.iterrows():
+            # GEX formula: OI × 100 × Gamma × S² × 0.01
+            gex_contribution = (
+                row['open_interest'] * 100 * row['gamma'] *
+                stock_price * stock_price * 0.01 * dealer_multiplier
+            )
+
+            # Calls = positive GEX, Puts = negative GEX (when dealers short)
+            if row['type'] == 'call':
+                total_gex += gex_contribution
+            else:
+                total_gex -= gex_contribution
+
+        # Convert to billions
+        net_gex_billions = total_gex / 1e9
+
+        # Find zero gamma level (simplified - use strike nearest current price)
+        strikes = sorted(df['strike'].unique())
+        zero_gamma_strike = min(strikes, key=lambda x: abs(x - stock_price))
+
+        return net_gex_billions, zero_gamma_strike
+
+    def _detect_unusual_activity(
+        self,
+        df: pd.DataFrame,
+        symbol: str
+    ) -> List[Dict]:
+        """
+        Detect unusual options activity.
+
+        Returns list of unusual contracts with volume >3x average
+        and premium >$250K.
+        """
+        unusual = []
+
+        # Get historical average volume per strike
+        avg_volumes = self._get_historical_avg_volume(symbol, df)
+
+        for _, row in df.iterrows():
+            strike_key = (row['strike'], row['type'])
+            avg_vol = avg_volumes.get(strike_key, row['volume'])
+
+            if avg_vol == 0:
+                continue
+
+            volume_ratio = row['volume'] / avg_vol
+            premium = row['volume'] * row['last'] * 100
+
+            # Flag as unusual if 3x volume and $250K+ premium
+            if volume_ratio >= 3.0 and premium >= 250000:
+                dte = (row['expiration'] - datetime.now()).days
+
+                unusual.append({
+                    'strike': row['strike'],
+                    'type': row['type'],
+                    'volume': int(row['volume']),
+                    'avg_volume': int(avg_vol),
+                    'ratio': round(volume_ratio, 1),
+                    'premium': premium,
+                    'dte': dte,
+                    'score': volume_ratio * (premium / 1e6) / max(np.sqrt(dte), 1)
+                })
+
+        # Sort by score (most significant first)
+        unusual.sort(key=lambda x: x['score'], reverse=True)
+
+        return unusual[:10]  # Return top 10
+
+    def _get_historical_avg_volume(
+        self,
+        symbol: str,
+        current_df: pd.DataFrame
+    ) -> Dict[Tuple[float, str], float]:
+        """
+        Get historical 20-day average volume per strike.
+
+        Returns dict mapping (strike, type) -> avg_volume.
+        """
+        conn = sqlite3.connect(self.db_path)
+
+        # Query last 20 days
+        cutoff_date = datetime.now() - timedelta(days=20)
+
+        query = """
+            SELECT strike, option_type, AVG(volume) as avg_volume
+            FROM options_chain
+            WHERE symbol = ? AND timestamp >= ?
+            GROUP BY strike, option_type
+        """
+
+        try:
+            hist_df = pd.read_sql_query(
+                query,
+                conn,
+                params=(symbol, cutoff_date)
+            )
+            conn.close()
+
+            avg_volumes = {}
+            for _, row in hist_df.iterrows():
+                key = (row['strike'], row['option_type'])
+                avg_volumes[key] = row['avg_volume']
+
+            return avg_volumes
+
+        except Exception as e:
+            logger.warning(f"Could not fetch historical volumes: {e}")
+            conn.close()
+            return {}
+
+    def _calculate_iv_metrics(
+        self,
+        symbol: str,
+        current_iv: float
+    ) -> Tuple[float, float]:
+        """
+        Calculate IV percentile and rank from historical data.
+
+        Returns
+        -------
+        Tuple[float, float]
+            (iv_percentile, iv_rank)
+        """
+        conn = sqlite3.connect(self.db_path)
+
+        # Get 252-day IV history
+        cutoff_date = datetime.now() - timedelta(days=252)
+
+        query = """
+            SELECT AVG(iv) as avg_iv, timestamp
+            FROM options_chain
+            WHERE symbol = ? AND timestamp >= ?
+            GROUP BY DATE(timestamp)
+            ORDER BY timestamp
+        """
+
+        try:
+            hist_df = pd.read_sql_query(
+                query,
+                conn,
+                params=(symbol, cutoff_date)
+            )
+            conn.close()
+
+            if len(hist_df) < 10:
+                return 50.0, 50.0  # Default if insufficient data
+
+            iv_values = hist_df['avg_iv'].values
+            iv_min = iv_values.min()
+            iv_max = iv_values.max()
+
+            # IV Percentile
+            if iv_max > iv_min:
+                iv_percentile = ((current_iv - iv_min) / (iv_max - iv_min)) * 100
+            else:
+                iv_percentile = 50.0
+
+            # IV Rank (percentage of days current IV was higher)
+            iv_rank = (iv_values < current_iv).sum() / len(iv_values) * 100
+
+            return iv_percentile, iv_rank
+
+        except Exception as e:
+            logger.warning(f"Could not calculate IV metrics: {e}")
+            conn.close()
+            return 50.0, 50.0
+
+    def _determine_vix_regime(self, vix_level: Optional[float]) -> str:
+        """Determine VIX regime."""
+        if vix_level is None:
+            return "UNKNOWN"
+
+        if vix_level < 15:
+            return "LOW (Complacent)"
+        elif vix_level < 20:
+            return "NORMAL"
+        elif vix_level < 30:
+            return "ELEVATED (Caution)"
+        else:
+            return "HIGH (Fear)"
+
+    def _generate_combined_signal(
+        self,
+        gamma_regime: str,
+        pc_ratio: float,
+        unusual: List[Dict],
+        iv_percentile: float
+    ) -> Tuple[str, str]:
+        """
+        Generate combined trading signal from all indicators.
+
+        Returns
+        -------
+        Tuple[str, str]
+            (signal, confidence) where signal in {BULLISH, BEARISH, NEUTRAL}
+            and confidence in {HIGH, MODERATE, LOW}
+        """
+        bullish_score = 0
+        bearish_score = 0
+
+        # Gamma regime (1 point)
+        if "POSITIVE" in gamma_regime:
+            bullish_score += 1
+        else:
+            bearish_score += 1
+
+        # Put/Call ratio (2 points)
+        if pc_ratio < 0.7:
+            bullish_score += 2
+        elif pc_ratio > 1.3:
+            bearish_score += 2
+
+        # Unusual activity (2 points)
+        if unusual:
+            call_unusual = sum(1 for u in unusual if u['type'] == 'call')
+            put_unusual = sum(1 for u in unusual if u['type'] == 'put')
+
+            if call_unusual > put_unusual:
+                bullish_score += 2
+            elif put_unusual > call_unusual:
+                bearish_score += 2
+
+        # IV percentile (1 point - low IV = bullish, high IV = bearish)
+        if iv_percentile < 30:
+            bullish_score += 1
+        elif iv_percentile > 70:
+            bearish_score += 1
+
+        # Determine signal and confidence
+        total_score = bullish_score + bearish_score
+
+        if bullish_score >= 4:
+            signal = "BULLISH"
+            confidence = "HIGH" if bullish_score >= 5 else "MODERATE"
+        elif bearish_score >= 4:
+            signal = "BEARISH"
+            confidence = "HIGH" if bearish_score >= 5 else "MODERATE"
+        else:
+            signal = "NEUTRAL"
+            confidence = "LOW"
+
+        return signal, confidence
+
+    def store_snapshot(self, snapshot: OptionsSnapshot):
+        """Store options snapshot to database."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        stored_count = 0
+        for _, row in snapshot.options_chain.iterrows():
+            try:
+                cursor.execute("""
+                    INSERT OR REPLACE INTO options_chain VALUES (
+                        NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                """, (
+                    snapshot.symbol,
+                    snapshot.timestamp,
+                    row['strike'],
+                    row['expiration'],
+                    row['type'],
+                    int(row['volume']),
+                    int(row['open_interest']),
+                    float(row['bid']),
+                    float(row['ask']),
+                    float(row['last']),
+                    float(row['iv']),
+                    float(row['delta']),
+                    float(row['gamma']),
+                    float(row['theta']),
+                    float(row['vega'])
+                ))
+                stored_count += 1
+            except Exception as e:
+                logger.warning(f"Error storing row: {e}")
+
+        conn.commit()
+        conn.close()
+        logger.info(f"Stored {stored_count} options for {snapshot.symbol}")
+
+    def store_signals(self, signals: OptionsSignals):
+        """Store processed signals to database."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT OR REPLACE INTO signals VALUES (
+                NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+        """, (
+            signals.symbol,
+            signals.timestamp,
+            float(signals.net_gex),
+            float(signals.zero_gamma_level),
+            float(signals.put_call_ratio),
+            float(signals.iv_percentile),
+            signals.vix_regime,
+            signals.overall_signal,
+            signals.confidence,
+            signals.call_volume,
+            signals.put_volume,
+            len(signals.unusual_activity)
+        ))
+
+        # Store unusual activity
+        for unusual in signals.unusual_activity:
+            cursor.execute("""
+                INSERT INTO unusual_activity VALUES (
+                    NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+            """, (
+                signals.symbol,
+                signals.timestamp,
+                unusual['strike'],
+                unusual['type'],
+                unusual['volume'],
+                unusual['avg_volume'],
+                unusual['ratio'],
+                unusual['premium'],
+                unusual['dte'],
+                unusual['score']
+            ))
+
+        conn.commit()
+        conn.close()
+        logger.info(f"Stored signals for {signals.symbol}")
+
+    def run_pipeline(
+        self,
+        symbols: List[str],
+        store_data: bool = True
+    ) -> Dict[str, OptionsSignals]:
+        """
+        Run complete pipeline for multiple symbols.
+
+        Parameters
+        ----------
+        symbols : List[str]
+            List of symbols to process
+        store_data : bool
+            Whether to store data to database
+
+        Returns
+        -------
+        Dict[str, OptionsSignals]
+            Signals for each symbol
+        """
+        start_time = time.time()
+        results = {}
+
+        logger.info(f"Starting pipeline for {len(symbols)} symbols")
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            future_to_symbol = {
+                executor.submit(
+                    self._process_symbol,
+                    symbol,
+                    store_data
+                ): symbol
+                for symbol in symbols
+            }
+
+            for future in as_completed(future_to_symbol):
+                symbol = future_to_symbol[future]
+                try:
+                    signals = future.result()
+                    results[symbol] = signals
+                    logger.info(
+                        f"✓ {symbol}: {signals.overall_signal} "
+                        f"({signals.confidence} confidence)"
+                    )
+                except Exception as e:
+                    logger.error(f"✗ {symbol}: {e}")
+
+        total_time = time.time() - start_time
+        logger.info(
+            f"Pipeline completed in {total_time:.2f}s "
+            f"({total_time/len(symbols):.2f}s per symbol)"
+        )
+
+        return results
+
+    def _process_symbol(
+        self,
+        symbol: str,
+        store_data: bool
+    ) -> OptionsSignals:
+        """Process single symbol through complete pipeline."""
+        # Stage 1: Fetch
+        snapshot = self.fetch_options_chain(symbol)
+
+        # Stage 2-4: Calculate signals
+        signals = self.calculate_signals(snapshot)
+
+        # Stage 3: Store
+        if store_data:
+            self.store_snapshot(snapshot)
+            self.store_signals(signals)
+
+        # Stage 5: Alert (would integrate here)
+        # self._send_alerts(signals)
+
+        return signals
+
+    def get_signal_history(
+        self,
+        symbol: str,
+        days: int = 30
+    ) -> pd.DataFrame:
+        """
+        Retrieve historical signals for a symbol.
+
+        Parameters
+        ----------
+        symbol : str
+            Stock symbol
+        days : int
+            Number of days to retrieve
+
+        Returns
+        -------
+        pd.DataFrame
+            Historical signals
+        """
+        conn = sqlite3.connect(self.db_path)
+
+        cutoff_date = datetime.now() - timedelta(days=days)
+
+        query = """
+            SELECT * FROM signals
+            WHERE symbol = ? AND timestamp >= ?
+            ORDER BY timestamp DESC
+        """
+
+        df = pd.read_sql_query(query, conn, params=(symbol, cutoff_date))
+        conn.close()
+
+        return df
+
+
+# ============================================================================
+# EXAMPLE USAGE
+# ============================================================================
+
+if __name__ == "__main__":
+    # Initialize pipeline
+    pipeline = OptionsDataPipeline(
+        api_key="your_api_key_here",
+        db_path="options_intelligence.db",
+        max_workers=5
+    )
+
+    # Define watchlist
+    watchlist = ["SPY", "QQQ", "AAPL", "TSLA", "NVDA"]
+
+    print("\n" + "="*80)
+    print("OPTIONS INTELLIGENCE PIPELINE - LIVE RUN")
+    print("="*80)
+
+    # Run pipeline
+    signals = pipeline.run_pipeline(watchlist, store_data=True)
+
+    # Display results
+    print("\n" + "="*80)
+    print("TRADING SIGNALS")
+    print("="*80)
+
+    for symbol, signal in signals.items():
+        print(f"\n{symbol}:")
+        print(f"  Signal: {signal.overall_signal} ({signal.confidence} confidence)")
+        print(f"  GEX Regime: {signal.gamma_regime}")
+        print(f"  Zero Gamma: ${signal.zero_gamma_level:.2f}")
+        print(f"  Put/Call: {signal.put_call_ratio:.2f}")
+        print(f"  IV Percentile: {signal.iv_percentile:.1f}%")
+
+        if signal.unusual_activity:
+            print(f"  Unusual Activity ({len(signal.unusual_activity)}):")
+            for unusual in signal.unusual_activity[:3]:
+                print(f"    • ${unusual['strike']} {unusual['type']}: "
+                      f"{unusual['volume']:,} vol ({unusual['ratio']:.1f}x avg), "
+                      f"${unusual['premium']:,.0f} premium")
+
+    print("\n" + "="*80)
+    print("Pipeline execution complete!")
+    print("="*80)</code></pre>
+            </div>
+        </section>
+
+        <!-- Part 6: Trading Applications -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>Morning Workflow</h3>
+            <table class="pipeline-table">
+                <thead><tr><th>Time</th><th>Action</th><th>Output</th><th>Trading Decision</th></tr></thead>
+                <tbody>
+                    <tr><td>8:00 AM</td><td>Run pipeline on 50-stock watchlist</td><td>Complete signals in 2 minutes</td><td>Identify top 5-10 setups</td></tr>
+                    <tr><td>8:05 AM</td><td>Filter by bullish signals + high confidence</td><td>3 stocks with strong buy signals</td><td>Cross-check with technicals</td></tr>
+                    <tr><td>8:15 AM</td><td>Review unusual activity alerts</td><td>NVDA $500 calls, 15x volume</td><td>Add to watchlist for market open</td></tr>
+                    <tr><td>9:30 AM</td><td>Real-time monitoring begins</td><td>Updates every 5 minutes</td><td>Enter trades on confirmation</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Real-Time Monitoring Strategy</h3>
+            <div class="card-grid">
+                <div class="card"><h4>Scan Frequency</h4><p><strong>Day Trading:</strong> Every 1-5 minutes for active symbols</p><p><strong>Swing Trading:</strong> End-of-day scan is sufficient</p><p><strong>Position Trading:</strong> Weekly scans</p></div>
+                <div class="card"><h4>Alert Triggers</h4><p>• Unusual activity score > 10</p><p>• GEX regime flip (positive ↔ negative)</p><p>• Put/call ratio crosses 0.7 or 1.3</p><p>• IV percentile enters extreme (< 10% or > 90%)</p></div>
+                <div class="card"><h4>Integration Points</h4><p>• Feed signals to trading algorithm</p><p>• Discord/Telegram notifications</p><p>• Email digest for EOD summary</p><p>• Dashboard visualization</p></div>
+                <div class="card"><h4>Performance Tracking</h4><p>• Log all signals to database</p><p>• Track signal accuracy over time</p><p>• Calculate hit rate per symbol</p><p>• Optimize thresholds based on results</p></div>
+            </div>
+
+            <!-- Chart 1: Pipeline Performance -->
+            <h3>Pipeline Performance Metrics</h3>
+            <div class="chart-container"><canvas id="performanceChart"></canvas></div>
+
+            <!-- Chart 2: Signal Distribution -->
+            <h3>Signal Distribution (Last 30 Days)</h3>
+            <div class="chart-container"><canvas id="signalDistChart"></canvas></div>
+
+            <!-- Chart 3: Latency Breakdown -->
+            <h3>Pipeline Latency Breakdown</h3>
+            <div class="chart-container"><canvas id="latencyChart"></canvas></div>
+
+            <!-- Interactive Calculator -->
+            <div class="calculator-section">
+                <h3>Pipeline Performance Estimator</h3>
+                <div class="calc-grid">
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Number of Symbols</label><input type="number" id="calcSymbols" class="calc-input" value="50" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Avg Latency per Symbol (ms)</label><input type="number" id="calcLatency" class="calc-input" value="130" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Parallel Workers</label><input type="number" id="calcWorkers" class="calc-input" value="5" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Update Frequency (minutes)</label><input type="number" id="calcFrequency" class="calc-input" value="5" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Data per Symbol (KB)</label><input type="number" id="calcDataSize" class="calc-input" value="50" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Trading Days per Year</label><input type="number" id="calcTradingDays" class="calc-input" value="252" step="1"></div>
+                </div>
+                <button class="calc-btn" onclick="calculatePipeline()">Calculate Performance</button>
+                <div class="calc-result" id="pipelineResult" style="display:none;"></div>
+            </div>
+        </section>
+
+        <!-- Part 7: Common Mistakes -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Mistake 1: Processing Too Many Symbols</h4>
+                    <p><strong>Wrong:</strong> "I'll monitor 500 stocks simultaneously to find more opportunities."</p>
+                    <p><strong>Right:</strong> Start with 10-20 high-quality symbols. More symbols = API rate limits, higher costs, information overload. Quality > quantity. Even professionals rarely track more than 100-200 actively.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 2: Fetching Data Too Frequently</h4>
+                    <p><strong>Wrong:</strong> "I'll update every 10 seconds to catch every move."</p>
+                    <p><strong>Right:</strong> Options data doesn't change that fast. Every 1-5 minutes is sufficient for day trading. More frequent = wasted API calls, higher costs, potential rate limiting. Match frequency to your trading timeframe.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 3: Not Storing Historical Data</h4>
+                    <p><strong>Wrong:</strong> "I'll just process real-time data and discard it."</p>
+                    <p><strong>Right:</strong> Historical context is CRITICAL. You need it to calculate IV percentiles, identify regime changes, detect unusual activity, and backtest. Always store to database.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 4: Ignoring Data Quality</h4>
+                    <p><strong>Wrong:</strong> "Process everything the API returns without validation."</p>
+                    <p><strong>Right:</strong> Validate EVERY data point. Wide spreads, zero volume, stale timestamps, invalid prices—all lead to garbage signals. Implement strict quality checks or your signals will be unreliable.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 5: No Error Handling</h4>
+                    <p><strong>Wrong:</strong> "If the API fails, just crash and I'll restart manually."</p>
+                    <p><strong>Right:</strong> APIs fail. Networks timeout. Implement retry logic with exponential backoff, graceful degradation, logging, and alerts. Production pipelines must handle failures automatically.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 6: Not Logging Everything</h4>
+                    <p><strong>Wrong:</strong> "I don't need logs, I'll just watch it run."</p>
+                    <p><strong>Right:</strong> Log every stage: fetch times, processing times, errors, signals generated. When something goes wrong (it will), logs are your only diagnostic tool. Use structured logging with timestamps.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 8: Summary & Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Key Takeaways</h2>
+            <div class="info-box"><div class="info-box-title">Pipeline Essentials</div>
+                <ul>
+                    <li><strong>5 Stages:</strong> Fetch → Process → Store → Analyze → Alert. Each stage must be optimized for production.</li>
+                    <li><strong>Performance Target:</strong> &lt;200ms per symbol for day trading. Achieve with parallel processing, caching, and efficient databases.</li>
+                    <li><strong>Storage:</strong> Plan for ~250GB/year for 50 symbols. Use time-series databases for efficient querying.</li>
+                    <li><strong>Data Quality:</strong> Validate EVERYTHING. Reject wide spreads, zero volume, stale data, invalid prices.</li>
+                    <li><strong>Error Handling:</strong> Retry logic, exponential backoff, graceful degradation. Production systems must self-heal.</li>
+                    <li><strong>Start Small:</strong> 10-20 symbols initially. Scale gradually after proving the system works.</li>
+                    <li><strong>Integration:</strong> Feed signals to trading algorithms (next lesson), alert systems, dashboards.</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> What is the recommended maximum latency for a real-time day trading pipeline?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">&lt;10ms (ultra-low latency)</button>
+                        <button onclick="checkAnswer(this, true)">&lt;200ms (real-time capable)</button>
+                        <button onclick="checkAnswer(this, false)">&lt;1 second (acceptable)</button>
+                        <button onclick="checkAnswer(this, false)">&lt;5 seconds (sufficient)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">For day trading, &lt;200ms total pipeline latency is the target. This allows real-time signal generation without missing opportunities. Under 100ms is ideal but not always necessary. Over 1 second starts becoming too slow for active trading.</div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <p><strong>Q2:</strong> You're building a pipeline for 50 symbols with 5 parallel workers and 150ms latency per symbol. How long does a complete scan take?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">150ms (parallel processing)</button>
+                        <button onclick="checkAnswer(this, true)">~1.5 seconds (50/5 × 150ms)</button>
+                        <button onclick="checkAnswer(this, false)">7.5 seconds (50 × 150ms)</button>
+                        <button onclick="checkAnswer(this, false)">30 seconds (with overhead)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">With 5 parallel workers, you process 5 symbols simultaneously. So 50 symbols / 5 workers = 10 batches. Each batch takes 150ms, so 10 × 150ms = 1,500ms = 1.5 seconds total. This is why parallel processing is critical for scaling.</div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <p><strong>Q3:</strong> Which data quality check is MOST important for preventing bad signals?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Checking if volume > 0</button>
+                        <button onclick="checkAnswer(this, true)">Validating bid/ask spread is reasonable (&lt;10%)</button>
+                        <button onclick="checkAnswer(this, false)">Ensuring IV is between 0.05 and 3.0</button>
+                        <button onclick="checkAnswer(this, false)">Verifying timestamp is recent</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">While all checks matter, spread validation is most critical. Wide spreads (>10% of mid) indicate illiquid options where the mid-price is meaningless. Using bad mid-prices leads to completely wrong calculations for GEX, unusual activity, and everything else. Always validate spreads first.</div>
+                </div>
+                <div class="quiz-question" id="q4">
+                    <p><strong>Q4:</strong> Why is historical data storage essential, not optional?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">To reduce API costs by caching</button>
+                        <button onclick="checkAnswer(this, false)">To comply with regulatory requirements</button>
+                        <button onclick="checkAnswer(this, true)">To calculate percentiles, detect regime changes, and backtest</button>
+                        <button onclick="checkAnswer(this, false)">To create pretty charts for visualization</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Historical context is REQUIRED for meaningful analysis. IV percentile needs 252 days of history. Unusual activity detection needs 20-day averages. Regime detection needs historical levels. Backtesting needs complete history. Without storage, you can't calculate any of these critical metrics.</div>
+                </div>
+                <div class="quiz-question" id="q5">
+                    <p><strong>Q5:</strong> Your pipeline processes 50 symbols, storing 50KB per snapshot, updating every 5 minutes during market hours (390 minutes). How much daily storage?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">~2.5 MB (50 × 50KB)</button>
+                        <button onclick="checkAnswer(this, false)">~20 MB (50KB × 390 snapshots)</button>
+                        <button onclick="checkAnswer(this, true)">~195 MB (50 symbols × 78 updates × 50KB)</button>
+                        <button onclick="checkAnswer(this, false)">~1 GB (with overhead and indexes)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">390 minutes / 5 minute updates = 78 snapshots per symbol per day. 50 symbols × 78 snapshots × 50KB = 195,000 KB ≈ 195 MB per day. Over a year (252 days), this is ~49 GB. Plan storage capacity accordingly!</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    }
+
+    function checkAnswer(btn, correct) {
+        const question = btn.closest('.quiz-question');
+        const buttons = question.querySelectorAll('.quiz-options button');
+        buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        question.querySelector('.quiz-explanation').style.display = 'block';
+    }
+
+    function calculatePipeline() {
+        const symbols = parseInt(document.getElementById('calcSymbols').value);
+        const latency = parseFloat(document.getElementById('calcLatency').value);
+        const workers = parseInt(document.getElementById('calcWorkers').value);
+        const frequency = parseInt(document.getElementById('calcFrequency').value);
+        const dataSize = parseFloat(document.getElementById('calcDataSize').value);
+        const tradingDays = parseInt(document.getElementById('calcTradingDays').value);
+
+        // Calculate pipeline performance
+        const batches = Math.ceil(symbols / workers);
+        const totalTime = (batches * latency) / 1000; // seconds
+        const updatesPerDay = 390 / frequency;
+        const dailyStorage = symbols * updatesPerDay * dataSize / 1024; // MB
+        const annualStorage = dailyStorage * tradingDays / 1024; // GB
+
+        const resultDiv = document.getElementById('pipelineResult');
+        resultDiv.style.display = 'block';
+
+        let status, statusColor;
+        if (totalTime < 2) {
+            status = 'EXCELLENT - Real-time capable';
+            statusColor = '#10b981';
+        } else if (totalTime < 5) {
+            status = 'GOOD - Suitable for day trading';
+            statusColor = '#f59e0b';
+        } else {
+            status = 'SLOW - Consider optimization';
+            statusColor = '#ef4444';
+        }
+
+        resultDiv.innerHTML = `
+            <h4 style="color:#a855f7; margin-top:0;">Pipeline Performance Analysis</h4>
+            <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin:10px 0;">
+                <div><strong style="color:#94a3b8;">Total Scan Time:</strong> ${totalTime.toFixed(2)} seconds</div>
+                <div><strong style="color:#94a3b8;">Batches:</strong> ${batches} (${workers} parallel)</div>
+                <div><strong style="color:#94a3b8;">Updates per Day:</strong> ${updatesPerDay.toFixed(0)}</div>
+                <div><strong style="color:#94a3b8;">Daily Storage:</strong> ${dailyStorage.toFixed(1)} MB</div>
+                <div><strong style="color:#94a3b8;">Annual Storage:</strong> ${annualStorage.toFixed(1)} GB</div>
+                <div><strong style="color:#94a3b8;">Throughput:</strong> ${(symbols / totalTime).toFixed(1)} symbols/sec</div>
+            </div>
+            <div style="padding:12px; border-radius:8px; background:rgba(0,0,0,0.2); margin-top:10px; border-left:4px solid ${statusColor};">
+                <strong style="color:${statusColor};">Status: ${status}</strong><br>
+                <span style="color:#94a3b8;">
+                    ${totalTime < 2 ? 'Your pipeline is optimized for high-frequency trading. Excellent performance!' :
+                      totalTime < 5 ? 'Good performance for most day trading strategies. Consider adding workers for better speed.' :
+                      'Performance needs improvement. Add more workers, optimize latency, or reduce symbol count.'}
+                </span>
+            </div>
+        `;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart 1: Performance Metrics
+        const ctx1 = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                datasets: [{
+                    label: 'Avg Latency (ms)',
+                    data: [145, 138, 125, 132, 128, 122, 118],
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.4
+                }, {
+                    label: 'Symbols Processed',
+                    data: [48, 50, 50, 47, 50, 50, 50],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    yAxisID: 'y1',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } },
+                    title: { display: true, text: 'Pipeline Performance Over Time', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { type: 'linear', position: 'left', ticks: { color: '#a855f7' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Latency (ms)', color: '#a855f7' } },
+                    y1: { type: 'linear', position: 'right', ticks: { color: '#10b981' }, grid: { display: false }, title: { display: true, text: 'Symbols', color: '#10b981' } }
+                }
+            }
+        });
+
+        // Chart 2: Signal Distribution
+        const ctx2 = document.getElementById('signalDistChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Bullish High', 'Bullish Moderate', 'Neutral', 'Bearish Moderate', 'Bearish High'],
+                datasets: [{
+                    data: [28, 35, 22, 12, 3],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(16, 185, 129, 0.5)',
+                        'rgba(148, 163, 184, 0.5)',
+                        'rgba(239, 68, 68, 0.5)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: ['#10b981', '#10b981', '#94a3b8', '#ef4444', '#ef4444'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' }, position: 'right' },
+                    title: { display: true, text: 'Signal Distribution (Last 30 Days)', color: '#f1f5f9' }
+                }
+            }
+        });
+
+        // Chart 3: Latency Breakdown
+        const ctx3 = document.getElementById('latencyChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: ['Fetch', 'Parse', 'Calculate', 'Store', 'Analyze'],
+                datasets: [{
+                    label: 'Latency (ms)',
+                    data: [87, 8, 23, 12, 8],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.6)',
+                        'rgba(139, 92, 246, 0.6)',
+                        'rgba(168, 85, 247, 0.6)',
+                        'rgba(16, 185, 129, 0.6)',
+                        'rgba(245, 158, 11, 0.6)'
+                    ],
+                    borderColor: ['#3b82f6', '#8b5cf6', '#a855f7', '#10b981', '#f59e0b'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Average Latency by Stage', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Milliseconds', color: '#94a3b8' } }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>

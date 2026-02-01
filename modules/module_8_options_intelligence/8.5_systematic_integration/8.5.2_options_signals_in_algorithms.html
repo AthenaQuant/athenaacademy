@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Integrate options intelligence into stock trading algorithms. Learn to enhance entries, exits, position sizing, and risk management using GEX, flow, and IV signals.">
+    <title>8.5.2 Options Signals in Algorithms | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .algo-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .algo-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .algo-table th, .algo-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: left; }
+        .algo-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .algo-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .layer-card { padding: 20px; border-radius: 12px; margin: 15px 0; border-left: 4px solid; }
+        .layer-base { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .layer-options { border-color: #a855f7; background: rgba(168, 85, 247, 0.1); }
+        .layer-execution { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .comparison-box { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .comparison-item { padding: 20px; border-radius: 12px; border: 2px solid; }
+        .comparison-without { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .comparison-with { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .calculator-section { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 25px; margin: 25px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #a855f7; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        .chart-container canvas { max-height: 350px; }
+        .signal-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
+        .signal-strong { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .signal-moderate { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .signal-weak { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .calc-grid, .comparison-box { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="8.5.1_options_intelligence_pipeline.html" class="nav-home">&larr; Previous: Pipeline</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.5.2</span><span class="nav-module-title">Signals in Algorithms</span></div>
+        <a href="8.5.3_support_resistance_from_options.html" class="nav-next">Next: Support & Resistance &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.5 Systematic Integration</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.5.2 Signals in Algorithms</span></div>
+        <h1>Options Signals in Stock Trading Algorithms</h1>
+        <p class="module-subtitle">Technical analysis alone misses half the picture. The options market reveals what institutions are doing: positioning, hedging, and making directional bets. Learn to integrate options intelligence into your stock trading algorithms for higher win rates, better position sizing, and superior risk management.</p>
+        <div class="module-meta"><span class="meta-item">&#9201;&#xFE0F; 65 min read</span><span class="meta-item">&#128202; 4 Visualizations</span><span class="meta-item">&#128187; Position Size Calculator</span><span class="meta-item">&#9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The 62% Win Rate Breakthrough</div>
+            <p>Your stock breakout algorithm has a 55% win rate—decent but not great. You trade technical setups: moving average crosses, RSI divergences, volume breakouts. Then you add one filter: only take trades when options flow confirms the direction. Bullish setups require bullish options signals (low P/C ratio, call sweeps, positive GEX). Bearish setups require bearish confirmation.</p>
+            <p><strong>Result:</strong> Win rate jumps from 55% to 62%. Average profit per trade increases by 18%. Why? Because you're now aligned with institutional positioning revealed in the options market. You're trading WITH the smart money, not against it.</p></div>
+            <div class="algo-eq">Stock Signals Alone = 55% Win Rate &nbsp;|&nbsp; Stock + Options Signals = 62% Win Rate &nbsp;|&nbsp; +7% Edge from Confirmation</div>
+            <div class="card-grid">
+                <div class="card"><h4>Higher Win Rate</h4><p>Options confirmation filters out lower-probability technical signals. Only trade when BOTH stock technicals AND options intelligence agree. This simple filter eliminates 30-40% of trades—the worst performers.</p></div>
+                <div class="card"><h4>Better Position Sizing</h4><p>High-conviction options signals = larger position. Moderate signals = smaller position. This dynamic sizing capitalizes on your best ideas while limiting risk on marginal setups.</p></div>
+                <div class="card"><h4>Improved Risk Management</h4><p>GEX regime tells you market behavior. Positive gamma = mean reversion (tight stops). Negative gamma = momentum (wider stops). Adjust risk parameters based on options-derived regime.</p></div>
+                <div class="card"><h4>Early Exit Signals</h4><p>Unusual opposite flow = warning sign. If you're long and see massive put buying, options market is signaling trouble. Exit before the stock breaks down. Options lead, stocks follow.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">+7%</div><div class="metric-label">Win Rate Improvement</div></div>
+                <div class="metric-card"><div class="metric-value">+18%</div><div class="metric-label">Profit Per Trade</div></div>
+                <div class="metric-card"><div class="metric-value">-35%</div><div class="metric-label">Losing Trades (Filtered)</div></div>
+                <div class="metric-card"><div class="metric-value">+0.6</div><div class="metric-label">Sharpe Ratio Boost</div></div>
+            </div>
+        </section>
+
+        <!-- Part 2: Building Intuition -->
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition</h2>
+            <h3>Layered Algorithm Architecture</h3>
+            <p>Integrating options signals doesn't mean replacing your stock strategy. It means adding an intelligence layer that enhances every decision. Think of it as a three-layer system:</p>
+
+            <div class="layer-card layer-base"><h4>Layer 1: Base Stock Strategy</h4>
+                <p><strong>What:</strong> Your existing technical/fundamental strategy (breakouts, mean reversion, momentum, etc.)</p>
+                <p><strong>Output:</strong> Potential trade candidates with entry/exit levels</p>
+                <p><strong>Example:</strong> AAPL crosses above 20-day MA with volume spike → BUY signal</p>
+            </div>
+            <div class="layer-card layer-options"><h4>Layer 2: Options Intelligence Filter</h4>
+                <p><strong>What:</strong> Options signals from your pipeline (GEX, flow, IV, P/C)</p>
+                <p><strong>Output:</strong> Confirmation, rejection, or position size adjustment</p>
+                <p><strong>Example:</strong> AAPL has bullish flow (P/C 0.58) + high unusual call activity → CONFIRM trade, increase size 1.5x</p>
+            </div>
+            <div class="layer-card layer-execution"><h4>Layer 3: Execution & Risk Management</h4>
+                <p><strong>What:</strong> Position sizing, stop placement, profit targets adjusted by options regime</p>
+                <p><strong>Output:</strong> Final trade parameters</p>
+                <p><strong>Example:</strong> Positive GEX regime → tighter stops (2%), take profit at resistance. Negative GEX → wider stops (4%), let winners run.</p>
+            </div>
+
+            <h3>How Options Signals Enhance Each Decision</h3>
+            <table class="algo-table">
+                <thead><tr><th>Decision Point</th><th>Without Options</th><th>With Options Intelligence</th><th>Benefit</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Entry Filter</strong></td><td>Take all technical signals</td><td>Only take when options confirm direction</td><td>Higher win rate, fewer false breakouts</td></tr>
+                    <tr><td><strong>Position Size</strong></td><td>Fixed 2% risk per trade</td><td>1% (weak signal) to 3% (strong signal) based on options confidence</td><td>Capitalize on high-conviction setups</td></tr>
+                    <tr><td><strong>Stop Loss</strong></td><td>Fixed 2% below entry</td><td>Adjusted by GEX regime: 1.5% (positive gamma) to 4% (negative gamma)</td><td>Avoid getting stopped out in noise</td></tr>
+                    <tr><td><strong>Profit Target</strong></td><td>Fixed 2:1 R/R ratio</td><td>Gamma walls (resistance levels) or zero gamma level</td><td>Exit at logical levels, not arbitrary</td></tr>
+                    <tr><td><strong>Exit Signal</strong></td><td>Wait for technical breakdown</td><td>Exit on unusual opposite flow (e.g., put sweeps when long)</td><td>Exit before the move against you</td></tr>
+                    <tr><td><strong>Trade Rejection</strong></td><td>None (trade all signals)</td><td>Reject if options conflict (e.g., bearish flow on bullish setup)</td><td>Avoid low-probability trades</td></tr>
+                </tbody>
+            </table>
+
+            <!-- SVG Diagram: Algorithm Flow -->
+            <div style="text-align:center; margin: 30px 0;">
+                <svg viewBox="0 0 900 600" style="max-width:850px; width:100%;">
+                    <defs>
+                        <marker id="arrowAlgo" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#a855f7"/>
+                        </marker>
+                    </defs>
+                    <rect x="0" y="0" width="900" height="600" rx="12" fill="#0f172a"/>
+                    <text x="450" y="30" text-anchor="middle" fill="#d8b4fe" font-size="18" font-weight="bold">Enhanced Trading Algorithm with Options Intelligence</text>
+
+                    <!-- Stock Signal -->
+                    <rect x="50" y="70" width="180" height="80" rx="8" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="140" y="100" text-anchor="middle" fill="#60a5fa" font-size="14" font-weight="bold">STOCK SIGNAL</text>
+                    <text x="140" y="120" text-anchor="middle" fill="#94a3b8" font-size="11">Technical Analysis</text>
+                    <text x="140" y="135" text-anchor="middle" fill="#10b981" font-size="10">BUY: AAPL @ $185</text>
+
+                    <!-- Arrow to Options Check -->
+                    <line x1="230" y1="110" x2="270" y2="110" stroke="#a855f7" stroke-width="2" marker-end="url(#arrowAlgo)"/>
+
+                    <!-- Options Intelligence -->
+                    <rect x="270" y="70" width="180" height="80" rx="8" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="2"/>
+                    <text x="360" y="95" text-anchor="middle" fill="#d8b4fe" font-size="14" font-weight="bold">OPTIONS CHECK</text>
+                    <text x="360" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">P/C: 0.58 (Bullish)</text>
+                    <text x="360" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">GEX: +$2.3B (Positive)</text>
+                    <text x="360" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">Unusual: $190 Calls</text>
+
+                    <!-- Decision Diamond -->
+                    <path d="M540,110 L590,70 L640,110 L590,150 Z" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="590" y="108" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="bold">Confirm?</text>
+                    <text x="590" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">Options Agree?</text>
+
+                    <!-- Arrow to Confirm -->
+                    <line x1="450" y1="110" x2="540" y2="110" stroke="#a855f7" stroke-width="2" marker-end="url(#arrowAlgo)"/>
+
+                    <!-- YES path -->
+                    <line x1="640" y1="110" x2="680" y2="110" stroke="#10b981" stroke-width="2" marker-end="url(#arrowAlgo)"/>
+                    <text x="660" y="105" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">YES</text>
+
+                    <!-- Position Sizing -->
+                    <rect x="680" y="70" width="170" height="80" rx="8" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2"/>
+                    <text x="765" y="95" text-anchor="middle" fill="#34d399" font-size="14" font-weight="bold">EXECUTE</text>
+                    <text x="765" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Size: 3% (High Conviction)</text>
+                    <text x="765" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">Stop: $181 (2% below)</text>
+                    <text x="765" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">Target: $192 (Gamma Wall)</text>
+
+                    <!-- NO path -->
+                    <line x1="590" y1="150" x2="590" y2="190" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowAlgo)"/>
+                    <text x="605" y="175" fill="#ef4444" font-size="11" font-weight="bold">NO</text>
+
+                    <!-- Reject Box -->
+                    <rect x="490" y="190" width="200" height="60" rx="8" fill="rgba(239,68,68,0.2)" stroke="#ef4444" stroke-width="2"/>
+                    <text x="590" y="215" text-anchor="middle" fill="#f87171" font-size="14" font-weight="bold">REJECT TRADE</text>
+                    <text x="590" y="235" text-anchor="middle" fill="#94a3b8" font-size="10">Options conflict with setup</text>
+
+                    <!-- Example Scenarios -->
+                    <text x="50" y="290" fill="#94a3b8" font-size="14" font-weight="bold">Example Scenarios:</text>
+
+                    <!-- Scenario 1 -->
+                    <rect x="50" y="305" width="260" height="120" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(16,185,129,0.3)" stroke-width="2"/>
+                    <text x="60" y="325" fill="#10b981" font-size="12" font-weight="bold">✓ STRONG BUY (Execute 3%)</text>
+                    <text x="60" y="345" fill="#94a3b8" font-size="10">Stock: Breakout above resistance</text>
+                    <text x="60" y="360" fill="#94a3b8" font-size="10">Options: P/C 0.55, massive call flow</text>
+                    <text x="60" y="375" fill="#94a3b8" font-size="10">GEX: Positive (mean reversion)</text>
+                    <text x="60" y="390" fill="#94a3b8" font-size="10">IV: 25th percentile (cheap vol)</text>
+                    <text x="60" y="405" fill="#10b981" font-size="10" font-style="italic">→ All systems go, max position size</text>
+
+                    <!-- Scenario 2 -->
+                    <rect x="320" y="305" width="260" height="120" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(245,158,11,0.3)" stroke-width="2"/>
+                    <text x="330" y="325" fill="#f59e0b" font-size="12" font-weight="bold">⚠ MODERATE BUY (Execute 1.5%)</text>
+                    <text x="330" y="345" fill="#94a3b8" font-size="10">Stock: Weak breakout, low volume</text>
+                    <text x="330" y="360" fill="#94a3b8" font-size="10">Options: P/C 0.85 (neutral-bullish)</text>
+                    <text x="330" y="375" fill="#94a3b8" font-size="10">GEX: Slightly positive</text>
+                    <text x="330" y="390" fill="#94a3b8" font-size="10">IV: 50th percentile (normal)</text>
+                    <text x="330" y="405" fill="#f59e0b" font-size="10" font-style="italic">→ Marginal setup, reduce size</text>
+
+                    <!-- Scenario 3 -->
+                    <rect x="590" y="305" width="260" height="120" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(239,68,68,0.3)" stroke-width="2"/>
+                    <text x="600" y="325" fill="#ef4444" font-size="12" font-weight="bold">✗ REJECT (Skip Trade)</text>
+                    <text x="600" y="345" fill="#94a3b8" font-size="10">Stock: Bullish breakout signal</text>
+                    <text x="600" y="360" fill="#94a3b8" font-size="10">Options: P/C 1.85 (bearish!)</text>
+                    <text x="600" y="375" fill="#94a3b8" font-size="10">GEX: Negative (momentum regime)</text>
+                    <text x="600" y="390" fill="#94a3b8" font-size="10">Unusual: Heavy put buying</text>
+                    <text x="600" y="405" fill="#ef4444" font-size="10" font-style="italic">→ Options disagree, skip this trade</text>
+
+                    <!-- Performance Stats -->
+                    <rect x="50" y="450" width="800" height="120" rx="8" fill="rgba(168,85,247,0.1)" stroke="#a855f7" stroke-width="2"/>
+                    <text x="450" y="475" text-anchor="middle" fill="#d8b4fe" font-size="14" font-weight="bold">Performance Comparison: With vs Without Options Intelligence</text>
+
+                    <text x="200" y="500" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="bold">Without Options</text>
+                    <text x="200" y="520" text-anchor="middle" fill="#94a3b8" font-size="11">Win Rate: 55%</text>
+                    <text x="200" y="535" text-anchor="middle" fill="#94a3b8" font-size="11">Sharpe: 1.2</text>
+                    <text x="200" y="550" text-anchor="middle" fill="#94a3b8" font-size="11">Annual: 15%</text>
+
+                    <text x="450" y="515" text-anchor="middle" fill="#a855f7" font-size="18">→</text>
+
+                    <text x="700" y="500" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">With Options Intelligence</text>
+                    <text x="700" y="520" text-anchor="middle" fill="#94a3b8" font-size="11">Win Rate: 62% (+7%)</text>
+                    <text x="700" y="535" text-anchor="middle" fill="#94a3b8" font-size="11">Sharpe: 1.8 (+0.6)</text>
+                    <text x="700" y="550" text-anchor="middle" fill="#94a3b8" font-size="11">Annual: 22% (+7%)</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Part 3: The Mathematics -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Signal Confidence Scoring</h3>
+            <p>To integrate options signals quantitatively, assign confidence scores to each signal component and combine them into an overall conviction level.</p>
+
+            <h4>Options Confidence Score Formula</h4>
+            <div class="algo-eq">Options Score = w₁ × GEX_Score + w₂ × Flow_Score + w₃ × IV_Score + w₄ × Unusual_Score</div>
+            <p>Where weights sum to 1.0: w₁ + w₂ + w₃ + w₄ = 1.0</p>
+            <p>Recommended weights: GEX (0.25), Flow (0.35), IV (0.15), Unusual (0.25)</p>
+
+            <h4>Individual Score Components</h4>
+            <table class="algo-table">
+                <thead><tr><th>Component</th><th>Formula</th><th>Range</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>GEX Score</strong></td><td>+1 if positive gamma, -1 if negative</td><td>-1 to +1</td><td>Regime indicator (mean reversion vs momentum)</td></tr>
+                    <tr><td><strong>Flow Score</strong></td><td>2 × (0.7 - P/C) if bullish, 2 × (P/C - 1.3) if bearish</td><td>-1 to +1</td><td>Directional bias from put/call ratio</td></tr>
+                    <tr><td><strong>IV Score</strong></td><td>(50 - IV_Percentile) / 50</td><td>-1 to +1</td><td>Low IV = bullish, high IV = bearish</td></tr>
+                    <tr><td><strong>Unusual Score</strong></td><td>+1 if calls unusual, -1 if puts unusual, 0 else</td><td>-1 to +1</td><td>Weighted by premium size</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Position Size Adjustment</h4>
+            <div class="algo-eq">Position Size = Base Size × (1 + Options Score)</div>
+            <p>Example: Base size 2%, Options score +0.5 → Position = 2% × 1.5 = <strong>3%</strong></p>
+            <p>Example: Base size 2%, Options score -0.3 → Position = 2% × 0.7 = <strong>1.4%</strong></p>
+            <p>Cap at 3× base size maximum (strong conviction) and 0.5× minimum (weak conviction).</p>
+
+            <h4>Stop Loss Adjustment by GEX Regime</h4>
+            <div class="algo-eq">Stop Distance = Base Stop × Volatility Multiplier</div>
+            <table class="algo-table">
+                <thead><tr><th>GEX Regime</th><th>Behavior</th><th>Volatility Multiplier</th><th>Example (2% base)</th></tr></thead>
+                <tbody>
+                    <tr><td>Positive Gamma</td><td>Mean Reversion</td><td>0.75</td><td>1.5% stop</td></tr>
+                    <tr><td>Near Zero Gamma</td><td>Neutral</td><td>1.0</td><td>2.0% stop</td></tr>
+                    <tr><td>Negative Gamma</td><td>Momentum</td><td>1.5</td><td>3.0% stop</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Profit Target from Gamma Walls</h4>
+            <p>Use high open interest levels as natural resistance/support:</p>
+            <div class="algo-eq">Target = Nearest Gamma Wall with OI > 2× Average</div>
+            <p>For long positions: Find call wall (high call OI) above current price</p>
+            <p>For short positions: Find put wall (high put OI) below current price</p>
+
+            <h4>Expected Win Rate Improvement</h4>
+            <div class="algo-eq">New Win Rate = Old Win Rate + (Filter Rate × Miss Rate)</div>
+            <p>Example: 55% win rate, filter rejects 30% of trades (filter rate), rejected trades win 40% (miss rate 60%)</p>
+            <p>Improvement = 0.30 × 0.10 = 0.03 → New Win Rate = 55% + 3% = <strong>58%</strong></p>
+            <p>In practice, improvements of 5-10% are common with proper options filtering.</p>
+        </section>
+
+        <!-- Part 4: Numerical Example -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>Complete Trade Example: NVDA Breakout with Options Confirmation</h3>
+
+            <h4>Step 1: Stock Signal Generation</h4>
+            <table class="algo-table">
+                <thead><tr><th>Parameter</th><th>Value</th><th>Signal</th></tr></thead>
+                <tbody>
+                    <tr><td>Stock Price</td><td>$495.30</td><td>Above 20-day MA ($492)</td></tr>
+                    <tr><td>RSI</td><td>62</td><td>Bullish momentum</td></tr>
+                    <tr><td>Volume</td><td>55M shares</td><td>2.1x average (unusual)</td></tr>
+                    <tr><td><strong>Technical Signal</strong></td><td colspan="2"><strong>BUY at $495.30</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Step 2: Options Intelligence Check</h4>
+            <table class="algo-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Score</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>Put/Call Ratio</td><td>0.52</td><td>+0.36</td><td>Very bullish (2 × (0.7 - 0.52) = 0.36)</td></tr>
+                    <tr><td>Net GEX</td><td>+$3.1B</td><td>+0.25</td><td>Positive gamma (mean reversion)</td></tr>
+                    <tr><td>IV Percentile</td><td>28%</td><td>+0.44</td><td>Low vol (50 - 28)/50 = 0.44</td></tr>
+                    <tr><td>Unusual Activity</td><td>$510 calls, 85K vol</td><td>+0.25</td><td>Huge call buying</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Step 3: Calculate Options Confidence Score</h4>
+            <div class="algo-eq">Options Score = 0.25(+0.25) + 0.35(+0.36) + 0.15(+0.44) + 0.25(+0.25)</div>
+            <div class="algo-eq">Options Score = 0.0625 + 0.126 + 0.066 + 0.0625 = <strong>+0.317</strong></div>
+            <p><strong>Interpretation:</strong> Strong bullish confirmation from options (score > +0.3 = high conviction)</p>
+
+            <h4>Step 4: Position Sizing</h4>
+            <div class="algo-eq">Position = 2.0% × (1 + 0.317) = 2.0% × 1.317 = <strong>2.63%</strong> of account</div>
+            <p>With $100,000 account → $2,630 position size</p>
+            <p>At $495.30 per share → 5 shares (rounded)</p>
+
+            <h4>Step 5: Stop Loss Placement</h4>
+            <p>Positive GEX regime → use 0.75× multiplier</p>
+            <div class="algo-eq">Stop = $495.30 × (1 - 0.02 × 0.75) = $495.30 × 0.985 = <strong>$487.87</strong></div>
+            <p>Tighter stop justified because positive gamma means mean reversion behavior (less downside volatility)</p>
+
+            <h4>Step 6: Profit Target</h4>
+            <p>Check gamma walls from options chain:</p>
+            <ul>
+                <li>$500 strike: 125,000 call OI (moderate)</li>
+                <li>$510 strike: 285,000 call OI (<strong>GAMMA WALL</strong> - resistance)</li>
+                <li>$520 strike: 95,000 call OI</li>
+            </ul>
+            <div class="algo-eq">Primary Target = <strong>$510</strong> (gamma wall resistance)</div>
+            <p>Stretch target if breakthrough: $520</p>
+
+            <h4>Trade Summary</h4>
+            <div class="calc-result">
+                <h4 style="color:#10b981; margin-top:0;">NVDA Long Trade - Options Enhanced</h4>
+                <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin:10px 0;">
+                    <div><strong style="color:#94a3b8;">Entry:</strong> $495.30</div>
+                    <div><strong style="color:#94a3b8;">Position Size:</strong> 2.63% ($2,630)</div>
+                    <div><strong style="color:#94a3b8;">Stop Loss:</strong> $487.87 (-1.5%)</div>
+                    <div><strong style="color:#94a3b8;">Target:</strong> $510.00 (+3.0%)</div>
+                    <div><strong style="color:#94a3b8;">Risk:</strong> $37.15 (1.5% × $2,477.50)</div>
+                    <div><strong style="color:#94a3b8;">Reward:</strong> $73.50 (3.0% × $2,451.50)</div>
+                    <div><strong style="color:#94a3b8;">R:R Ratio:</strong> 1.98:1</div>
+                    <div><strong style="color:#94a3b8;">Options Score:</strong> <span class="signal-strong">+0.317 (STRONG)</span></div>
+                </div>
+                <div style="padding:12px; border-radius:8px; background:rgba(16,185,129,0.1); margin-top:10px; border-left:4px solid #10b981;">
+                    <strong style="color:#10b981;">Rationale:</strong> Technical breakout confirmed by strong bullish options flow. Low IV environment (cheap options) and positive gamma regime (mean reversion) support the long thesis. Gamma wall at $510 provides natural resistance target. High conviction trade justified by multi-signal confirmation.
+                </div>
+            </div>
+
+            <h4>Outcome (3 Days Later)</h4>
+            <p>NVDA rallies to $508.20, approaching the $510 gamma wall. Partial exit at $508 (85% profit capture), let remaining run. Stock reverses at $509.80 (just below gamma wall resistance), stop trailed to breakeven. Final exit $506.50.</p>
+            <p><strong>Result:</strong> +2.3% gain, 1.53:1 R:R achieved. Gamma wall prediction accurate—stock reversed exactly at options-indicated resistance.</p>
+        </section>
+
+        <!-- Part 5: Python Implementation -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>enhanced_trading_algo.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Enhanced Stock Trading Algorithm with Options Intelligence
+Integrates options signals for better entries, exits, and position sizing
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+
+
+class Signal(Enum):
+    """Trading signal types."""
+    STRONG_BUY = "strong_buy"
+    BUY = "buy"
+    NEUTRAL = "neutral"
+    SELL = "sell"
+    STRONG_SELL = "strong_sell"
+
+
+@dataclass
+class OptionsIntelligence:
+    """Options intelligence data for a symbol."""
+    symbol: str
+    timestamp: datetime
+    put_call_ratio: float
+    net_gex: float
+    gamma_regime: str  # "positive" or "negative"
+    iv_percentile: float
+    unusual_activity: List[Dict]
+    zero_gamma_level: float
+
+
+@dataclass
+class StockSignal:
+    """Stock technical signal."""
+    symbol: str
+    timestamp: datetime
+    signal: Signal
+    entry_price: float
+    base_stop: float
+    technical_score: float  # 0-1 confidence
+
+
+@dataclass
+class EnhancedTrade:
+    """Complete trade with options enhancement."""
+    symbol: str
+    timestamp: datetime
+    entry_price: float
+    position_size_pct: float
+    stop_loss: float
+    profit_target: float
+
+    # Options-derived
+    options_score: float
+    confidence: str  # "high", "moderate", "low"
+    gamma_regime: str
+
+    # Risk metrics
+    risk_dollars: float
+    reward_dollars: float
+    risk_reward_ratio: float
+
+
+class OptionsEnhancedAlgorithm:
+    """
+    Stock trading algorithm enhanced with options intelligence.
+
+    Combines technical signals with options data for improved
+    win rates and position sizing.
+    """
+
+    def __init__(
+        self,
+        account_size: float = 100000,
+        base_risk_pct: float = 2.0,
+        min_options_score: float = -0.5,
+        weights: Dict[str, float] = None
+    ):
+        """
+        Initialize algorithm.
+
+        Parameters
+        ----------
+        account_size : float
+            Trading account size
+        base_risk_pct : float
+            Base risk per trade as percentage
+        min_options_score : float
+            Minimum options score to take trade (-1 to +1)
+        weights : Dict[str, float]
+            Weights for options score components
+        """
+        self.account_size = account_size
+        self.base_risk_pct = base_risk_pct
+        self.min_options_score = min_options_score
+
+        # Default weights for options scoring
+        self.weights = weights or {
+            'gex': 0.25,
+            'flow': 0.35,
+            'iv': 0.15,
+            'unusual': 0.25
+        }
+
+        # Position sizing limits
+        self.max_position_multiplier = 1.5  # Max 3% if options very strong
+        self.min_position_multiplier = 0.5  # Min 1% if options weak
+
+        # GEX regime stop adjustments
+        self.gex_stop_multipliers = {
+            'positive': 0.75,  # Tighter stops in mean reversion
+            'negative': 1.5    # Wider stops in momentum
+        }
+
+    def calculate_options_score(
+        self,
+        options: OptionsIntelligence,
+        direction: str = "long"
+    ) -> float:
+        """
+        Calculate comprehensive options score.
+
+        Parameters
+        ----------
+        options : OptionsIntelligence
+            Options data
+        direction : str
+            "long" or "short" - direction of trade
+
+        Returns
+        -------
+        float
+            Combined options score (-1 to +1)
+        """
+        # 1. GEX Score
+        gex_score = 1.0 if options.gamma_regime == "positive" else -1.0
+
+        # 2. Flow Score (from P/C ratio)
+        pc = options.put_call_ratio
+        if direction == "long":
+            # Bullish: low P/C is good
+            if pc < 0.7:
+                flow_score = min(1.0, 2 * (0.7 - pc))
+            elif pc > 1.3:
+                flow_score = max(-1.0, -2 * (pc - 1.3))
+            else:
+                flow_score = (0.7 - pc) / 0.6  # Linear scaling
+        else:  # short
+            # Bearish: high P/C is good
+            if pc > 1.3:
+                flow_score = min(1.0, 2 * (pc - 1.3))
+            elif pc < 0.7:
+                flow_score = max(-1.0, -2 * (0.7 - pc))
+            else:
+                flow_score = (pc - 0.7) / 0.6
+
+        # 3. IV Score
+        # Low IV = bullish (cheap options, low fear)
+        # High IV = bearish (expensive options, high fear)
+        iv_score = (50 - options.iv_percentile) / 50
+        if direction == "short":
+            iv_score = -iv_score  # Invert for shorts
+
+        # 4. Unusual Activity Score
+        unusual_score = 0.0
+        if options.unusual_activity:
+            # Check if unusual activity aligns with direction
+            call_premium = sum(
+                u['premium'] for u in options.unusual_activity
+                if u['type'] == 'call'
+            )
+            put_premium = sum(
+                u['premium'] for u in options.unusual_activity
+                if u['type'] == 'put'
+            )
+
+            total_premium = call_premium + put_premium
+            if total_premium > 0:
+                if direction == "long":
+                    unusual_score = (call_premium - put_premium) / total_premium
+                else:
+                    unusual_score = (put_premium - call_premium) / total_premium
+
+        # Combine scores
+        total_score = (
+            self.weights['gex'] * gex_score +
+            self.weights['flow'] * flow_score +
+            self.weights['iv'] * iv_score +
+            self.weights['unusual'] * unusual_score
+        )
+
+        return np.clip(total_score, -1.0, 1.0)
+
+    def calculate_position_size(
+        self,
+        options_score: float,
+        entry_price: float,
+        stop_price: float
+    ) -> Tuple[float, int]:
+        """
+        Calculate position size based on options score.
+
+        Parameters
+        ----------
+        options_score : float
+            Options confidence score (-1 to +1)
+        entry_price : float
+            Entry price per share
+        stop_price : float
+            Stop loss price
+
+        Returns
+        -------
+        Tuple[float, int]
+            (position_size_pct, shares)
+        """
+        # Adjust base risk by options score
+        multiplier = 1.0 + options_score
+        multiplier = np.clip(
+            multiplier,
+            self.min_position_multiplier,
+            self.max_position_multiplier
+        )
+
+        adjusted_risk_pct = self.base_risk_pct * multiplier
+
+        # Calculate shares based on risk
+        risk_per_share = abs(entry_price - stop_price)
+        risk_dollars = self.account_size * (adjusted_risk_pct / 100)
+
+        shares = int(risk_dollars / risk_per_share) if risk_per_share > 0 else 0
+
+        # Calculate actual position size percentage
+        position_value = shares * entry_price
+        position_size_pct = (position_value / self.account_size) * 100
+
+        return position_size_pct, shares
+
+    def calculate_stop_loss(
+        self,
+        entry_price: float,
+        base_stop_pct: float,
+        gamma_regime: str,
+        direction: str = "long"
+    ) -> float:
+        """
+        Calculate stop loss adjusted for GEX regime.
+
+        Parameters
+        ----------
+        entry_price : float
+            Entry price
+        base_stop_pct : float
+            Base stop distance as percentage
+        gamma_regime : str
+            "positive" or "negative"
+        direction : str
+            "long" or "short"
+
+        Returns
+        -------
+        float
+            Stop loss price
+        """
+        multiplier = self.gex_stop_multipliers.get(gamma_regime, 1.0)
+        adjusted_stop_pct = base_stop_pct * multiplier
+
+        if direction == "long":
+            stop_price = entry_price * (1 - adjusted_stop_pct / 100)
+        else:
+            stop_price = entry_price * (1 + adjusted_stop_pct / 100)
+
+        return stop_price
+
+    def find_gamma_wall_target(
+        self,
+        options: OptionsIntelligence,
+        entry_price: float,
+        direction: str = "long"
+    ) -> Optional[float]:
+        """
+        Find nearest gamma wall for profit target.
+
+        Gamma wall = strike with very high open interest
+        that acts as resistance/support.
+
+        Parameters
+        ----------
+        options : OptionsIntelligence
+            Options data with OI levels
+        entry_price : float
+            Entry price
+        direction : str
+            "long" or "short"
+
+        Returns
+        -------
+        Optional[float]
+            Target price at gamma wall, or None
+        """
+        # This would need access to full options chain with OI
+        # For now, use zero gamma level as approximation
+
+        if direction == "long":
+            # For longs, target is above entry
+            if options.zero_gamma_level > entry_price:
+                return options.zero_gamma_level
+            else:
+                # Use default 2:1 R/R if no clear wall
+                return None
+        else:
+            # For shorts, target is below entry
+            if options.zero_gamma_level < entry_price:
+                return options.zero_gamma_level
+            else:
+                return None
+
+    def should_take_trade(
+        self,
+        stock_signal: StockSignal,
+        options: OptionsIntelligence
+    ) -> Tuple[bool, str]:
+        """
+        Determine if trade should be taken based on options confirmation.
+
+        Parameters
+        ----------
+        stock_signal : StockSignal
+            Technical stock signal
+        options : OptionsIntelligence
+            Options intelligence
+
+        Returns
+        -------
+        Tuple[bool, str]
+            (should_trade, reason)
+        """
+        # Determine direction
+        if stock_signal.signal in [Signal.STRONG_BUY, Signal.BUY]:
+            direction = "long"
+        elif stock_signal.signal in [Signal.STRONG_SELL, Signal.SELL]:
+            direction = "short"
+        else:
+            return False, "Neutral stock signal"
+
+        # Calculate options score
+        options_score = self.calculate_options_score(options, direction)
+
+        # Check minimum threshold
+        if options_score < self.min_options_score:
+            return False, f"Options score too low: {options_score:.2f}"
+
+        # Strong agreement bonus
+        if (
+            stock_signal.signal == Signal.STRONG_BUY and
+            options_score > 0.3
+        ):
+            return True, f"Strong bullish confirmation (score: {options_score:.2f})"
+
+        if (
+            stock_signal.signal == Signal.STRONG_SELL and
+            options_score > 0.3
+        ):
+            return True, f"Strong bearish confirmation (score: {options_score:.2f})"
+
+        # Regular confirmation
+        if options_score > 0:
+            return True, f"Options confirm direction (score: {options_score:.2f})"
+
+        # Weak or conflicting
+        return False, f"Insufficient options confirmation (score: {options_score:.2f})"
+
+    def generate_trade(
+        self,
+        stock_signal: StockSignal,
+        options: OptionsIntelligence,
+        base_stop_pct: float = 2.0
+    ) -> Optional[EnhancedTrade]:
+        """
+        Generate complete trade with options enhancement.
+
+        Parameters
+        ----------
+        stock_signal : StockSignal
+            Stock technical signal
+        options : OptionsIntelligence
+            Options data
+        base_stop_pct : float
+            Base stop loss percentage
+
+        Returns
+        -------
+        Optional[EnhancedTrade]
+            Complete trade specification, or None if rejected
+        """
+        # Check if we should take the trade
+        should_trade, reason = self.should_take_trade(stock_signal, options)
+
+        if not should_trade:
+            print(f"❌ Trade rejected: {reason}")
+            return None
+
+        # Determine direction
+        direction = "long" if stock_signal.signal in [Signal.STRONG_BUY, Signal.BUY] else "short"
+
+        # Calculate options score
+        options_score = self.calculate_options_score(options, direction)
+
+        # Calculate stop loss
+        stop_loss = self.calculate_stop_loss(
+            stock_signal.entry_price,
+            base_stop_pct,
+            options.gamma_regime,
+            direction
+        )
+
+        # Calculate position size
+        position_size_pct, shares = self.calculate_position_size(
+            options_score,
+            stock_signal.entry_price,
+            stop_loss
+        )
+
+        # Find profit target
+        gamma_target = self.find_gamma_wall_target(
+            options,
+            stock_signal.entry_price,
+            direction
+        )
+
+        if gamma_target:
+            profit_target = gamma_target
+        else:
+            # Default 2:1 R/R
+            risk = abs(stock_signal.entry_price - stop_loss)
+            if direction == "long":
+                profit_target = stock_signal.entry_price + (2 * risk)
+            else:
+                profit_target = stock_signal.entry_price - (2 * risk)
+
+        # Calculate risk metrics
+        risk_dollars = shares * abs(stock_signal.entry_price - stop_loss)
+        reward_dollars = shares * abs(profit_target - stock_signal.entry_price)
+        rr_ratio = reward_dollars / risk_dollars if risk_dollars > 0 else 0
+
+        # Determine confidence
+        if options_score > 0.3:
+            confidence = "high"
+        elif options_score > 0:
+            confidence = "moderate"
+        else:
+            confidence = "low"
+
+        trade = EnhancedTrade(
+            symbol=stock_signal.symbol,
+            timestamp=stock_signal.timestamp,
+            entry_price=stock_signal.entry_price,
+            position_size_pct=position_size_pct,
+            stop_loss=stop_loss,
+            profit_target=profit_target,
+            options_score=options_score,
+            confidence=confidence,
+            gamma_regime=options.gamma_regime,
+            risk_dollars=risk_dollars,
+            reward_dollars=reward_dollars,
+            risk_reward_ratio=rr_ratio
+        )
+
+        print(f"✅ Trade generated: {reason}")
+        return trade
+
+    def print_trade_summary(self, trade: EnhancedTrade):
+        """Print formatted trade summary."""
+        print("\n" + "="*70)
+        print(f"ENHANCED TRADE: {trade.symbol}")
+        print("="*70)
+        print(f"Entry:           ${trade.entry_price:.2f}")
+        print(f"Stop Loss:       ${trade.stop_loss:.2f}")
+        print(f"Target:          ${trade.profit_target:.2f}")
+        print(f"Position Size:   {trade.position_size_pct:.2f}%")
+        print(f"Risk:            ${trade.risk_dollars:.2f}")
+        print(f"Reward:          ${trade.reward_dollars:.2f}")
+        print(f"R:R Ratio:       {trade.risk_reward_ratio:.2f}:1")
+        print(f"\nOptions Score:   {trade.options_score:.3f}")
+        print(f"Confidence:      {trade.confidence.upper()}")
+        print(f"GEX Regime:      {trade.gamma_regime.upper()}")
+        print("="*70)
+
+
+# ============================================================================
+# EXAMPLE USAGE
+# ============================================================================
+
+if __name__ == "__main__":
+    # Initialize algorithm
+    algo = OptionsEnhancedAlgorithm(
+        account_size=100000,
+        base_risk_pct=2.0,
+        min_options_score=-0.3
+    )
+
+    # Example: NVDA bullish setup
+    stock_signal = StockSignal(
+        symbol="NVDA",
+        timestamp=datetime.now(),
+        signal=Signal.STRONG_BUY,
+        entry_price=495.30,
+        base_stop=485.00,
+        technical_score=0.8
+    )
+
+    options_data = OptionsIntelligence(
+        symbol="NVDA",
+        timestamp=datetime.now(),
+        put_call_ratio=0.52,
+        net_gex=3.1e9,
+        gamma_regime="positive",
+        iv_percentile=28.0,
+        unusual_activity=[
+            {
+                'strike': 510,
+                'type': 'call',
+                'volume': 85000,
+                'premium': 4250000
+            }
+        ],
+        zero_gamma_level=510.00
+    )
+
+    # Generate trade
+    trade = algo.generate_trade(stock_signal, options_data)
+
+    if trade:
+        algo.print_trade_summary(trade)
+
+    print("\n" + "="*70)
+    print("Example 2: Conflicting Signals (Should Reject)")
+    print("="*70)
+
+    # Bullish stock signal but bearish options
+    bearish_options = OptionsIntelligence(
+        symbol="AAPL",
+        timestamp=datetime.now(),
+        put_call_ratio=1.85,  # Bearish!
+        net_gex=-1.2e9,
+        gamma_regime="negative",
+        iv_percentile=75.0,
+        unusual_activity=[
+            {
+                'strike': 180,
+                'type': 'put',
+                'volume': 45000,
+                'premium': 2100000
+            }
+        ],
+        zero_gamma_level=182.00
+    )
+
+    bullish_stock = StockSignal(
+        symbol="AAPL",
+        timestamp=datetime.now(),
+        signal=Signal.BUY,
+        entry_price=185.00,
+        base_stop=181.00,
+        technical_score=0.6
+    )
+
+    trade2 = algo.generate_trade(bullish_stock, bearish_options)
+
+    if trade2:
+        algo.print_trade_summary(trade2)
+    else:
+        print("\n✓ Trade correctly rejected due to options conflict")</code></pre>
+            </div>
+        </section>
+
+        <!-- Part 6: Trading Applications -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>Real-World Integration Patterns</h3>
+            <div class="comparison-box">
+                <div class="comparison-item comparison-without">
+                    <h4 style="color:#ef4444;">❌ Without Options Intelligence</h4>
+                    <ul style="color:#94a3b8; font-size:0.9rem;">
+                        <li>Trade all technical signals (55% win rate)</li>
+                        <li>Fixed 2% position size every trade</li>
+                        <li>Fixed 2% stop loss regardless of conditions</li>
+                        <li>Arbitrary profit targets (2:1 R/R)</li>
+                        <li>No early warning of reversals</li>
+                        <li>Annual return: 15%, Sharpe: 1.2</li>
+                    </ul>
+                </div>
+                <div class="comparison-item comparison-with">
+                    <h4 style="color:#10b981;">✅ With Options Intelligence</h4>
+                    <ul style="color:#94a3b8; font-size:0.9rem;">
+                        <li>Filter trades by options confirmation (62% win rate)</li>
+                        <li>Dynamic sizing: 1-3% based on conviction</li>
+                        <li>GEX-adjusted stops: 1.5-3% depending on regime</li>
+                        <li>Gamma wall targets (logical resistance/support)</li>
+                        <li>Exit on unusual opposite flow before breakdown</li>
+                        <li>Annual return: 22%, Sharpe: 1.8</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Implementation Workflow</h3>
+            <table class="algo-table">
+                <thead><tr><th>Step</th><th>Action</th><th>Tools/Data Needed</th><th>Output</th></tr></thead>
+                <tbody>
+                    <tr><td>1. Morning Scan</td><td>Run options pipeline on watchlist</td><td>Options data pipeline (Module 8.5.1)</td><td>Signals for all symbols</td></tr>
+                    <tr><td>2. Technical Scan</td><td>Run your stock scanning algorithm</td><td>Price/volume data, indicators</td><td>Potential trade candidates</td></tr>
+                    <tr><td>3. Cross-Reference</td><td>Match stock signals with options signals</td><td>Both datasets combined</td><td>Filtered high-probability setups</td></tr>
+                    <tr><td>4. Score & Rank</td><td>Calculate options score for each candidate</td><td>Scoring formula</td><td>Ranked trade list</td></tr>
+                    <tr><td>5. Position Size</td><td>Calculate size based on conviction</td><td>Account size, risk parameters</td><td>Exact share count</td></tr>
+                    <tr><td>6. Execute</td><td>Enter trades with calculated parameters</td><td>Broker API</td><td>Active positions</td></tr>
+                    <tr><td>7. Monitor</td><td>Watch for unusual opposite flow</td><td>Real-time options feed</td><td>Early exit signals</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Chart 1: Win Rate by Options Score -->
+            <h3>Win Rate by Options Confirmation Level</h3>
+            <div class="chart-container"><canvas id="winRateChart"></canvas></div>
+
+            <!-- Chart 2: Position Size Distribution -->
+            <h3>Position Size Distribution (Options-Adjusted)</h3>
+            <div class="chart-container"><canvas id="positionSizeChart"></canvas></div>
+
+            <!-- Chart 3: Performance Comparison -->
+            <h3>Cumulative Returns: With vs Without Options</h3>
+            <div class="chart-container"><canvas id="returnsChart"></canvas></div>
+
+            <!-- Interactive Calculator -->
+            <div class="calculator-section">
+                <h3>Options-Enhanced Position Size Calculator</h3>
+                <div class="calc-grid">
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Account Size ($)</label><input type="number" id="calcAccount" class="calc-input" value="100000" step="1000"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Base Risk (%)</label><input type="number" id="calcRisk" class="calc-input" value="2.0" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Entry Price ($)</label><input type="number" id="calcEntry" class="calc-input" value="495.30" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Stop Loss ($)</label><input type="number" id="calcStop" class="calc-input" value="487.87" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">P/C Ratio</label><input type="number" id="calcPC" class="calc-input" value="0.52" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">IV Percentile (%)</label><input type="number" id="calcIV" class="calc-input" value="28" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">GEX Regime</label>
+                        <select id="calcGEX" class="calc-input">
+                            <option value="positive">Positive (Mean Reversion)</option>
+                            <option value="negative">Negative (Momentum)</option>
+                        </select>
+                    </div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Unusual Activity</label>
+                        <select id="calcUnusual" class="calc-input">
+                            <option value="1">Yes - Strong Call Buying</option>
+                            <option value="0">No Unusual Activity</option>
+                            <option value="-1">Yes - Strong Put Buying</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculatePosition()">Calculate Position</button>
+                <div class="calc-result" id="positionResult" style="display:none;"></div>
+            </div>
+        </section>
+
+        <!-- Part 7: Common Mistakes -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Mistake 1: Using Options as PRIMARY Signal</h4>
+                    <p><strong>Wrong:</strong> "Options show bullish flow, so I'll buy the stock even though it's in a downtrend."</p>
+                    <p><strong>Right:</strong> Options are a CONFIRMATION layer, not the primary signal. Always start with stock technicals/fundamentals, then use options to confirm or reject. Never trade options signals alone.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 2: Ignoring Conflicting Signals</h4>
+                    <p><strong>Wrong:</strong> "I like this stock breakout, so I'll ignore the bearish P/C ratio and take the trade anyway."</p>
+                    <p><strong>Right:</strong> When options conflict with your stock signal, skip the trade. The whole point is filtering—you WANT to reject trades where signals disagree. Those are the low-probability setups.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 3: Fixed Position Sizing</h4>
+                    <p><strong>Wrong:</strong> "Always risk 2% per trade regardless of conviction."</p>
+                    <p><strong>Right:</strong> Vary position size based on options score. High-conviction trades (strong options confirmation) deserve larger size. Weak signals get smaller size. This is how you maximize edge.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 4: Not Adjusting for GEX Regime</h4>
+                    <p><strong>Wrong:</strong> "Use 2% stop every time."</p>
+                    <p><strong>Right:</strong> Positive gamma = tighter stops (1.5%) because mean reversion. Negative gamma = wider stops (3%) because momentum. Fixed stops get you chopped out in the wrong regime.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 5: Overcomplicating the Score</h4>
+                    <p><strong>Wrong:</strong> "I'll use 15 different options metrics and weight them all perfectly."</p>
+                    <p><strong>Right:</strong> Keep it simple: GEX, P/C ratio, IV percentile, unusual activity. Four inputs, weighted sensibly. More complexity doesn't improve results and makes the system fragile.</p>
+                </div>
+                <div class="card">
+                    <h4>Mistake 6: Not Tracking Performance</h4>
+                    <p><strong>Wrong:</strong> "I'll just eyeball if options signals are helping."</p>
+                    <p><strong>Right:</strong> Track everything: win rate by options score, profit by confidence level, filter rejection rate. Data tells you if it's working. Without metrics, you're guessing.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 8: Summary & Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Key Takeaways</h2>
+            <div class="info-box"><div class="info-box-title">Integration Essentials</div>
+                <ul>
+                    <li><strong>3-Layer Architecture:</strong> Stock signals → Options confirmation → Execution. Each layer enhances the next.</li>
+                    <li><strong>Options Score:</strong> Combine GEX (25%), flow (35%), IV (15%), unusual (25%) into single conviction metric.</li>
+                    <li><strong>Dynamic Position Sizing:</strong> 1-3% risk based on options score. High conviction = larger size.</li>
+                    <li><strong>GEX-Adjusted Stops:</strong> Positive gamma = 0.75× (tighter), Negative gamma = 1.5× (wider).</li>
+                    <li><strong>Gamma Wall Targets:</strong> Use high OI strikes as natural profit targets instead of arbitrary R/R.</li>
+                    <li><strong>Filter, Don't Replace:</strong> Options confirm stock signals. Never trade options alone. Reject conflicts.</li>
+                    <li><strong>Expected Improvement:</strong> +5-10% win rate, +0.4-0.8 Sharpe, +5-10% annual returns.</li>
+                    <li><strong>Track Everything:</strong> Win rate by score, profit by confidence. Let data guide optimization.</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> You have a bullish stock breakout but the P/C ratio is 1.9 (very bearish). What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Take the trade but reduce position size</button>
+                        <button onclick="checkAnswer(this, true)">Reject the trade—options conflict with stock signal</button>
+                        <button onclick="checkAnswer(this, false)">Take the trade—stock signals are more important</button>
+                        <button onclick="checkAnswer(this, false)">Wait for options to confirm before entering</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">REJECT. The entire point of options integration is filtering. P/C 1.9 is extremely bearish—institutions are buying puts heavily. This conflicts with your bullish stock signal. These conflicting-signal trades are the lowest probability setups. Skip it and wait for alignment.</div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <p><strong>Q2:</strong> Your base risk is 2% per trade. You calculate an options score of +0.5 (strong bullish). What should your position size be?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">2.0% (always use base)</button>
+                        <button onclick="checkAnswer(this, false)">2.5% (add 0.5% for strong signal)</button>
+                        <button onclick="checkAnswer(this, true)">3.0% (2% × 1.5 multiplier)</button>
+                        <button onclick="checkAnswer(this, false)">4.0% (2% × 2 for very strong)</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Position = Base × (1 + Options Score) = 2% × (1 + 0.5) = 2% × 1.5 = 3%. Strong options confirmation justifies larger position. This is how you capitalize on high-conviction setups while limiting exposure on weak signals.</div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <p><strong>Q3:</strong> You're in positive GEX regime. Your normal stop is 2%. What should your adjusted stop be?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, true)">1.5% (tighter for mean reversion)</button>
+                        <button onclick="checkAnswer(this, false)">2.0% (keep it the same)</button>
+                        <button onclick="checkAnswer(this, false)">3.0% (wider for safety)</button>
+                        <button onclick="checkAnswer(this, false)">Depends on other factors</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Positive gamma = mean reversion behavior. Price pulls back toward balance. Use 0.75× multiplier: 2% × 0.75 = 1.5%. Tighter stops work because big moves away from gamma walls are rare. In negative gamma (momentum), use 1.5× = 3% to avoid getting stopped in normal volatility.</div>
+                </div>
+                <div class="quiz-question" id="q4">
+                    <p><strong>Q4:</strong> What is the PRIMARY purpose of integrating options signals into stock algorithms?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Replace technical analysis with options analysis</button>
+                        <button onclick="checkAnswer(this, true)">Filter trades to improve win rate and sizing</button>
+                        <button onclick="checkAnswer(this, false)">Generate more trading opportunities</button>
+                        <button onclick="checkAnswer(this, false)">Predict exact price targets</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">The goal is FILTERING and ENHANCEMENT. Options confirmation filters out low-probability trades (improving win rate) and adjusts position sizing based on conviction. You trade LESS often but with higher quality. Not about replacing technicals or generating more signals—it's about making existing signals better.</div>
+                </div>
+                <div class="quiz-question" id="q5">
+                    <p><strong>Q5:</strong> You're long a stock. Suddenly you detect massive unusual put buying (50x normal volume, $5M premium). What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Ignore it—stick to your technical stop</button>
+                        <button onclick="checkAnswer(this, false)">Add to your position—puts are being sold to market makers</button>
+                        <button onclick="checkAnswer(this, true)">Exit immediately—this is early warning of reversal</button>
+                        <button onclick="checkAnswer(this, false)">Tighten your stop but stay in the trade</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">EXIT NOW. Massive put buying is institutions hedging or positioning for downside. Options often lead stocks by hours or days. This is your early warning system. Don't wait for the stock to break down technically—by then it's too late. Options gave you the signal first. This is one of the biggest advantages of integration.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    }
+
+    function checkAnswer(btn, correct) {
+        const question = btn.closest('.quiz-question');
+        const buttons = question.querySelectorAll('.quiz-options button');
+        buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        question.querySelector('.quiz-explanation').style.display = 'block';
+    }
+
+    function calculatePosition() {
+        const account = parseFloat(document.getElementById('calcAccount').value);
+        const baseRisk = parseFloat(document.getElementById('calcRisk').value);
+        const entry = parseFloat(document.getElementById('calcEntry').value);
+        const stop = parseFloat(document.getElementById('calcStop').value);
+        const pc = parseFloat(document.getElementById('calcPC').value);
+        const iv = parseFloat(document.getElementById('calcIV').value);
+        const gex = document.getElementById('calcGEX').value;
+        const unusual = parseFloat(document.getElementById('calcUnusual').value);
+
+        // Calculate options score
+        const gexScore = gex === 'positive' ? 0.25 : -0.25;
+        const flowScore = 0.35 * Math.min(1, Math.max(-1, 2 * (0.7 - pc)));
+        const ivScore = 0.15 * ((50 - iv) / 50);
+        const unusualScore = 0.25 * unusual;
+        const optionsScore = gexScore + flowScore + ivScore + unusualScore;
+
+        // Calculate position size
+        const multiplier = Math.max(0.5, Math.min(1.5, 1 + optionsScore));
+        const adjustedRisk = baseRisk * multiplier;
+        const riskPerShare = Math.abs(entry - stop);
+        const riskDollars = account * (adjustedRisk / 100);
+        const shares = Math.floor(riskDollars / riskPerShare);
+        const positionValue = shares * entry;
+        const positionPct = (positionValue / account) * 100;
+
+        // Determine confidence
+        let confidence, confidenceColor;
+        if (optionsScore > 0.3) {
+            confidence = 'HIGH';
+            confidenceColor = '#10b981';
+        } else if (optionsScore > 0) {
+            confidence = 'MODERATE';
+            confidenceColor = '#f59e0b';
+        } else {
+            confidence = 'LOW';
+            confidenceColor = '#ef4444';
+        }
+
+        const resultDiv = document.getElementById('positionResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="color:#a855f7; margin-top:0;">Position Size Analysis</h4>
+            <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin:10px 0;">
+                <div><strong style="color:#94a3b8;">Options Score:</strong> ${optionsScore.toFixed(3)}</div>
+                <div><strong style="color:#94a3b8;">Confidence:</strong> <span style="color:${confidenceColor}; font-weight:bold;">${confidence}</span></div>
+                <div><strong style="color:#94a3b8;">Size Multiplier:</strong> ${multiplier.toFixed(2)}x</div>
+                <div><strong style="color:#94a3b8;">Adjusted Risk:</strong> ${adjustedRisk.toFixed(2)}%</div>
+                <div><strong style="color:#94a3b8;">Shares:</strong> ${shares}</div>
+                <div><strong style="color:#94a3b8;">Position Value:</strong> $${positionValue.toFixed(2)}</div>
+                <div><strong style="color:#94a3b8;">Position %:</strong> ${positionPct.toFixed(2)}%</div>
+                <div><strong style="color:#94a3b8;">Risk Amount:</strong> $${riskDollars.toFixed(2)}</div>
+            </div>
+            <div style="padding:12px; border-radius:8px; background:rgba(0,0,0,0.2); margin-top:10px; border-left:4px solid ${confidenceColor};">
+                <strong style="color:${confidenceColor};">Recommendation:</strong><br>
+                <span style="color:#94a3b8;">
+                    ${optionsScore > 0.3 ? 'Strong options confirmation supports larger position size. All signals aligned.' :
+                      optionsScore > 0 ? 'Moderate confirmation. Take trade with standard sizing.' :
+                      optionsScore > -0.3 ? 'Weak confirmation. Reduce size or skip trade.' :
+                      'Options conflict with setup. REJECT this trade.'}
+                </span>
+            </div>
+        `;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart 1: Win Rate by Options Score
+        const ctx1 = document.getElementById('winRateChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Strong Negative\n(<-0.3)', 'Negative\n(-0.3 to 0)', 'Neutral\n(0 to 0.2)', 'Positive\n(0.2 to 0.4)', 'Strong Positive\n(>0.4)'],
+                datasets: [{
+                    label: 'Win Rate (%)',
+                    data: [35, 48, 55, 64, 73],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.6)',
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(148, 163, 184, 0.6)',
+                        'rgba(16, 185, 129, 0.6)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderColor: ['#ef4444', '#f59e0b', '#94a3b8', '#10b981', '#10b981'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Win Rate Increases with Stronger Options Confirmation', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Win Rate (%)', color: '#94a3b8' }, min: 0, max: 80 }
+                }
+            }
+        });
+
+        // Chart 2: Position Size Distribution
+        const ctx2 = document.getElementById('positionSizeChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ['Small (1-1.5%)', 'Medium (1.5-2.5%)', 'Large (2.5-3%)'],
+                datasets: [{
+                    data: [25, 45, 30],
+                    backgroundColor: [
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(168, 85, 247, 0.6)',
+                        'rgba(16, 185, 129, 0.6)'
+                    ],
+                    borderColor: ['#f59e0b', '#a855f7', '#10b981'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' }, position: 'right' },
+                    title: { display: true, text: 'Dynamic Position Sizing Based on Options Score', color: '#f1f5f9' }
+                }
+            }
+        });
+
+        // Chart 3: Cumulative Returns
+        const ctx3 = document.getElementById('returnsChart').getContext('2d');
+        const months = Array.from({length: 13}, (_, i) => `Month ${i}`);
+        new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Without Options (15% annual)',
+                    data: [0, 1.2, 2.1, 3.5, 4.2, 5.8, 6.5, 7.9, 8.8, 10.2, 11.5, 13.1, 15.0],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }, {
+                    label: 'With Options Intelligence (22% annual)',
+                    data: [0, 1.8, 3.2, 5.1, 6.8, 9.2, 11.1, 13.5, 15.8, 17.9, 19.5, 20.8, 22.0],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } },
+                    title: { display: true, text: 'Cumulative Returns: Options Integration Adds 7% Annually', color: '#f1f5f9' }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' }, title: { display: true, text: 'Return (%)', color: '#94a3b8' } }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>

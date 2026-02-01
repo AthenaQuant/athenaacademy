@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Put/Call ratio extremes as contrarian reversal signals. Learn to identify market bottoms (P/C >1.5) and tops (P/C <0.5) using sentiment extremes for high-probability trades.">
+    <title>8.4.4 Put/Call Extremes & Reversals | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .pc-eq { font-size: 1.4rem; color: #a855f7; text-align: center; padding: 20px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; margin: 20px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-card { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #a855f7; }
+        .metric-label { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; }
+        .pc-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .pc-table th, .pc-table td { padding: 12px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .pc-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .extreme-card { padding: 20px; border-radius: 12px; margin: 10px 0; border-left: 4px solid; }
+        .extreme-bullish { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .extreme-bearish { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .extreme-neutral { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .chart-container { position: relative; height: 400px; margin: 20px 0; }
+        @media (max-width: 768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="8.4.3_term_structure_volatility.html" class="nav-home">&larr; Previous: Term Structure</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.4.4</span><span class="nav-module-title">Put/Call Extremes</span></div>
+        <a href="../../../index.html" class="nav-next">Course Home &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.4 Market Regime Detection</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.4.4 Put/Call Extremes</span></div>
+        <h1>Put/Call Ratio Extremes as Reversal Signals</h1>
+        <p class="module-subtitle">When everyone's bearish (P/C >1.5), that's when markets bottom. When everyone's bullish (P/C <0.5), that's when tops form. March 2020: Equity P/C hit 1.85 at the exact bottom. October 2021: P/C dropped to 0.48 right at the top. Extremes are contrarian goldmines.</p>
+        <div class="module-meta"><span class="meta-item">&#9201;&#xFE0F; 50 min read</span><span class="meta-item">&#128202; 3 Visualizations</span><span class="meta-item">&#128187; P/C Extreme Detector</span><span class="meta-item">&#9989; 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">The Contrarian Signal That Called the COVID Bottom</div>
+            <p>March 23, 2020. COVID panic peak. SPY at $218, down 35% from highs. Everyone was terrified. The equity Put/Call ratio hit <strong>1.85</strong>—nearly 2 puts bought for every 1 call. This was the 99th percentile—extreme bearishness.</p>
+            <p>Contrarian traders recognized this: "When everyone's bearish, who's left to sell?" They bought. SPY bottomed that exact day. Six months later: SPY at $350 (+60%). The P/C extreme called the exact bottom.</p>
+            <p><strong>October 2021:</strong> Markets at all-time highs. Equity P/C dropped to <strong>0.48</strong>—extreme bullishness. Everyone buying calls, nobody buying puts. Market topped within weeks, fell 25% by June 2022.</p>
+            <p><strong>The pattern:</strong> Sentiment extremes = reversals. P/C >1.5 = buy. P/C <0.5 = sell. Markets move on CHANGE in sentiment, not on fundamentals.</p></div>
+            <div class="pc-eq">High P/C = Extreme Fear = Contrarian Buy | Low P/C = Extreme Greed = Contrarian Sell</div>
+            <div class="card-grid">
+                <div class="card"><h4>Contrarian Indicator</h4><p>When everyone bets one way, the opposite happens. P/C >1.5 = max bearish = buy. P/C <0.5 = max bullish = sell.</p></div>
+                <div class="card"><h4>Market Bottoms</h4><p>Equity P/C >1.5 has marked bottoms in 2008, 2011, 2020. When panic peaks, sellers exhausted, rebounds start.</p></div>
+                <div class="card"><h4>Market Tops</h4><p>P/C <0.5 signals complacency. Nobody hedging = vulnerable. Tops often within 2-4 weeks of extreme low P/C.</p></div>
+                <div class="card"><h4>Percentile Matters</h4><p>Absolute levels vary. Use percentiles (>90th or <10th) to identify extremes relative to recent range.</p></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-value">&gt;1.5</div><div class="metric-label">Extreme Bearish</div></div>
+                <div class="metric-card"><div class="metric-value">0.7-1.2</div><div class="metric-label">Normal Range</div></div>
+                <div class="metric-card"><div class="metric-value">&lt;0.5</div><div class="metric-label">Extreme Bullish</div></div>
+                <div class="metric-card"><div class="metric-value">90th+</div><div class="metric-label">Percentile Threshold</div></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition</h2>
+            <h3>What is Put/Call Ratio?</h3>
+            <p>The Put/Call (P/C) ratio measures put volume relative to call volume. It's a sentiment indicator showing whether traders are bearish (buying puts) or bullish (buying calls).</p>
+            <div class="pc-eq">P/C Ratio = Total Put Volume / Total Call Volume</div>
+            <p>P/C = 1.0 means equal put and call volume (balanced). P/C >1.0 means more puts (bearish). P/C <1.0 means more calls (bullish).</p>
+
+            <h3>Two Types of P/C Ratios</h3>
+            <table class="pc-table">
+                <thead><tr><th>Type</th><th>What It Measures</th><th>Normal Range</th><th>Best For</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Equity P/C</strong></td><td>Single stock options only</td><td>0.5-1.2</td><td>Reversal signals (most sensitive)</td></tr>
+                    <tr><td><strong>Index P/C</strong></td><td>SPX/SPY options only</td><td>0.8-1.3</td><td>Overall market sentiment</td></tr>
+                    <tr><td><strong>Total P/C</strong></td><td>All options combined</td><td>0.7-1.0</td><td>Broad sentiment (less reliable)</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Recommendation:</strong> Use Equity P/C for reversal signals—it's most extreme and most predictive.</p>
+
+            <h3>Why Extremes Predict Reversals</h3>
+            <p><strong>The crowd is always wrong at extremes.</strong> When P/C hits 1.8 (extreme bearish):</p>
+            <ul>
+                <li>Everyone who wanted to sell has already sold</li>
+                <li>Maximum bearishness = no sellers left</li>
+                <li>Any good news triggers short covering and put sellers covering</li>
+                <li>Result: Sharp rally from oversold conditions</li>
+            </ul>
+            <p><strong>When P/C hits 0.45 (extreme bullish):</strong></p>
+            <ul>
+                <li>Everyone who wanted to buy has already bought</li>
+                <li>Nobody hedging (no put buying) = vulnerable</li>
+                <li>Any bad news triggers panic (no protection in place)</li>
+                <li>Result: Sharp selloff from overbought conditions</li>
+            </ul>
+
+            <div class="extreme-card extreme-bearish"><h4>Extreme Bearish (P/C >1.5) - CONTRARIAN BUY</h4>
+                <p><strong>Interpretation:</strong> Panic. Everyone buying puts for protection. Maximum fear.</p>
+                <p><strong>What It Means:</strong> Sellers exhausted. Downside priced in. Classic capitulation.</p>
+                <p><strong>Trading Action:</strong> CONTRARIAN BUY. Start building long positions. Especially powerful if P/C >1.7 AND VIX >40.</p>
+                <p><strong>Historical Win Rate:</strong> ~70-75% when P/C >1.5 at 95th+ percentile</p>
+                <p><strong>Timeframe:</strong> Reversals typically within 1-5 trading days</p>
+            </div>
+
+            <div class="extreme-card extreme-neutral"><h4>Normal Range (P/C 0.7-1.2) - NO EXTREME</h4>
+                <p><strong>Interpretation:</strong> Balanced sentiment. No strong consensus.</p>
+                <p><strong>Trading Action:</strong> Use other indicators. P/C not giving contrarian signals.</p>
+            </div>
+
+            <div class="extreme-card extreme-bullish"><h4>Extreme Bullish (P/C <0.5) - CONTRARIAN SELL</h4>
+                <p><strong>Interpretation:</strong> Complacency. Everyone buying calls. Nobody hedging.</p>
+                <p><strong>What It Means:</strong> Market vulnerable. Buyers exhausted. Downside risk not priced in.</p>
+                <p><strong>Trading Action:</strong> CONTRARIAN SELL. Take profits, reduce longs, or buy puts. Especially powerful if P/C <0.45 AND VIX <15.</p>
+                <p><strong>Historical Win Rate:</strong> ~65-70% when P/C <0.5 at 5th- percentile</p>
+                <p><strong>Timeframe:</strong> Tops form over 2-4 weeks (slower than bottoms)</p>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>P/C Ratio Calculation</h3>
+            <div class="pc-eq">Equity P/C = Total Equity Put Volume / Total Equity Call Volume</div>
+            <p>Example: 850,000 puts traded, 520,000 calls → P/C = 850/520 = <strong>1.63</strong> (bearish extreme)</p>
+
+            <h3>P/C Percentile</h3>
+            <div class="pc-eq">Percentile = ((Current - Min<sub>90d</sub>) / (Max<sub>90d</sub> - Min<sub>90d</sub>)) × 100</div>
+            <p>Example: P/C 1.55, 90-day range [0.52, 1.68]</p>
+            <p>Percentile = (1.55 - 0.52) / (1.68 - 0.52) × 100 = <strong>88.8%</strong> (near extreme high)</p>
+
+            <h3>Extreme Detection Thresholds</h3>
+            <table class="pc-table">
+                <thead><tr><th>Condition</th><th>Threshold</th><th>Signal</th></tr></thead>
+                <tbody>
+                    <tr><td>P/C Percentile >95%</td><td>Very rare extreme bearish</td><td>Strong contrarian BUY</td></tr>
+                    <tr><td>P/C Percentile >90%</td><td>Extreme bearish</td><td>Contrarian BUY</td></tr>
+                    <tr><td>P/C Percentile <10%</td><td>Extreme bullish</td><td>Contrarian SELL</td></tr>
+                    <tr><td>P/C Percentile <5%</td><td>Very rare extreme bullish</td><td>Strong contrarian SELL</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>March 23, 2020 - COVID Bottom</h3>
+            <table class="pc-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>Equity P/C</td><td>1.85</td><td>Extreme bearish</td></tr>
+                    <tr><td>P/C Percentile</td><td>99%</td><td>Highest in years</td></tr>
+                    <tr><td>VIX</td><td>61</td><td>Extreme fear</td></tr>
+                    <tr><td>SPY</td><td>$218</td><td>Down 35%</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Signal:</strong> P/C 1.85 (99th percentile) + VIX 61 = MAXIMUM PANIC = Contrarian BUY</p>
+            <p><strong>Outcome:</strong> March 23 = exact bottom. SPY +60% over next 6 months.</p>
+
+            <h3>October 2021 - Market Top</h3>
+            <table class="pc-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>Equity P/C</td><td>0.48</td><td>Extreme bullish</td></tr>
+                    <tr><td>P/C Percentile</td><td>4%</td><td>Lowest in years</td></tr>
+                    <tr><td>VIX</td><td>16</td><td>Calm</td></tr>
+                    <tr><td>SPY</td><td>$455</td><td>All-time high</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Signal:</strong> P/C 0.48 (4th percentile) + VIX 16 = MAXIMUM COMPLACENCY = Contrarian SELL</p>
+            <p><strong>Outcome:</strong> Market topped Nov 2021. SPY fell 25% by June 2022.</p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>pc_extreme_detector.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""Put/Call Ratio Extreme Detector"""
+import pandas as pd
+from dataclasses import dataclass
+from enum import Enum
+
+class PCSignal(Enum):
+    EXTREME_BEARISH = "Extreme Bearish (P/C >1.5) - CONTRARIAN BUY"
+    BEARISH = "Bearish (P/C 1.2-1.5)"
+    NEUTRAL = "Neutral (P/C 0.7-1.2)"
+    BULLISH = "Bullish (P/C 0.5-0.7)"
+    EXTREME_BULLISH = "Extreme Bullish (P/C <0.5) - CONTRARIAN SELL"
+
+@dataclass
+class PCAnalysis:
+    pc_ratio: float
+    pc_percentile: float
+    signal: PCSignal
+    contrarian_action: str
+    win_rate_historical: float
+
+def calculate_pc_percentile(
+    current_pc: float,
+    pc_history: pd.Series,
+    lookback: int = 90
+) -> float:
+    """Calculate P/C percentile."""
+    recent = pc_history.tail(lookback)
+    if len(recent) == 0:
+        return 50.0
+    pc_min, pc_max = recent.min(), recent.max()
+    if pc_max == pc_min:
+        return 50.0
+    return ((current_pc - pc_min) / (pc_max - pc_min)) * 100
+
+def classify_pc_signal(pc: float, percentile: float) -> PCSignal:
+    """Classify P/C signal."""
+    if pc > 1.5 or percentile > 90:
+        return PCSignal.EXTREME_BEARISH
+    elif pc > 1.2:
+        return PCSignal.BEARISH
+    elif pc < 0.5 or percentile < 10:
+        return PCSignal.EXTREME_BULLISH
+    elif pc < 0.7:
+        return PCSignal.BULLISH
+    else:
+        return PCSignal.NEUTRAL
+
+def generate_action(signal: PCSignal, percentile: float) -> tuple:
+    """Generate contrarian trading action."""
+    if signal == PCSignal.EXTREME_BEARISH:
+        if percentile > 95:
+            return "STRONG BUY - Max panic, start accumulating", 75
+        return "BUY - Extreme bearish sentiment, contrarian opportunity", 70
+    elif signal == PCSignal.EXTREME_BULLISH:
+        if percentile < 5:
+            return "STRONG SELL - Max complacency, reduce exposure", 70
+        return "SELL - Extreme bullish sentiment, take profits", 65
+    return "NEUTRAL - No extreme signal", 50
+
+def analyze_pc_ratio(pc_current: float, pc_history: pd.Series) -> PCAnalysis:
+    """Complete P/C analysis."""
+    pct = calculate_pc_percentile(pc_current, pc_history)
+    signal = classify_pc_signal(pc_current, pct)
+    action, win_rate = generate_action(signal, pct)
+
+    return PCAnalysis(pc_current, pct, signal, action, win_rate)
+
+# Example
+if __name__ == "__main__":
+    pc_history = pd.Series([0.8, 0.9, 1.1, 0.7, 1.0] * 18)
+
+    # COVID bottom
+    analysis = analyze_pc_ratio(1.85, pc_history)
+    print(f"P/C: {analysis.pc_ratio}")
+    print(f"Signal: {analysis.signal.value}")
+    print(f"Action: {analysis.contrarian_action}")
+    print(f"Historical Win Rate: {analysis.win_rate_historical}%")
+</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6-8: Applications, Mistakes & Summary</h2>
+            <p><strong>Application:</strong> Check equity P/C daily. >90th percentile = buy. <10th percentile = sell.</p>
+            <p><strong>Mistake:</strong> Using absolute levels without percentiles. Must compare to recent range.</p>
+
+            <div class="info-box"><div class="info-box-title">Quick Reference</div>
+                <ul>
+                    <li><strong>P/C >1.5 (>90th pct):</strong> Contrarian BUY signal</li>
+                    <li><strong>P/C <0.5 (<10th pct):</strong> Contrarian SELL signal</li>
+                    <li><strong>Combine with VIX:</strong> P/C high + VIX high = strongest buy</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> Equity P/C is 1.72 at 96th percentile. What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Sell—extreme bearishness means more downside</button>
+                        <button onclick="checkAnswer(this, true)">Buy—contrarian signal, panic exhausted</button>
+                        <button onclick="checkAnswer(this, false)">Wait—too risky to trade</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">P/C 1.72 (96th pct) = extreme bearish = CONTRARIAN BUY. When everyone's bearish, reversals happen.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+    function copyCode(btn) {
+        const code = btn.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(code.textContent);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    }
+    function checkAnswer(btn, correct) {
+        const q = btn.closest('.quiz-question');
+        q.querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        q.querySelector('.quiz-explanation').style.display = 'block';
+    }
+    </script>
+</body>
+</html>
