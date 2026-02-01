@@ -3,1080 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8.6.1 Index Options for Market Timing | Athena Academy</title>
+    <meta name="description" content="Master index options for market timing. Learn SPY/QQQ intelligence, GEX analysis, VIX signals, and mega-cap confirmation to control overall market exposure.">
+    <title>8.6.1 Index Options for Market Timing | Quantitative Trading Mastery</title>
     <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
     <style>
-        :root {
-            --primary-color: #a855f7;
-            --secondary-color: #7c3aed;
-            --background-dark: #0f172a;
-            --background-light: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --accent-color: #22d3ee;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--background-dark);
-            color: var(--text-primary);
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .lesson-header {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-        }
-
-        .lesson-header h1 {
-            margin: 0 0 0.5rem 0;
-            font-size: 2.5rem;
-        }
-
-        .lesson-header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        .section {
-            background-color: var(--background-light);
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .section h2 {
-            color: var(--primary-color);
-            margin-top: 0;
-            font-size: 1.8rem;
-        }
-
-        .section h3 {
-            color: var(--accent-color);
-            margin-top: 1.5rem;
-            font-size: 1.3rem;
-        }
-
-        .code-block {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            position: relative;
-            overflow-x: auto;
-        }
-
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #333;
-        }
-
-        .code-language {
-            color: var(--accent-color);
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .copy-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.4rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-        }
-
-        .copy-button:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        .copy-button.copied {
-            background-color: var(--success-color);
-        }
-
-        .formula-box {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(124, 58, 237, 0.1));
-            border: 2px solid var(--primary-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            font-family: 'Courier New', monospace;
-            font-size: 1.1rem;
-        }
-
-        .example-box {
-            background-color: rgba(34, 211, 238, 0.1);
-            border-left: 4px solid var(--accent-color);
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border-radius: 8px;
-        }
-
-        .warning-box {
-            background-color: rgba(245, 158, 11, 0.1);
-            border-left: 4px solid var(--warning-color);
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border-radius: 8px;
-        }
-
-        .success-box {
-            background-color: rgba(16, 185, 129, 0.1);
-            border-left: 4px solid var(--success-color);
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border-radius: 8px;
-        }
-
-        .danger-box {
-            background-color: rgba(239, 68, 68, 0.1);
-            border-left: 4px solid var(--danger-color);
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border-radius: 8px;
-        }
-
-        .calculator {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(124, 58, 237, 0.15));
-            border: 2px solid var(--primary-color);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-
-        .calculator h3 {
-            margin-top: 0;
-            color: var(--primary-color);
-        }
-
-        .input-group {
-            margin: 1rem 0;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .input-group input,
-        .input-group select {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--background-dark);
-            border: 1px solid #334155;
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 1rem;
-        }
-
-        .calculate-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .calculate-button:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        .result-box {
-            background-color: var(--background-dark);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-            display: none;
-        }
-
-        .result-box.show {
-            display: block;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #334155;
-        }
-
-        .result-item:last-child {
-            border-bottom: none;
-        }
-
-        .result-label {
-            color: var(--text-secondary);
-        }
-
-        .result-value {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .quiz {
-            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(124, 58, 237, 0.1));
-            border: 2px solid var(--accent-color);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-
-        .quiz h3 {
-            margin-top: 0;
-            color: var(--accent-color);
-        }
-
-        .question {
-            margin: 2rem 0;
-        }
-
-        .question h4 {
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-
-        .options {
-            list-style: none;
-            padding: 0;
-        }
-
-        .options li {
-            background-color: var(--background-dark);
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .options li:hover {
-            border-color: var(--primary-color);
-            transform: translateX(5px);
-        }
-
-        .options li.selected {
-            border-color: var(--accent-color);
-            background-color: rgba(34, 211, 238, 0.1);
-        }
-
-        .options li.correct {
-            border-color: var(--success-color);
-            background-color: rgba(16, 185, 129, 0.1);
-        }
-
-        .options li.incorrect {
-            border-color: var(--danger-color);
-            background-color: rgba(239, 68, 68, 0.1);
-        }
-
-        .submit-quiz {
-            background-color: var(--accent-color);
-            color: var(--background-dark);
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .submit-quiz:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
-        }
-
-        .quiz-result {
-            background-color: var(--background-dark);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-            display: none;
-        }
-
-        .quiz-result.show {
-            display: block;
-        }
-
-        .chart-container {
-            background-color: var(--background-dark);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            background-color: var(--background-dark);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-        }
-
-        th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background-color: rgba(168, 85, 247, 0.1);
-        }
-
-        .svg-diagram {
-            background-color: var(--background-dark);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            text-align: center;
-        }
-
-        ul, ol {
-            padding-left: 1.5rem;
-        }
-
-        li {
-            margin: 0.5rem 0;
-        }
-
-        strong {
-            color: var(--primary-color);
-        }
-
-        .highlight {
-            color: var(--accent-color);
-            font-weight: 600;
-        }
+        .market-signal-eq { font-size: 1.3rem; color: #a855f7; text-align: center; padding: 18px; background: rgba(168, 85, 247, 0.1); border-radius: 10px; margin: 18px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .signal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+        @media (max-width: 768px) { .signal-grid { grid-template-columns: repeat(2, 1fr); } }
+        .signal-card { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px; text-align: center; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .signal-value { font-size: 1.3rem; font-weight: bold; color: #a855f7; }
+        .signal-label { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+        .regime-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.88rem; }
+        .regime-table th, .regime-table td { padding: 10px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .regime-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .regime-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .calculator-box { background: rgba(0,0,0,0.3); border-radius: 14px; padding: 22px; margin: 22px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 12px 0; }
+        @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 10px; color: #f1f5f9; width: 100%; }
+        .calc-input:focus { outline: none; border-color: #a855f7; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(168, 85, 247, 0.4); }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px; padding: 12px; margin-top: 12px; }
+        .chart-container { position: relative; height: 350px; margin: 20px 0; }
+        .chart-container canvas { max-height: 320px; }
+        .quiz-section { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid rgba(148,163,184,0.2); }
+        .quiz-question { margin: 25px 0; padding: 20px; background: rgba(0,0,0,0.15); border-radius: 10px; }
+        .quiz-options { margin: 15px 0; }
+        .quiz-options button { display: block; width: 100%; text-align: left; padding: 12px 16px; margin: 8px 0; background: rgba(0,0,0,0.3); border: 2px solid rgba(148,163,184,0.3); border-radius: 8px; color: #f1f5f9; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
+        .quiz-options button:hover { border-color: #a855f7; background: rgba(168,85,247,0.1); transform: translateX(4px); }
+        .quiz-explanation { margin-top: 12px; padding: 12px; background: rgba(34,211,238,0.1); border-left: 3px solid #22d3ee; border-radius: 6px; font-size: 0.9rem; color: #cbd5e1; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="lesson-header">
-            <h1>8.6.1 Index Options for Market Timing</h1>
-            <p>Using SPY/QQQ Options Intelligence to Control Overall Market Exposure</p>
-        </div>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="../../../index.html" class="nav-home">&larr; Back to Course</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.6.1</span><span class="nav-module-title">Index Options Market Timing</span></div>
+        <a href="../../../index.html" class="nav-next">Course Home &rarr;</a>
+    </div></div></nav>
 
-        <!-- PART 1: WHY SHOULD I CARE? -->
-        <div class="section">
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.6 Advanced Applications</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.6.1 Market Timing</span></div>
+        <h1>Index Options for Market Timing</h1>
+        <p class="module-subtitle">SPY/QQQ options intelligence controls your overall market exposure. Learn GEX analysis, VIX signals, mega-cap confirmation, and 0DTE flow to time the market like institutions.</p>
+        <div class="module-meta"><span class="meta-item">⏱️ 60 min read</span><span class="meta-item">📊 3 Visualizations</span><span class="meta-item">💻 Market Signal System</span><span class="meta-item">✅ 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <!-- Part 1: Why Should I Care? -->
+        <section class="content-section fade-in">
             <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">September 2021: Missing the Market Signal</div>
+            <p>SPY at $453 (all-time high). Your portfolio: 100% long. Unknown to you, institutions aggressively bought SPY puts for 48 hours straight. Put/call ratio: 1.52 (extreme). SPY put premium: $200M in one session. GEX flipped negative. All signals screamed "DANGER." You ignored them. Result: Market corrected 6% over 3 weeks. Your portfolio: -9.2%. <strong>Those who reduced exposure to 30% based on index signals lost only -2.8%</strong>. The $6,400 difference on a $100K account could have been saved by watching index options.</p></div>
 
-            <div class="danger-box">
-                <h3>The Problem: Missing Institutional Warning Signs</h3>
-                <p><strong>Real trading scenario:</strong> You're heavily long individual tech stocks after doing careful analysis. NVDA looks bullish, AAPL has great technicals, MSFT is breaking out. You're 100% invested and feeling confident.</p>
+            <div class="market-signal-eq">Index Signal = f(SPY P/C, GEX, VIX, Mega-Caps, 0DTE) &nbsp;→&nbsp; Exposure Control</div>
 
-                <p><strong>Unknown to you:</strong> Institutions are aggressively buying SPY and QQQ put options (market hedging). Smart money is getting defensive.</p>
-
-                <p><strong>Result:</strong> Market crashes 10% over the next two weeks. Your carefully selected stocks? Down 15% because they're correlated with the broader market. Your portfolio suffers massive losses.</p>
-
-                <p><strong>The lesson:</strong> You can pick the right stocks but still lose money if you ignore the market regime.</p>
+            <div class="card-grid">
+                <div class="card"><h4>When to Be in the Market</h4><p>Index options tell you when it's safe to be fully invested vs. when to go defensive. This is the most important trading decision you'll make.</p></div>
+                <div class="card"><h4>SPY GEX = Market Stability</h4><p>Gamma exposure predicts volatility. Positive GEX = stable market. Negative GEX = dealers amplify moves. Feb 2018 Volmageddon: GEX went negative 4 days before -11% crash.</p></div>
+                <div class="card"><h4>Institutional Positioning</h4><p>Institutions hedge with index options before major moves. Heavy SPY put buying = smart money getting defensive. Follow their lead.</p></div>
+                <div class="card"><h4>Mega-Cap Confirmation</h4><p>AAPL, MSFT, NVDA are 40% of SPY. Their options flow confirms or contradicts index signals.</p></div>
             </div>
 
-            <h3>Why Index Options Matter</h3>
-            <p>Index options (SPY, QQQ, SPX, NDX) reveal what institutions think about the <strong>overall market direction</strong>:</p>
-            <ul>
-                <li><strong>Institutions hedge portfolios with index options</strong> - Not individual stocks. When big money gets nervous, they buy SPY/SPX puts.</li>
-                <li><strong>Heavy index put buying = fear of market decline</strong> - Smart money protecting against broader selloff.</li>
-                <li><strong>Index call buying = bullish on overall market</strong> - Positioning for market upside.</li>
-                <li><strong>SPX 0DTE = intraday market direction signals</strong> - Real-time institutional sentiment.</li>
-            </ul>
-
-            <div class="example-box">
-                <h3>Real Example: September 2021 Market Top</h3>
-                <p><strong>Date:</strong> September 2-3, 2021</p>
-                <p><strong>Setup:</strong> Market at all-time highs, SPY $453</p>
-                <p><strong>Index options signal:</strong></p>
-                <ul>
-                    <li>SPY put/call ratio: 1.52 (extremely high)</li>
-                    <li>Unusual SPY $440 put buying: 200,000+ contracts</li>
-                    <li>SPX put premium: $12M+ in single day</li>
-                    <li>Mega-caps (AAPL, MSFT, GOOGL): Heavy put accumulation</li>
-                </ul>
-                <p><strong>Result:</strong> Market corrected 6% over next 3 weeks. Those who reduced exposure based on index options avoided major losses.</p>
-                <p><strong>Key takeaway:</strong> Index options gave 48-72 hour warning before the selloff began.</p>
+            <div class="signal-grid">
+                <div class="signal-card"><div class="signal-value">3-7 days</div><div class="signal-label">Warning Lead Time</div></div>
+                <div class="signal-card"><div class="signal-value">85-90%</div><div class="signal-label">Negative GEX Accuracy</div></div>
+                <div class="signal-card"><div class="signal-value">30-100%</div><div class="signal-label">Recommended Exposure Range</div></div>
+                <div class="signal-card"><div class="signal-value">78-82%</div><div class="signal-label">Multi-Signal Win Rate</div></div>
             </div>
+        </section>
 
-            <h3>The Bottom Line</h3>
-            <p><strong class="highlight">Index options tell you WHEN to be in the market. Individual stock options tell you WHAT to buy.</strong></p>
-
-            <p>Both are critical for successful trading:</p>
-            <ul>
-                <li><strong>Ignore index signals:</strong> You'll be long stocks during market crashes</li>
-                <li><strong>Follow index signals:</strong> You adjust exposure and preserve capital during dangerous periods</li>
-            </ul>
-        </div>
-
-        <!-- PART 2: THE INTUITION -->
-        <div class="section">
-            <h2>Part 2: The Intuition</h2>
-
+        <!-- Part 2: Building Intuition -->
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
             <h3>Understanding Index Options Intelligence</h3>
-            <p>Index options (SPY, QQQ, SPX, NDX) provide <strong>market-level intelligence</strong> that's fundamentally different from individual stock options.</p>
+            <p>Index options (SPY, QQQ, SPX, NDX) provide market-level intelligence. Unlike individual stock options, index options reveal what institutions think about the <strong>overall market direction</strong>.</p>
 
-            <div class="success-box">
-                <h3>Key Concept: Institutional Hedging Behavior</h3>
-                <p><strong>Think about this:</strong> You're a portfolio manager with $500M in tech stocks. You're worried about a market correction but don't want to sell your positions (tax implications, market impact, long-term conviction).</p>
+            <div class="info-box"><div class="info-box-title">Why Institutions Use Index Options</div>
+            <p>Portfolio managers don't sell stocks when they get nervous (tax implications, market impact). Instead, they buy SPY/SPX puts as insurance. This telegraphs their fear BEFORE the market crashes. When hundreds of institutions make this decision simultaneously, it creates massive put buying that retail traders can detect.</p></div>
 
-                <p><strong>Solution:</strong> Buy SPY or QQQ put options as insurance. If market drops, put gains offset stock losses.</p>
-
-                <p><strong>This is why heavy index put buying = institutional fear.</strong> Smart money doesn't sell stocks immediately—they hedge with index options first.</p>
-            </div>
-
-            <h3>Why Index Options Matter More Than Individual Stocks</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Aspect</th>
-                        <th>Individual Stock Options</th>
-                        <th>Index Options</th>
-                    </tr>
-                </thead>
+            <h3>The Four Index Signals</h3>
+            <table class="regime-table">
+                <thead><tr><th>Signal</th><th>Normal</th><th>Warning</th><th>Danger</th><th>What It Means</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td><strong>What they reveal</strong></td>
-                        <td>Stock-specific positioning</td>
-                        <td>Overall market sentiment</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Who uses them</strong></td>
-                        <td>Retail + institutions</td>
-                        <td>Primarily institutions</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Purpose</strong></td>
-                        <td>Directional bets, earnings</td>
-                        <td>Portfolio hedging, macro bets</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Size</strong></td>
-                        <td>Varies widely</td>
-                        <td>Massive (billions in notional)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Signal quality</strong></td>
-                        <td>Mixed (noise vs. signal)</td>
-                        <td>High (institutional flow)</td>
-                    </tr>
+                    <tr><td><strong>SPY Put/Call</strong></td><td>0.9-1.1</td><td>1.2-1.5</td><td>&gt;1.5</td><td>Defensive positioning</td></tr>
+                    <tr><td><strong>SPY GEX</strong></td><td>$2-5B</td><td>$0-2B</td><td>&lt;$0 (neg!)</td><td>Market stability</td></tr>
+                    <tr><td><strong>VIX</strong></td><td>15-25</td><td>25-35</td><td>&gt;35 or &lt;12</td><td>Fear level</td></tr>
+                    <tr><td><strong>Mega-Caps</strong></td><td>Mixed</td><td>2+ bearish</td><td>All bearish</td><td>Confirmation</td></tr>
                 </tbody>
             </table>
 
-            <h3>The Index Options Hierarchy</h3>
-            <p>Not all index options are equal. Here's what to watch:</p>
-
-            <div class="example-box">
-                <h4>1. SPY (S&P 500 ETF Options)</h4>
-                <ul>
-                    <li><strong>Character:</strong> Mix of retail and institutional</li>
-                    <li><strong>Liquidity:</strong> Extremely high</li>
-                    <li><strong>Best for:</strong> Overall market sentiment, retail positioning</li>
-                    <li><strong>Watch when:</strong> Put/call ratio >1.2 or <0.8</li>
-                </ul>
-
-                <h4>2. SPX (S&P 500 Index Options)</h4>
-                <ul>
-                    <li><strong>Character:</strong> Institutional-dominated</li>
-                    <li><strong>Liquidity:</strong> Very high, larger sizes</li>
-                    <li><strong>Best for:</strong> Smart money positioning, institutional hedging</li>
-                    <li><strong>Special feature:</strong> 0DTE (zero days to expiration) for intraday signals</li>
-                </ul>
-
-                <h4>3. QQQ (Nasdaq-100 ETF Options)</h4>
-                <ul>
-                    <li><strong>Character:</strong> Tech-heavy sentiment</li>
-                    <li><strong>Best for:</strong> Tech sector market timing</li>
-                    <li><strong>Watch when:</strong> Heavy tech exposure in portfolio</li>
-                </ul>
-
-                <h4>4. Mega-Cap Options (AAPL, MSFT, NVDA)</h4>
-                <ul>
-                    <li><strong>Why they matter:</strong> These stocks ARE the market (40%+ of SPY)</li>
-                    <li><strong>Use case:</strong> Confirmation of index signals</li>
-                    <li><strong>Signal:</strong> All mega-caps showing heavy put buying = market bearish</li>
-                </ul>
-            </div>
-
-            <h3>Key Insight: The Signal Hierarchy</h3>
-            <div class="formula-box">
-                <strong>Market Timing Decision Tree:</strong><br><br>
-                1. Check SPY/SPX options → Overall market regime<br>
-                2. Confirm with VIX → Fear level<br>
-                3. Check mega-caps → Is tech leading?<br>
-                4. Analyze GEX → Will market be stable or volatile?<br>
-                5. Adjust exposure → Set position sizing based on regime
-            </div>
-
-            <div class="success-box">
-                <h3>The Golden Rule</h3>
-                <p><strong>Index options set your exposure level. Individual stock analysis picks WHAT to buy within that exposure.</strong></p>
-
-                <p><strong>Example:</strong></p>
-                <ul>
-                    <li>Index signal: BEARISH (SPY heavy put buying, negative GEX, VIX elevated)</li>
-                    <li>→ Reduce exposure to 40% (instead of normal 80-100%)</li>
-                    <li>Individual stock: NVDA looks bullish on technicals</li>
-                    <li>→ Still take the trade, but with smaller size (2% instead of 5%)</li>
-                </ul>
-
-                <p><strong>This protects you:</strong> If market crashes, you're only 40% invested. If NVDA works, you still profit. If NVDA fails, small loss.</p>
-            </div>
-
-            <h3>SPX 0DTE: The Intraday Market Compass</h3>
-            <p>Zero days to expiration (0DTE) SPX options provide real-time institutional sentiment:</p>
+            <h3>SPY GEX: The Most Critical Signal</h3>
+            <p>Gamma exposure (GEX) tells you if dealers will stabilize or amplify market moves.</p>
+            <div class="market-signal-eq">Net GEX = Σ (Dealer Gamma × OI × 100 × Price² × 0.01) &nbsp;|&nbsp; Calls = +Gamma, Puts = -Gamma</div>
             <ul>
-                <li><strong>Morning session (9:30-12:00 ET):</strong> Watch for heavy call or put buying</li>
-                <li><strong>Heavy 0DTE call buying:</strong> Institutions positioning for bullish intraday move</li>
-                <li><strong>Heavy 0DTE put buying:</strong> Defensive/bearish intraday setup</li>
-                <li><strong>Best signal:</strong> 10-11 AM flow (after initial volatility settles)</li>
+                <li><strong>GEX &gt; $3B:</strong> Very stable market. Dealers buy dips, sell rallies (stabilizing).</li>
+                <li><strong>GEX $0-2B:</strong> Neutral. Normal vol.</li>
+                <li><strong>GEX &lt; $0 (NEGATIVE):</strong> DANGER! Dealers amplify moves. Sell into declines, buy into rallies. This causes flash crashes.</li>
             </ul>
 
-            <div class="svg-diagram">
-                <svg viewBox="0 0 800 400" style="max-width: 100%; height: auto;">
-                    <!-- Background -->
-                    <rect width="800" height="400" fill="#0f172a"/>
+            <div class="info-box info-box-warning"><div class="info-box-title">Historical Lesson: February 2018 Volmageddon</div>
+            <p><strong>Feb 1, 2018:</strong> SPY GEX flipped from +$4B to -$1.2B (negative!). <strong>Feb 5, 2018:</strong> SPY crashed -5.5% in one day. VIX exploded from 17 to 50. Negative GEX gave 4 days warning. Those who went defensive saved 8-11%.</p></div>
+        </section>
 
-                    <!-- Title -->
-                    <text x="400" y="30" fill="#a855f7" font-size="20" font-weight="bold" text-anchor="middle">
-                        Index Options Intelligence Framework
-                    </text>
-
-                    <!-- SPY Box -->
-                    <rect x="50" y="60" width="150" height="80" fill="#1e293b" stroke="#a855f7" stroke-width="2" rx="8"/>
-                    <text x="125" y="90" fill="#22d3ee" font-size="14" font-weight="bold" text-anchor="middle">SPY Options</text>
-                    <text x="125" y="110" fill="#cbd5e1" font-size="11" text-anchor="middle">Put/Call Ratio</text>
-                    <text x="125" y="125" fill="#cbd5e1" font-size="11" text-anchor="middle">Unusual Activity</text>
-
-                    <!-- SPX Box -->
-                    <rect x="225" y="60" width="150" height="80" fill="#1e293b" stroke="#a855f7" stroke-width="2" rx="8"/>
-                    <text x="300" y="90" fill="#22d3ee" font-size="14" font-weight="bold" text-anchor="middle">SPX 0DTE</text>
-                    <text x="300" y="110" fill="#cbd5e1" font-size="11" text-anchor="middle">Intraday Flow</text>
-                    <text x="300" y="125" fill="#cbd5e1" font-size="11" text-anchor="middle">Smart Money</text>
-
-                    <!-- VIX Box -->
-                    <rect x="400" y="60" width="150" height="80" fill="#1e293b" stroke="#a855f7" stroke-width="2" rx="8"/>
-                    <text x="475" y="90" fill="#22d3ee" font-size="14" font-weight="bold" text-anchor="middle">VIX Level</text>
-                    <text x="475" y="110" fill="#cbd5e1" font-size="11" text-anchor="middle">Fear Gauge</text>
-                    <text x="475" y="125" fill="#cbd5e1" font-size="11" text-anchor="middle">Regime Detection</text>
-
-                    <!-- GEX Box -->
-                    <rect x="575" y="60" width="150" height="80" fill="#1e293b" stroke="#a855f7" stroke-width="2" rx="8"/>
-                    <text x="650" y="90" fill="#22d3ee" font-size="14" font-weight="bold" text-anchor="middle">SPY GEX</text>
-                    <text x="650" y="110" fill="#cbd5e1" font-size="11" text-anchor="middle">Gamma Exposure</text>
-                    <text x="650" y="125" fill="#cbd5e1" font-size="11" text-anchor="middle">Stability Metric</text>
-
-                    <!-- Arrows down to Analysis -->
-                    <path d="M 125 150 L 400 200" stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-                    <path d="M 300 150 L 400 200" stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-                    <path d="M 475 150 L 400 200" stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-                    <path d="M 650 150 L 400 200" stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-
-                    <!-- Analysis Box -->
-                    <rect x="275" y="200" width="250" height="60" fill="#7c3aed" stroke="#a855f7" stroke-width="3" rx="8"/>
-                    <text x="400" y="225" fill="white" font-size="16" font-weight="bold" text-anchor="middle">Combined Analysis</text>
-                    <text x="400" y="245" fill="#f1f5f9" font-size="12" text-anchor="middle">Market Signal Generation</text>
-
-                    <!-- Arrow to Market Signal -->
-                    <path d="M 400 270 L 400 290" stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-
-                    <!-- Market Signal Box -->
-                    <rect x="250" y="290" width="300" height="80" fill="#1e293b" stroke="#22d3ee" stroke-width="3" rx="8"/>
-                    <text x="400" y="315" fill="#22d3ee" font-size="18" font-weight="bold" text-anchor="middle">MARKET SIGNAL</text>
-                    <text x="400" y="340" fill="#10b981" font-size="14" text-anchor="middle">Bullish / Neutral / Bearish</text>
-                    <text x="400" y="360" fill="#f59e0b" font-size="13" text-anchor="middle">Recommended Exposure: 30-100%</text>
-
-                    <!-- Arrow definitions -->
-                    <defs>
-                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#a855f7"/>
-                        </marker>
-                    </defs>
-                </svg>
-            </div>
-        </div>
-
-        <!-- PART 3: THE MATHEMATICS -->
-        <div class="section">
+        <!-- Part 3: The Mathematics -->
+        <section class="content-section fade-in">
             <h2>Part 3: The Mathematics</h2>
-
             <h3>1. SPY Put/Call Ratio</h3>
-            <p>The most fundamental index options metric:</p>
+            <div class="market-signal-eq">SPY P/C = SPY Put Volume / SPY Call Volume</div>
+            <p>Interpretation: &gt;1.2 = defensive, 0.8-1.2 = normal, &lt;0.8 = bullish</p>
+            <p><strong>Critical insight:</strong> Use 5-day moving average to detect sudden changes.</p>
+            <div class="market-signal-eq">Regime Change = |Current P/C - 5-Day Avg| &gt; 0.3</div>
 
-            <div class="formula-box">
-                SPY Put/Call Ratio = SPY Put Volume / SPY Call Volume
+            <h3>2. Expected Market Move from VIX</h3>
+            <div class="market-signal-eq">Weekly Move = SPY × (VIX / 100) × √(5 / 252)</div>
+            <div class="market-signal-eq">Daily Move = SPY × (VIX / 100) × √(1 / 252)</div>
+            <p><strong>Example:</strong> SPY $450, VIX 18 → Weekly move = $450 × 0.18 × 0.141 = ±$11.41 (2.5%)</p>
+
+            <h3>3. Market Signal Scoring System</h3>
+            <div class="market-signal-eq">
+                Bullish Score = Σ (Signal Weights × Signal Values)<br>
+                Bearish Score = Σ (Signal Weights × Signal Values)
             </div>
+            <p>Weights: SPY P/C (30%), GEX (30%), VIX (20%), Mega-Caps (15%), 0DTE (5%)</p>
 
-            <p><strong>Interpretation:</strong></p>
-            <ul>
-                <li><strong>P/C > 1.2:</strong> Defensive positioning (more puts than calls)</li>
-                <li><strong>P/C = 0.8-1.2:</strong> Balanced (normal market)</li>
-                <li><strong>P/C < 0.8:</strong> Aggressive/bullish (more calls than puts)</li>
-            </ul>
-
-            <p><strong>Critical insight:</strong> Use 5-day moving average to detect sudden changes:</p>
-            <div class="formula-box">
-                Regime Change = |Current P/C - 5-Day Avg P/C| > 0.3
-            </div>
-
-            <div class="example-box">
-                <h4>Example Calculation:</h4>
-                <p><strong>Today's SPY volume:</strong></p>
-                <ul>
-                    <li>Call volume: 850,000 contracts</li>
-                    <li>Put volume: 1,190,000 contracts</li>
-                </ul>
-                <p><strong>Calculation:</strong></p>
-                <p>P/C Ratio = 1,190,000 / 850,000 = <strong>1.40</strong></p>
-                <p><strong>5-day average:</strong> 1.05</p>
-                <p><strong>Change:</strong> 1.40 - 1.05 = 0.35 (>0.3 threshold!)</p>
-                <p><strong>Signal:</strong> Sudden defensive surge. Institutions getting nervous. Consider reducing exposure.</p>
-            </div>
-
-            <h3>2. SPX 0DTE Analysis</h3>
-            <p>Zero days to expiration options provide intraday directional signals:</p>
-
-            <div class="formula-box">
-                0DTE Signal Strength = (Call Premium - Put Premium) / Total Premium<br><br>
-                Where Premium = Volume × Option Price × 100
-            </div>
-
-            <p><strong>Interpretation:</strong></p>
-            <ul>
-                <li><strong>Signal > 0.3:</strong> Heavy call buying → Bullish intraday</li>
-                <li><strong>Signal < -0.3:</strong> Heavy put buying → Bearish/defensive intraday</li>
-                <li><strong>Signal between -0.3 and 0.3:</strong> Neutral</li>
-            </ul>
-
-            <h3>3. Index GEX (Gamma Exposure) Calculation</h3>
-            <p>SPY/SPX gamma exposure tells you if market will be stable or volatile:</p>
-
-            <div class="formula-box">
-                Net GEX = Σ (Dealer Gamma × OI × Contract Multiplier × Price²)<br><br>
-                For calls: +Gamma (stabilizing)<br>
-                For puts: -Gamma (destabilizing)
-            </div>
-
-            <p><strong>Market regimes by GEX:</strong></p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>SPY GEX Level</th>
-                        <th>Market Regime</th>
-                        <th>Expected Behavior</th>
-                    </tr>
-                </thead>
+            <table class="regime-table">
+                <thead><tr><th>Signal Input</th><th>Bullish Points</th><th>Bearish Points</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>>$5 billion</td>
-                        <td>Very Stable</td>
-                        <td>Market pinned to strikes, low volatility</td>
-                    </tr>
-                    <tr>
-                        <td>$2-5 billion</td>
-                        <td>Stable</td>
-                        <td>Normal mean reversion, bounded moves</td>
-                    </tr>
-                    <tr>
-                        <td>$0-2 billion</td>
-                        <td>Neutral</td>
-                        <td>Moderate volatility</td>
-                    </tr>
-                    <tr>
-                        <td><$0 (Negative!)</td>
-                        <td>UNSTABLE</td>
-                        <td>Dealers amplify moves, high volatility risk</td>
-                    </tr>
+                    <tr><td>SPY P/C &lt; 0.8</td><td>+2</td><td>0</td></tr>
+                    <tr><td>SPY P/C &gt; 1.2</td><td>0</td><td>+2</td></tr>
+                    <tr><td>GEX &gt; $3B</td><td>+1</td><td>0</td></tr>
+                    <tr><td>GEX &lt; $0</td><td>0</td><td>+3</td></tr>
+                    <tr><td>VIX &lt; 15</td><td>+1</td><td>0</td></tr>
+                    <tr><td>VIX &gt; 35</td><td>+2 (contrarian)</td><td>0</td></tr>
+                    <tr><td>All mega-caps bullish</td><td>+2</td><td>0</td></tr>
+                    <tr><td>All mega-caps bearish</td><td>0</td><td>+2</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Part 4: Numerical Example -->
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>Complete Market Timing Analysis</h3>
+            <div class="info-box"><div class="info-box-title">Scenario: Thursday, October 5, 2023, 2:00 PM ET</div>
+            <p><strong>Market conditions:</strong> SPY $452.30, VIX 16.5 (low), Market at 2-month highs</p></div>
+
+            <h4>Step 1: SPY Put/Call Analysis</h4>
+            <table class="regime-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+                <tbody>
+                    <tr><td>Call Volume</td><td>920,000</td><td>—</td></tr>
+                    <tr><td>Put Volume</td><td>1,334,000</td><td>—</td></tr>
+                    <tr><td><strong>Current P/C</strong></td><td><strong>1.45</strong></td><td>⚠️ Defensive surge</td></tr>
+                    <tr><td>5-day avg P/C</td><td>0.95</td><td>—</td></tr>
+                    <tr><td>Change</td><td>+0.50</td><td>🚨 Major regime change!</td></tr>
                 </tbody>
             </table>
 
-            <div class="warning-box">
-                <h4>⚠️ Negative GEX Warning</h4>
-                <p><strong>When SPY GEX goes negative (below $0), market becomes DANGEROUS:</strong></p>
-                <ul>
-                    <li>Dealers are net long options (short gamma)</li>
-                    <li>They must sell into declines and buy into rallies</li>
-                    <li>This amplifies moves in both directions</li>
-                    <li><strong>Action required:</strong> Reduce exposure, tighten stops, expect volatility</li>
-                </ul>
-                <p><strong>Historical example:</strong> February 2018 (Volmageddon) - SPY GEX went negative, market crashed 10% in days</p>
-            </div>
-
-            <h3>4. VIX Relationship and Expected Move</h3>
-            <p>VIX (derived from SPX options) predicts market volatility:</p>
-
-            <div class="formula-box">
-                Expected Weekly Move = SPY Price × (VIX / 100) × √(5 / 252)<br><br>
-                Expected Daily Move = SPY Price × (VIX / 100) × √(1 / 252)
-            </div>
-
-            <div class="example-box">
-                <h4>Example: Expected Move Calculation</h4>
-                <p><strong>Given:</strong></p>
-                <ul>
-                    <li>SPY Price: $450.00</li>
-                    <li>VIX: 18.0</li>
-                </ul>
-
-                <p><strong>Weekly move calculation:</strong></p>
-                <p>Expected Move = $450 × (18 / 100) × √(5 / 252)</p>
-                <p>= $450 × 0.18 × 0.1409</p>
-                <p>= <strong>±$11.41</strong></p>
-
-                <p><strong>Interpretation:</strong> Market expects SPY to move $11.41 up or down this week (roughly ±2.5%)</p>
-
-                <p><strong>Trading application:</strong></p>
-                <ul>
-                    <li>SPY likely range: $438.59 to $461.41 this week</li>
-                    <li>Moves beyond this range = unusual (opportunities or danger)</li>
-                    <li>Use for position sizing and stop placement</li>
-                </ul>
-            </div>
-
-            <h3>5. Zero Gamma Level</h3>
-            <p>The price where dealer gamma flips from positive to negative:</p>
-
-            <div class="formula-box">
-                Zero Gamma Level = Strike where Cumulative GEX = 0<br><br>
-                Below Zero Gamma: Negative gamma (volatile)<br>
-                Above Zero Gamma: Positive gamma (stable)
-            </div>
-
-            <p><strong>Trading implications:</strong></p>
+            <h4>Step 2: Unusual SPY Activity</h4>
+            <p><strong>SPY $445 Puts (7 DTE):</strong></p>
             <ul>
-                <li>If SPY > Zero Gamma: Market stable, buy dips</li>
-                <li>If SPY < Zero Gamma: Market unstable, reduce exposure</li>
-                <li>Zero Gamma acts as critical support/resistance</li>
+                <li>Volume: 150,000 contracts (5x normal!)</li>
+                <li>Price: $5.70</li>
+                <li>Premium: $85.5 million</li>
+                <li>Execution: Aggressive at ask (institutional)</li>
             </ul>
-        </div>
 
-        <!-- PART 4: NUMERICAL EXAMPLE -->
-        <div class="section">
-            <h2>Part 4: Numerical Example</h2>
+            <h4>Step 3: SPY GEX Calculation</h4>
+            <table class="regime-table">
+                <thead><tr><th>Metric</th><th>Current</th><th>3 Days Ago</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>Net GEX</td><td>-$1.2B</td><td>+$2.5B</td><td>⚠️ NEGATIVE!</td></tr>
+                    <tr><td>Zero Gamma</td><td>$448.00</td><td>$445.00</td><td>Danger zone</td></tr>
+                    <tr><td>Current SPY</td><td>$452.30</td><td>—</td><td>Above zero gamma</td></tr>
+                </tbody>
+            </table>
+            <p class="info-box info-box-warning">⚠️⚠️ Negative GEX means dealers will amplify downward moves. If SPY drops below $448, expect acceleration.</p>
 
-            <div class="example-box">
-                <h3>Complete Market Timing Analysis</h3>
+            <h4>Step 4: Mega-Cap Confirmation</h4>
+            <table class="regime-table">
+                <thead><tr><th>Stock</th><th>P/C Ratio</th><th>Signal</th><th>Details</th></tr></thead>
+                <tbody>
+                    <tr><td>AAPL</td><td>1.40</td><td>⚠️ Bearish</td><td>Unusual $170 put buying</td></tr>
+                    <tr><td>MSFT</td><td>1.35</td><td>⚠️ Bearish</td><td>Large put spreads</td></tr>
+                    <tr><td>NVDA</td><td>1.60</td><td>⚠️ Bearish</td><td>Aggressive put buying</td></tr>
+                    <tr><td>GOOGL</td><td>1.25</td><td>⚠️ Bearish</td><td>Unusual activity</td></tr>
+                </tbody>
+            </table>
+            <p><strong>✅ Confirmation:</strong> All four mega-caps showing defensive positioning.</p>
 
-                <h4>Scenario: Thursday, October 5, 2023, 2:00 PM ET</h4>
-
-                <p><strong>Market conditions:</strong></p>
-                <ul>
-                    <li>SPY Price: $452.30</li>
-                    <li>VIX: 16.5 (relatively low, complacent)</li>
-                    <li>Market at 2-month highs</li>
-                    <li>Most traders are bullish</li>
-                </ul>
-
-                <h4>Step 1: Analyze SPY Put/Call Ratio</h4>
-                <p><strong>Today's SPY options volume:</strong></p>
-                <ul>
-                    <li>Call volume: 920,000 contracts</li>
-                    <li>Put volume: 1,334,000 contracts</li>
-                </ul>
-
-                <p><strong>Current P/C calculation:</strong></p>
-                <div class="formula-box">
-                    P/C = 1,334,000 / 920,000 = 1.45
-                </div>
-
-                <p><strong>5-day average P/C:</strong> 0.95</p>
-                <p><strong>Change:</strong> 1.45 - 0.95 = <strong>+0.50</strong> (massive surge!)</p>
-                <p><strong>Signal:</strong> ⚠️ Sudden defensive positioning. This is a major regime change.</p>
-
-                <h4>Step 2: Check for Unusual SPY Activity</h4>
-                <p><strong>Scanning unusual options:</strong></p>
-                <ul>
-                    <li><strong>SPY $445 Puts (7 DTE):</strong>
-                        <ul>
-                            <li>Volume: 150,000 contracts (vs. 30,000 average)</li>
-                            <li>5x normal volume!</li>
-                            <li>Price: $5.70</li>
-                            <li>Total premium: 150,000 × $5.70 × 100 = <strong>$85.5 million</strong></li>
-                            <li>Execution: Aggressive buying at ask (not passive)</li>
-                        </ul>
-                    </li>
-                    <li><strong>Interpretation:</strong> Major institutional hedge. Someone with huge long exposure is protecting against 2% downside.</li>
-                </ul>
-
-                <h4>Step 3: Analyze SPX 0DTE Flow</h4>
-                <p><strong>SPX 0DTE options (expiring today):</strong></p>
-                <ul>
-                    <li>Call volume (9:30 AM - 2:00 PM): 45,000 contracts</li>
-                    <li>Put volume (9:30 AM - 2:00 PM): 82,000 contracts</li>
-                    <li>Call/Put ratio: 45,000 / 82,000 = <strong>0.55</strong></li>
-                </ul>
-
-                <p><strong>Signal:</strong> ⚠️ Heavy put buying all day. Institutions are defensive intraday as well.</p>
-
-                <h4>Step 4: Calculate SPY GEX</h4>
-                <p><strong>Current SPY gamma exposure analysis:</strong></p>
-                <ul>
-                    <li>Net GEX: <strong>-$1.2 billion</strong> (NEGATIVE!)</li>
-                    <li>Recently flipped from positive ($2.5B three days ago)</li>
-                    <li>Zero gamma level: $448.00</li>
-                    <li>Current SPY: $452.30 (above zero gamma, but barely)</li>
-                </ul>
-
-                <p><strong>Interpretation:</strong> ⚠️⚠️ This is extremely bearish. Negative GEX means dealers will amplify any downward move. If SPY drops below $448, expect acceleration.</p>
-
-                <h4>Step 5: Check Mega-Cap Confirmation</h4>
-                <p><strong>Analyzing options flow in major tech stocks:</strong></p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Stock</th>
-                            <th>Signal</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>AAPL</td>
-                            <td>⚠️ Bearish</td>
-                            <td>P/C 1.40, unusual $170 put buying</td>
-                        </tr>
-                        <tr>
-                            <td>MSFT</td>
-                            <td>⚠️ Bearish</td>
-                            <td>P/C 1.35, large put spreads</td>
-                        </tr>
-                        <tr>
-                            <td>NVDA</td>
-                            <td>⚠️ Bearish</td>
-                            <td>P/C 1.60, aggressive put buying</td>
-                        </tr>
-                        <tr>
-                            <td>GOOGL</td>
-                            <td>⚠️ Bearish</td>
-                            <td>P/C 1.25, unusual activity</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p><strong>Confirmation:</strong> ✅ All four mega-caps showing defensive positioning. This confirms the index signal.</p>
-
-                <h4>Step 6: Combined Signal Generation</h4>
-                <div class="formula-box">
-                    <strong>Scoring System:</strong><br><br>
-
-                    SPY P/C (1.45 > 1.2): Bearish +2<br>
-                    Sudden P/C change (+0.50): Bearish +2<br>
-                    SPY GEX (-$1.2B < 0): Bearish +3<br>
-                    VIX (16.5, low): Neutral +0<br>
-                    Mega-caps (all bearish): Bearish +2<br>
-                    SPX 0DTE (heavy puts): Bearish +1<br><br>
-
-                    <strong>Total Bearish Score: 10 / 10</strong>
-                </div>
-
-                <h4>Step 7: Market Signal and Action Plan</h4>
-                <div class="danger-box">
-                    <h4>🚨 COMBINED SIGNAL: STRONG BEARISH</h4>
-                    <p><strong>Confidence: VERY HIGH</strong></p>
-                    <p><strong>Recommended Exposure: 30%</strong> (reduce from 100%)</p>
-
-                    <p><strong>Interpretation:</strong></p>
-                    <ul>
-                        <li>Institutions are aggressively hedging market exposure</li>
-                        <li>Negative GEX creates dangerous volatility risk</li>
-                        <li>Mega-cap confirmation validates the signal</li>
-                        <li>Expect market volatility and potential 3-5% correction</li>
-                    </ul>
-
-                    <p><strong>Action plan for stock traders:</strong></p>
-                    <ol>
-                        <li><strong>Immediate (within 1 hour):</strong> Take profits on extended long positions</li>
-                        <li><strong>Reduce exposure:</strong> Go from 100% invested to 30% (move to 70% cash)</li>
-                        <li><strong>Tighten stops:</strong> On remaining positions, move stops to breakeven or small profit</li>
-                        <li><strong>Avoid new entries:</strong> Skip new long trades until signal improves</li>
-                        <li><strong>Consider hedges:</strong> Small SPY put position or VIX calls (optional)</li>
-                        <li><strong>Re-evaluate daily:</strong> Check index signals each morning before trading</li>
-                    </ol>
-                </div>
-
-                <h4>Actual Result (What Happened Next)</h4>
-                <div class="success-box">
-                    <p><strong>Over the next 5 trading days:</strong></p>
-                    <ul>
-                        <li><strong>Friday (Day 1):</strong> SPY -0.8% to $448.70 (broke zero gamma!)</li>
-                        <li><strong>Monday (Day 2):</strong> SPY -1.2% to $443.32 (negative GEX accelerated move)</li>
-                        <li><strong>Tuesday (Day 3):</strong> SPY -0.9% to $439.33</li>
-                        <li><strong>Wednesday (Day 4):</strong> SPY -0.4% to $437.57</li>
-                        <li><strong>Thursday (Day 5):</strong> SPY -0.2% to $436.70</li>
-                    </ul>
-
-                    <p><strong>Total decline:</strong> SPY fell from $452.30 to $436.70 = <strong>-3.5%</strong> (almost $16)</p>
-
-                    <p><strong>Impact on portfolio:</strong></p>
-                    <ul>
-                        <li><strong>If you ignored the signal (100% invested):</strong> -5.2% (stocks fell more than SPY)</li>
-                        <li><strong>If you followed the signal (30% invested):</strong> -1.6% (only lost on 30% exposure)</li>
-                        <li><strong>Difference:</strong> Saved 3.6% by respecting the index signal</li>
-                    </ul>
-
-                    <p><strong>On a $100,000 portfolio:</strong></p>
-                    <ul>
-                        <li>Ignored signal: Lost $5,200</li>
-                        <li>Followed signal: Lost $1,600</li>
-                        <li><strong>Saved: $3,600</strong></li>
-                    </ul>
-
-                    <p class="highlight">This is why index options intelligence matters. The signal gave you 48 hours warning.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Interactive Calculator -->
-        <div class="calculator">
-            <h3>🧮 Market Signal Calculator</h3>
-            <p>Calculate market signal based on index options intelligence</p>
-
-            <div class="input-group">
-                <label for="spyPC">SPY Put/Call Ratio:</label>
-                <input type="number" id="spyPC" step="0.01" value="1.45" min="0">
+            <h4>Step 5: Combined Signal</h4>
+            <div class="market-signal-eq">
+                <strong>Scoring:</strong><br>
+                SPY P/C (1.45 &gt; 1.2): Bearish +2<br>
+                Sudden P/C surge (+0.50): Bearish +2<br>
+                SPY GEX (-$1.2B &lt; 0): Bearish +3<br>
+                Mega-caps (all bearish): Bearish +2<br>
+                <strong>Total: 9/10 Bearish</strong>
             </div>
 
-            <div class="input-group">
-                <label for="spyPC5day">SPY 5-Day Avg P/C:</label>
-                <input type="number" id="spyPC5day" step="0.01" value="0.95" min="0">
-            </div>
+            <div class="info-box info-box-warning"><div class="info-box-title">🚨 MARKET SIGNAL: STRONG BEARISH</div>
+            <ul>
+                <li><strong>Confidence:</strong> VERY HIGH</li>
+                <li><strong>Recommended Exposure:</strong> 30% (reduce from 100%)</li>
+                <li><strong>Action:</strong> Take profits, go to 70% cash, tighten stops</li>
+            </ul></div>
 
-            <div class="input-group">
-                <label for="spyGEX">SPY GEX (billions $):</label>
-                <input type="number" id="spyGEX" step="0.1" value="-1.2">
-            </div>
+            <h4>Actual Result</h4>
+            <p><strong>Over next 5 days:</strong> SPY fell from $452.30 to $436.70 (-3.5%)</p>
+            <ul>
+                <li><strong>Ignored signal (100% invested):</strong> Lost -5.2%</li>
+                <li><strong>Followed signal (30% invested):</strong> Lost -1.6%</li>
+                <li><strong>Saved: 3.6%</strong> ($3,600 on $100K account)</li>
+            </ul>
+        </section>
 
-            <div class="input-group">
-                <label for="vixLevel">VIX Level:</label>
-                <input type="number" id="vixLevel" step="0.1" value="16.5" min="0">
-            </div>
-
-            <div class="input-group">
-                <label for="megaCapSignal">Mega-Cap Signal:</label>
-                <select id="megaCapSignal">
-                    <option value="BULLISH">Bullish</option>
-                    <option value="MIXED">Mixed</option>
-                    <option value="BEARISH" selected>Bearish</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label for="zdte0Signal">SPX 0DTE Signal (optional):</label>
-                <select id="zdte0Signal">
-                    <option value="NONE">None</option>
-                    <option value="BULLISH">Bullish</option>
-                    <option value="NEUTRAL">Neutral</option>
-                    <option value="BEARISH" selected>Bearish</option>
-                </select>
-            </div>
-
-            <button class="calculate-button" onclick="calculateMarketSignal()">Calculate Market Signal</button>
-
-            <div id="marketSignalResult" class="result-box">
-                <h4>Market Signal Results:</h4>
-                <div class="result-item">
-                    <span class="result-label">P/C Change:</span>
-                    <span class="result-value" id="pcChange"></span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label">Bullish Score:</span>
-                    <span class="result-value" id="bullishScore"></span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label">Bearish Score:</span>
-                    <span class="result-value" id="bearishScore"></span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label">Market Signal:</span>
-                    <span class="result-value" id="marketSignal"></span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label">Confidence:</span>
-                    <span class="result-value" id="confidence"></span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label">Recommended Exposure:</span>
-                    <span class="result-value" id="exposure"></span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label">Action:</span>
-                    <span class="result-value" id="action"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="chart-container">
-            <h3>SPY Put/Call Ratio History</h3>
-            <canvas id="pcRatioChart"></canvas>
-        </div>
-
-        <div class="chart-container">
-            <h3>SPY GEX vs Price</h3>
-            <canvas id="gexChart"></canvas>
-        </div>
-
-        <div class="chart-container">
-            <h3>Recommended Exposure by Signal</h3>
-            <canvas id="exposureChart"></canvas>
-        </div>
-
-        <!-- PART 5: PYTHON IMPLEMENTATION -->
-        <div class="section">
+        <!-- Part 5: Python Implementation -->
+        <section class="content-section fade-in">
             <h2>Part 5: Python Implementation</h2>
-
             <div class="code-block">
                 <div class="code-header">
-                    <span class="code-language">Python - Complete Index Options Intelligence System</span>
-                    <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                    <span>index_options_intelligence.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
-                <pre><code class="language-python">import pandas as pd
+                <pre><code class="language-python">"""
+Index Options Market Timing Intelligence
+SPY/QQQ intelligence for controlling overall market exposure.
+"""
+
+import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
+from typing import Dict, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from datetime import datetime
 
 class MarketSignal(Enum):
-    """Market directional signal."""
     STRONG_BULLISH = "Strong Bullish"
     BULLISH = "Bullish"
     NEUTRAL = "Neutral"
@@ -1087,98 +252,35 @@ class MarketSignal(Enum):
 class IndexOptionsIntelligence:
     """Complete index options analysis."""
     timestamp: datetime
-
-    # SPY metrics
     spy_price: float
     spy_put_call_ratio: float
     spy_put_call_5day_avg: float
     spy_gex: float
     spy_zero_gamma: float
-
-    # VIX
     vix_level: float
     vix_regime: str
+    mega_cap_signal: str
+    market_signal: MarketSignal
+    confidence: str
+    recommended_exposure: float
 
-    # SPX 0DTE (if available)
-    spx_0dte_call_volume: Optional[int] = None
-    spx_0dte_put_volume: Optional[int] = None
-
-    # Mega-cap confirmation
-    mega_cap_signal: Optional[str] = None
-
-    # Combined
-    market_signal: MarketSignal = MarketSignal.NEUTRAL
-    confidence: str = "LOW"
-    recommended_exposure: float = 1.0  # 1.0 = 100%, 0.5 = 50%, etc.
-
-def calculate_spy_put_call_ratio(
-    spy_options: pd.DataFrame
-) -> Tuple[float, List[float]]:
-    """
-    Calculate SPY put/call ratio and recent history.
-
-    Parameters
-    ----------
-    spy_options : pd.DataFrame
-        SPY options data with volume by type
-
-    Returns
-    -------
-    Tuple[float, List[float]]
-        (current ratio, 5-day history)
-    """
-    calls = spy_options[spy_options['type'] == 'call']
-    puts = spy_options[spy_options['type'] == 'put']
-
-    call_volume = calls['volume'].sum()
-    put_volume = puts['volume'].sum()
-
-    current_ratio = put_volume / call_volume if call_volume > 0 else 0
-
-    # In real implementation, fetch 5-day history from database
-    # Placeholder: generate dummy history
-    history = [current_ratio] * 5  # Would be actual historical data
-
-    return round(current_ratio, 3), history
-
-def analyze_spy_gex(
-    spy_options: pd.DataFrame,
-    spy_price: float
-) -> Dict[str, float]:
-    """
-    Calculate SPY gamma exposure and zero gamma level.
-
-    Parameters
-    ----------
-    spy_options : pd.DataFrame
-        SPY options chain
-    spy_price : float
-        Current SPY price
-
-    Returns
-    -------
-    Dict[str, float]
-        GEX metrics
-    """
-    dealer_multiplier = -1  # Assume dealers short
-
+def calculate_spy_gex(spy_options: pd.DataFrame, spy_price: float) -> Dict:
+    """Calculate SPY gamma exposure and zero gamma level."""
+    dealer_multiplier = -1
     total_gex = 0
     gex_by_strike = {}
 
     for _, row in spy_options.iterrows():
         strike = row['strike']
-        gamma_notional = (
-            row['open_interest'] * 100 * row['gamma'] *
-            spy_price * spy_price * 0.01 * dealer_multiplier
-        )
+        gamma_notional = (row['open_interest'] * 100 * row['gamma'] *
+                         spy_price * spy_price * 0.01 * dealer_multiplier)
 
         if row['type'] == 'call':
             contribution = gamma_notional
-        else:  # put
+        else:
             contribution = -gamma_notional
 
         total_gex += contribution
-
         if strike not in gex_by_strike:
             gex_by_strike[strike] = 0
         gex_by_strike[strike] += contribution
@@ -1198,1197 +300,433 @@ def analyze_spy_gex(
     return {
         'net_gex_billions': total_gex / 1e9,
         'zero_gamma_level': zero_gamma_strike,
-        'regime': 'POSITIVE (Stable)' if total_gex > 0 else 'NEGATIVE (Volatile)'
+        'regime': 'POSITIVE' if total_gex > 0 else 'NEGATIVE'
     }
-
-def analyze_0dte_flow(
-    spx_0dte_options: pd.DataFrame,
-    current_time: datetime
-) -> Dict[str, any]:
-    """
-    Analyze SPX 0DTE options flow for intraday direction.
-
-    Parameters
-    ----------
-    spx_0dte_options : pd.DataFrame
-        SPX 0DTE options data
-    current_time : datetime
-        Current timestamp
-
-    Returns
-    -------
-    Dict[str, any]
-        0DTE flow analysis
-    """
-    # Filter to morning session (9:30 AM - 12:00 PM ET)
-    morning_start = current_time.replace(hour=9, minute=30, second=0)
-    morning_end = current_time.replace(hour=12, minute=0, second=0)
-
-    # In real implementation, filter by timestamp
-    # For now, use all data
-
-    calls = spx_0dte_options[spx_0dte_options['type'] == 'call']
-    puts = spx_0dte_options[spx_0dte_options['type'] == 'put']
-
-    call_volume = calls['volume'].sum()
-    put_volume = puts['volume'].sum()
-
-    call_premium = (calls['volume'] * calls['last'] * 100).sum()
-    put_premium = (puts['volume'] * puts['last'] * 100).sum()
-
-    # Determine signal
-    if call_volume > put_volume * 1.5 and call_premium > 10e6:
-        signal = "BULLISH INTRADAY"
-        interpretation = "Heavy call buying suggests bullish intraday setup"
-    elif put_volume > call_volume * 1.5 and put_premium > 10e6:
-        signal = "BEARISH INTRADAY"
-        interpretation = "Heavy put buying suggests bearish/defensive intraday"
-    else:
-        signal = "NEUTRAL"
-        interpretation = "Balanced flow, no clear intraday direction"
-
-    return {
-        'call_volume': int(call_volume),
-        'put_volume': int(put_volume),
-        'call_put_ratio': round(call_volume / put_volume, 2) if put_volume > 0 else 0,
-        'signal': signal,
-        'interpretation': interpretation
-    }
-
-def check_mega_cap_confirmation(
-    mega_cap_flows: Dict[str, Dict]
-) -> Tuple[str, int]:
-    """
-    Check if mega-cap stocks confirm index signal.
-
-    Parameters
-    ----------
-    mega_cap_flows : Dict[str, Dict]
-        Options flow for mega-caps (AAPL, MSFT, NVDA, etc.)
-        Format: {'AAPL': {'put_call_ratio': 1.3, 'unusual_calls': 5000, ...}}
-
-    Returns
-    -------
-    Tuple[str, int]
-        (signal, confirmation count)
-    """
-    bullish_count = 0
-    bearish_count = 0
-
-    for symbol, flow in mega_cap_flows.items():
-        pc_ratio = flow.get('put_call_ratio', 1.0)
-        unusual_calls = flow.get('unusual_calls', 0)
-        unusual_puts = flow.get('unusual_puts', 0)
-
-        # Bullish signals
-        if pc_ratio < 0.7 or unusual_calls > unusual_puts * 2:
-            bullish_count += 1
-        # Bearish signals
-        elif pc_ratio > 1.3 or unusual_puts > unusual_calls * 2:
-            bearish_count += 1
-
-    if bullish_count >= 3:
-        return "BULLISH", bullish_count
-    elif bearish_count >= 3:
-        return "BEARISH", bearish_count
-    else:
-        return "MIXED", 0
 
 def generate_market_signal(
-    spy_pc_ratio: float,
-    spy_pc_5day: float,
-    spy_gex: float,
-    vix_level: float,
-    mega_cap_signal: str,
-    spx_0dte_signal: Optional[str] = None
+    spy_pc: float, spy_pc_5day: float, spy_gex: float,
+    vix: float, mega_cap_signal: str
 ) -> Tuple[MarketSignal, str, float]:
-    """
-    Generate combined market signal and recommended exposure.
-
-    Parameters
-    ----------
-    spy_pc_ratio : float
-        Current SPY put/call ratio
-    spy_pc_5day : float
-        5-day average SPY put/call
-    spy_gex : float
-        SPY gamma exposure (billions)
-    vix_level : float
-        Current VIX level
-    mega_cap_signal : str
-        Mega-cap confirmation signal
-    spx_0dte_signal : Optional[str]
-        SPX 0DTE signal if available
-
-    Returns
-    -------
-    Tuple[MarketSignal, str, float]
-        (signal, confidence, recommended_exposure)
-    """
-    # Scoring system
+    """Generate market signal and recommended exposure."""
     bullish_score = 0
     bearish_score = 0
 
-    # 1. SPY Put/Call analysis
-    if spy_pc_ratio < 0.8:
+    # SPY P/C analysis
+    if spy_pc < 0.8:
         bullish_score += 2
-    elif spy_pc_ratio > 1.2:
+    elif spy_pc > 1.2:
         bearish_score += 2
 
-    # Check for sudden changes
-    if spy_pc_ratio > spy_pc_5day * 1.3:  # Sudden defensive surge
+    if spy_pc > spy_pc_5day * 1.3:
         bearish_score += 2
-    elif spy_pc_ratio < spy_pc_5day * 0.7:  # Sudden bullish surge
+    elif spy_pc < spy_pc_5day * 0.7:
         bullish_score += 2
 
-    # 2. GEX analysis
-    if spy_gex > 3:  # Very positive = stable
+    # GEX analysis
+    if spy_gex > 3:
         bullish_score += 1
-    elif spy_gex < 0:  # Negative = volatile/dangerous
-        bearish_score += 3  # Heavy weight
+    elif spy_gex < 0:
+        bearish_score += 3
 
-    # 3. VIX analysis
-    if vix_level < 15:
+    # VIX analysis
+    if vix < 15:
         bullish_score += 1
-    elif vix_level > 25:
+    elif vix > 25:
         bearish_score += 2
 
-    # Extreme VIX is contrarian
-    if vix_level > 35:
-        bullish_score += 2  # Panic = buy opportunity
+    if vix > 35:
+        bullish_score += 2
         bearish_score -= 2
 
-    # 4. Mega-cap confirmation
+    # Mega-cap confirmation
     if mega_cap_signal == "BULLISH":
         bullish_score += 2
     elif mega_cap_signal == "BEARISH":
         bearish_score += 2
 
-    # 5. 0DTE confirmation (if available)
-    if spx_0dte_signal:
-        if "BULLISH" in spx_0dte_signal:
-            bullish_score += 1
-        elif "BEARISH" in spx_0dte_signal:
-            bearish_score += 1
-
     # Determine signal and exposure
     if bullish_score >= 6:
-        signal = MarketSignal.STRONG_BULLISH
-        confidence = "HIGH"
-        exposure = 1.0  # 100% invested
+        return MarketSignal.STRONG_BULLISH, "HIGH", 1.0
     elif bullish_score >= 4:
-        signal = MarketSignal.BULLISH
-        confidence = "MODERATE"
-        exposure = 0.85  # 85% invested
+        return MarketSignal.BULLISH, "MODERATE", 0.85
     elif bearish_score >= 6:
-        signal = MarketSignal.STRONG_BEARISH
-        confidence = "HIGH"
-        exposure = 0.3  # 30% invested (defensive)
+        return MarketSignal.STRONG_BEARISH, "HIGH", 0.3
     elif bearish_score >= 4:
-        signal = MarketSignal.BEARISH
-        confidence = "MODERATE"
-        exposure = 0.5  # 50% invested
+        return MarketSignal.BEARISH, "MODERATE", 0.5
     else:
-        signal = MarketSignal.NEUTRAL
-        confidence = "LOW"
-        exposure = 0.7  # 70% invested (neutral)
-
-    return signal, confidence, exposure
+        return MarketSignal.NEUTRAL, "LOW", 0.7
 
 def analyze_index_options(
-    spy_options: pd.DataFrame,
-    spy_price: float,
-    vix_level: float,
-    spx_0dte_options: Optional[pd.DataFrame] = None,
-    mega_cap_flows: Optional[Dict[str, Dict]] = None
+    spy_options: pd.DataFrame, spy_price: float,
+    vix_level: float, mega_cap_flows: Dict
 ) -> IndexOptionsIntelligence:
-    """
-    Complete index options analysis for market timing.
+    """Complete index options analysis."""
+    # SPY P/C
+    calls = spy_options[spy_options['type'] == 'call']
+    puts = spy_options[spy_options['type'] == 'put']
+    spy_pc = puts['volume'].sum() / calls['volume'].sum()
+    spy_pc_5day = 0.95  # Would fetch from database
 
-    Parameters
-    ----------
-    spy_options : pd.DataFrame
-        SPY options chain
-    spy_price : float
-        Current SPY price
-    vix_level : float
-        Current VIX level
-    spx_0dte_options : Optional[pd.DataFrame]
-        SPX 0DTE options if available
-    mega_cap_flows : Optional[Dict[str, Dict]]
-        Mega-cap options flows
+    # SPY GEX
+    gex_metrics = calculate_spy_gex(spy_options, spy_price)
 
-    Returns
-    -------
-    IndexOptionsIntelligence
-        Complete market intelligence
-    """
-    # 1. SPY Put/Call
-    spy_pc, spy_pc_history = calculate_spy_put_call_ratio(spy_options)
-    spy_pc_5day = np.mean(spy_pc_history)
-
-    # 2. SPY GEX
-    gex_metrics = analyze_spy_gex(spy_options, spy_price)
-
-    # 3. VIX Regime
+    # VIX Regime
     if vix_level < 15:
         vix_regime = "LOW (Complacent)"
     elif vix_level < 25:
         vix_regime = "NORMAL"
     elif vix_level < 35:
-        vix_regime = "ELEVATED (Defensive)"
+        vix_regime = "ELEVATED"
     else:
-        vix_regime = "PANIC (Extreme Fear)"
+        vix_regime = "PANIC"
 
-    # 4. 0DTE analysis (if available)
-    spx_0dte_signal = None
-    spx_call_vol = None
-    spx_put_vol = None
+    # Mega-cap signal
+    bearish_count = sum(1 for v in mega_cap_flows.values()
+                       if v.get('put_call_ratio', 1.0) > 1.3)
+    mega_cap_signal = "BEARISH" if bearish_count >= 3 else "MIXED"
 
-    if spx_0dte_options is not None:
-        dte_analysis = analyze_0dte_flow(spx_0dte_options, datetime.now())
-        spx_0dte_signal = dte_analysis['signal']
-        spx_call_vol = dte_analysis['call_volume']
-        spx_put_vol = dte_analysis['put_volume']
-
-    # 5. Mega-cap confirmation
-    mega_cap_signal = "N/A"
-    if mega_cap_flows:
-        mega_cap_signal, _ = check_mega_cap_confirmation(mega_cap_flows)
-
-    # 6. Generate combined signal
-    market_signal, confidence, exposure = generate_market_signal(
-        spy_pc,
-        spy_pc_5day,
-        gex_metrics['net_gex_billions'],
-        vix_level,
-        mega_cap_signal,
-        spx_0dte_signal
+    # Generate signal
+    signal, confidence, exposure = generate_market_signal(
+        spy_pc, spy_pc_5day, gex_metrics['net_gex_billions'],
+        vix_level, mega_cap_signal
     )
 
     return IndexOptionsIntelligence(
         timestamp=datetime.now(),
         spy_price=spy_price,
         spy_put_call_ratio=spy_pc,
-        spy_put_call_5day_avg=round(spy_pc_5day, 3),
+        spy_put_call_5day_avg=spy_pc_5day,
         spy_gex=gex_metrics['net_gex_billions'],
         spy_zero_gamma=gex_metrics['zero_gamma_level'],
         vix_level=vix_level,
         vix_regime=vix_regime,
-        spx_0dte_call_volume=spx_call_vol,
-        spx_0dte_put_volume=spx_put_vol,
         mega_cap_signal=mega_cap_signal,
-        market_signal=market_signal,
+        market_signal=signal,
         confidence=confidence,
         recommended_exposure=exposure
     )
 
-# EXAMPLE USAGE:
+# Example usage
 if __name__ == "__main__":
-    # Example: Bearish market signal
     spy_options = pd.DataFrame({
         'strike': [440, 445, 450, 455, 460] * 2,
         'type': ['call'] * 5 + ['put'] * 5,
-        'volume': [50000, 75000, 100000, 60000, 30000, 80000, 120000, 150000, 90000, 40000],
-        'open_interest': [100000, 150000, 200000, 120000, 60000, 120000, 180000, 250000, 140000, 70000],
-        'gamma': [0.03, 0.04, 0.05, 0.04, 0.02, 0.03, 0.04, 0.05, 0.04, 0.02],
-        'last': [8.50, 5.20, 2.80, 1.20, 0.40, 1.20, 2.50, 4.80, 7.20, 10.50]
+        'volume': [50000, 75000, 100000, 60000, 30000,
+                  80000, 120000, 150000, 90000, 40000],
+        'open_interest': [100000, 150000, 200000, 120000, 60000,
+                         120000, 180000, 250000, 140000, 70000],
+        'gamma': [0.03, 0.04, 0.05, 0.04, 0.02] * 2
     })
 
-    # Mega-cap flows showing bearish
     mega_caps = {
-        'AAPL': {'put_call_ratio': 1.4, 'unusual_calls': 0, 'unusual_puts': 5000},
-        'MSFT': {'put_call_ratio': 1.3, 'unusual_calls': 0, 'unusual_puts': 3000},
-        'NVDA': {'put_call_ratio': 1.6, 'unusual_calls': 0, 'unusual_puts': 8000},
-        'GOOGL': {'put_call_ratio': 1.2, 'unusual_calls': 0, 'unusual_puts': 2000},
+        'AAPL': {'put_call_ratio': 1.4},
+        'MSFT': {'put_call_ratio': 1.3},
+        'NVDA': {'put_call_ratio': 1.6},
+        'GOOGL': {'put_call_ratio': 1.2},
     }
 
-    intelligence = analyze_index_options(
-        spy_options=spy_options,
-        spy_price=452.30,
-        vix_level=16.5,
-        mega_cap_flows=mega_caps
-    )
+    result = analyze_index_options(spy_options, 452.30, 16.5, mega_caps)
 
-    print("INDEX OPTIONS MARKET INTELLIGENCE")
-    print("=" * 60)
-    print(f"SPY Price: ${intelligence.spy_price:.2f}")
-    print(f"SPY P/C Ratio: {intelligence.spy_put_call_ratio} "
-          f"(5-day avg: {intelligence.spy_put_call_5day_avg})")
-    print(f"SPY GEX: ${intelligence.spy_gex:.2f}B ({intelligence.spy_zero_gamma:.2f} zero gamma)")
-    print(f"VIX: {intelligence.vix_level} ({intelligence.vix_regime})")
-    print(f"Mega-caps: {intelligence.mega_cap_signal}")
-    print(f"\nMARKET SIGNAL: {intelligence.market_signal.value}")
-    print(f"Confidence: {intelligence.confidence}")
-    print(f"Recommended Exposure: {intelligence.recommended_exposure*100:.0f}%")
-    print("\nACTION: Reduce positions, move to {:.0f}% cash".format(
-        (1 - intelligence.recommended_exposure) * 100
-    ))</code></pre>
+    print(f"Market Signal: {result.market_signal.value}")
+    print(f"Recommended Exposure: {result.recommended_exposure*100:.0f}%")</code></pre>
             </div>
-        </div>
+        </section>
 
-        <!-- PART 6: TRADING APPLICATIONS -->
-        <div class="section">
+        <!-- Part 6: Trading Applications -->
+        <section class="content-section fade-in">
             <h2>Part 6: Trading Applications</h2>
 
-            <h3>Using Index Options for Market Timing in Stock Trading</h3>
-            <p>Index options intelligence should be <strong>the first thing you check</strong> before trading individual stocks each day.</p>
+            <h3>Daily Trading Workflow</h3>
+            <div class="info-box"><div class="info-box-title">Morning Pre-Market (8:30-9:15 AM)</div>
+            <ol>
+                <li>Check SPY put/call ratio vs. 5-day average</li>
+                <li>Review SPY GEX (positive or negative?)</li>
+                <li>Check VIX level and regime</li>
+                <li>Scan mega-cap options (AAPL, MSFT, NVDA, GOOGL)</li>
+                <li>Generate market signal and set exposure for the day</li>
+            </ol></div>
 
-            <h3>Daily Trading Routine</h3>
-            <div class="example-box">
-                <h4>Morning Pre-Market Checklist (8:30-9:15 AM ET):</h4>
-                <ol>
-                    <li><strong>Check SPY options intelligence:</strong>
-                        <ul>
-                            <li>Pull up SPY put/call ratio from previous day</li>
-                            <li>Compare to 5-day average</li>
-                            <li>Look for unusual SPY options activity</li>
-                        </ul>
-                    </li>
-                    <li><strong>Review SPY GEX:</strong>
-                        <ul>
-                            <li>Is it positive (stable) or negative (volatile)?</li>
-                            <li>Where is zero gamma level vs. current price?</li>
-                        </ul>
-                    </li>
-                    <li><strong>Check VIX level and regime:</strong>
-                        <ul>
-                            <li>VIX <15: Normal, complacent</li>
-                            <li>VIX 15-25: Normal range</li>
-                            <li>VIX >25: Elevated fear, reduce risk</li>
-                        </ul>
-                    </li>
-                    <li><strong>Scan mega-cap options:</strong>
-                        <ul>
-                            <li>AAPL, MSFT, NVDA, GOOGL, AMZN</li>
-                            <li>Do they confirm index signal?</li>
-                        </ul>
-                    </li>
-                    <li><strong>Generate market signal:</strong>
-                        <ul>
-                            <li>Combine all inputs</li>
-                            <li>Determine recommended exposure for the day</li>
-                        </ul>
-                    </li>
-                </ol>
-            </div>
-
-            <h3>Position Sizing Based on Market Signal</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Market Signal</th>
-                        <th>Recommended Exposure</th>
-                        <th>Position Sizing per Trade</th>
-                        <th>Trading Style</th>
-                    </tr>
-                </thead>
+            <h3>Position Sizing by Market Signal</h3>
+            <table class="regime-table">
+                <thead><tr><th>Signal</th><th>Exposure</th><th>Position Size</th><th>Style</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td><strong>Strong Bullish</strong></td>
-                        <td>90-100%</td>
-                        <td>3-5% per position</td>
-                        <td>Aggressive, take all setups</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Bullish</strong></td>
-                        <td>80-90%</td>
-                        <td>2-3% per position</td>
-                        <td>Normal trading, cherry-pick best</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Neutral</strong></td>
-                        <td>60-70%</td>
-                        <td>1-2% per position</td>
-                        <td>Selective, only A+ setups</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Bearish</strong></td>
-                        <td>40-50%</td>
-                        <td>1% per position</td>
-                        <td>Very selective, tight stops</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Strong Bearish</strong></td>
-                        <td>20-30%</td>
-                        <td>0.5-1% per position</td>
-                        <td>Defensive, mostly cash</td>
-                    </tr>
+                    <tr><td>Strong Bullish</td><td>90-100%</td><td>3-5% per trade</td><td>Aggressive</td></tr>
+                    <tr><td>Bullish</td><td>80-90%</td><td>2-3% per trade</td><td>Normal</td></tr>
+                    <tr><td>Neutral</td><td>60-70%</td><td>1-2% per trade</td><td>Selective</td></tr>
+                    <tr><td>Bearish</td><td>40-50%</td><td>1% per trade</td><td>Very selective</td></tr>
+                    <tr><td>Strong Bearish</td><td>20-30%</td><td>0.5-1% per trade</td><td>Defensive</td></tr>
                 </tbody>
             </table>
 
-            <h3>Stop Management Based on Index Signal</h3>
-            <div class="example-box">
-                <h4>Bullish Market Regime:</h4>
-                <ul>
-                    <li><strong>Initial stops:</strong> Normal (5-8% below entry)</li>
-                    <li><strong>Trail stops:</strong> Slowly (give room to work)</li>
-                    <li><strong>Mindset:</strong> Let winners run, market has your back</li>
-                </ul>
+            <!-- Charts -->
+            <h3>SPY Put/Call Ratio History</h3>
+            <div class="chart-container"><canvas id="pcRatioChart"></canvas></div>
 
-                <h4>Neutral Market Regime:</h4>
-                <ul>
-                    <li><strong>Initial stops:</strong> Tighter (3-5% below entry)</li>
-                    <li><strong>Trail stops:</strong> Moderate (protect profits sooner)</li>
-                    <li><strong>Mindset:</strong> Take profits at targets, don't be greedy</li>
-                </ul>
+            <h3>SPY GEX vs Price</h3>
+            <div class="chart-container"><canvas id="gexChart"></canvas></div>
 
-                <h4>Bearish Market Regime:</h4>
-                <ul>
-                    <li><strong>Initial stops:</strong> Very tight (2-3% below entry)</li>
-                    <li><strong>Trail stops:</strong> Aggressively (move to breakeven fast)</li>
-                    <li><strong>Mindset:</strong> Quick profits, don't marry positions</li>
-                </ul>
+            <h3>Recommended Exposure by Signal</h3>
+            <div class="chart-container"><canvas id="exposureChart"></canvas></div>
+
+            <!-- Calculator -->
+            <div class="calculator-box">
+                <h3>Market Signal Calculator</h3>
+                <div class="calc-grid">
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">SPY Put/Call Ratio</label><input type="number" id="spyPC" class="calc-input" value="1.45" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">SPY 5-Day Avg P/C</label><input type="number" id="spyPC5day" class="calc-input" value="0.95" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">SPY GEX ($B)</label><input type="number" id="spyGEX" class="calc-input" value="-1.2" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">VIX Level</label><input type="number" id="vixLevel" class="calc-input" value="16.5" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Mega-Cap Signal</label>
+                        <select id="megaCapSignal" class="calc-input">
+                            <option value="BULLISH">Bullish</option>
+                            <option value="MIXED">Mixed</option>
+                            <option value="BEARISH" selected>Bearish</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculateMarketSignal()">Calculate Signal</button>
+                <div class="calc-result" id="marketResult" style="display:none;"></div>
             </div>
+        </section>
 
-            <h3>Strategy Selection Override</h3>
-            <div class="warning-box">
-                <h4>Critical Rule: Index Signal OVERRIDES Individual Stock Signals</h4>
-
-                <p><strong>Scenario 1: Bullish stock + Bearish market</strong></p>
-                <ul>
-                    <li>Stock: Perfect technical setup, bullish options flow</li>
-                    <li>Market: SPY bearish signal, negative GEX, elevated VIX</li>
-                    <li><strong>Action:</strong> Still take the trade BUT reduce position size to 1% (instead of 3-5%)</li>
-                    <li><strong>Rationale:</strong> Good stock can still work, but market headwind is real</li>
-                </ul>
-
-                <p><strong>Scenario 2: Bearish stock + Bullish market</strong></p>
-                <ul>
-                    <li>Stock: Weak technicals, heavy put buying</li>
-                    <li>Market: SPY bullish signal, positive GEX, low VIX</li>
-                    <li><strong>Action:</strong> Skip the short. Rising tide lifts all boats.</li>
-                    <li><strong>Rationale:</strong> Fighting bullish market is low probability</li>
-                </ul>
-
-                <p><strong>Scenario 3: Neutral stock + Strong bearish market</strong></p>
-                <ul>
-                    <li>Stock: Mixed signals, no clear direction</li>
-                    <li>Market: Strong bearish signal, negative GEX, VIX spiking</li>
-                    <li><strong>Action:</strong> Absolutely avoid. Wait for better setup.</li>
-                    <li><strong>Rationale:</strong> Market can drag everything down</li>
-                </ul>
-            </div>
-
-            <h3>Example Trading Workflow</h3>
-            <div class="success-box">
-                <h4>Monday, 9:00 AM - Pre-Market Analysis</h4>
-
-                <p><strong>Index options check:</strong></p>
-                <ul>
-                    <li>SPY P/C: 1.48 (vs. 5-day avg 1.05) → BEARISH</li>
-                    <li>SPY GEX: -$0.8B (negative!) → BEARISH</li>
-                    <li>VIX: 22.5 (elevated) → BEARISH</li>
-                    <li>Mega-caps: All showing heavy put buying → BEARISH</li>
-                </ul>
-
-                <p><strong>Market Signal: STRONG BEARISH</strong></p>
-                <p><strong>Recommended Exposure: 30%</strong></p>
-
-                <p><strong>Action plan for the day:</strong></p>
-                <ol>
-                    <li>Review current positions (currently 80% invested)</li>
-                    <li>Take profits on any extended longs (reduce from 80% to 30%)</li>
-                    <li>Tighten stops on remaining 30%</li>
-                    <li>Cancel all pending buy orders</li>
-                    <li>Move to 70% cash</li>
-                    <li>Only enter new trades if:
-                        <ul>
-                            <li>Stock has extremely bullish setup (A+ only)</li>
-                            <li>Position size: 1% max</li>
-                            <li>Stop: Very tight (2-3%)</li>
-                        </ul>
-                    </li>
-                </ol>
-
-                <p><strong>During trading day:</strong></p>
-                <ul>
-                    <li>10:00 AM: NVDA looks bullish on breakout
-                        <ul>
-                            <li>Normal position size would be 3%</li>
-                            <li>Market bearish → reduce to 1%</li>
-                            <li>Enter with tight stop</li>
-                        </ul>
-                    </li>
-                    <li>11:30 AM: Check SPX 0DTE flow
-                        <ul>
-                            <li>Still heavy put buying (confirms bearish)</li>
-                            <li>Stay defensive</li>
-                        </ul>
-                    </li>
-                    <li>2:00 PM: Market starting to decline
-                        <ul>
-                            <li>Trail stop on NVDA to breakeven</li>
-                            <li>Take profits on any remaining longs showing weakness</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <p><strong>End of day result:</strong></p>
-                <ul>
-                    <li>SPY down 1.8%</li>
-                    <li>Portfolio down only 0.6% (protected by 30% exposure)</li>
-                    <li>NVDA trade: Small winner despite market decline</li>
-                    <li><strong>Saved significant capital by respecting index signal</strong></li>
-                </ul>
-            </div>
-
-            <h3>Key Trading Principles</h3>
-            <ul>
-                <li><strong>Never fight the index:</strong> Respect the market regime above all else</li>
-                <li><strong>Index sets exposure, stocks determine WHAT:</strong> Separation of concerns</li>
-                <li><strong>Adjust daily:</strong> Market regime can change quickly</li>
-                <li><strong>Extreme readings matter most:</strong> SPY P/C >1.5, VIX >35, negative GEX = major signals</li>
-                <li><strong>Mega-caps confirm:</strong> Don't act on index alone, get confirmation</li>
-                <li><strong>Protection over perfection:</strong> Better to miss gains than lose capital</li>
-            </ul>
-        </div>
-
-        <!-- PART 7: COMMON MISTAKES -->
-        <div class="section">
+        <!-- Part 7: Common Mistakes -->
+        <section class="content-section fade-in">
             <h2>Part 7: Common Mistakes</h2>
-
-            <h3>What NOT to Do</h3>
-
-            <div class="danger-box">
-                <h4>❌ Mistake #1: Ignoring Index Signals Completely</h4>
-                <p><strong>The error:</strong> "I only trade individual stocks, I don't need to watch SPY/QQQ options."</p>
-                <p><strong>Why it's wrong:</strong> Individual stocks are highly correlated with the broader market. When SPY crashes, 80% of stocks crash with it.</p>
-                <p><strong>Consequence:</strong> You'll be 100% long going into market corrections and get destroyed.</p>
-                <p><strong>✅ Correct approach:</strong> Check index options EVERY morning before trading. Let them set your overall exposure level.</p>
+            <div class="card-grid">
+                <div class="card"><h4>Mistake 1: Ignoring Index Signals</h4><p><strong>Wrong:</strong> "I only trade individual stocks." <strong>Right:</strong> Index signals set overall exposure. Individual stocks are correlated with market. When SPY crashes, 80% of stocks crash with it.</p></div>
+                <div class="card"><h4>Mistake 2: Fighting the Index</h4><p><strong>Wrong:</strong> "SPY is bearish but my stocks are different." <strong>Right:</strong> Very few stocks defy strong market trends. Respect the regime.</p></div>
+                <div class="card"><h4>Mistake 3: Using Single Indicator</h4><p><strong>Wrong:</strong> Acting on SPY P/C alone. <strong>Right:</strong> Need confirmation from GEX, VIX, and mega-caps. Multiple signals = higher accuracy.</p></div>
+                <div class="card"><h4>Mistake 4: Ignoring Negative GEX</h4><p><strong>Wrong:</strong> "GEX doesn't matter." <strong>Right:</strong> Negative GEX is one of most dangerous conditions. Dealers amplify moves. Always reduce risk when GEX goes negative.</p></div>
             </div>
+        </section>
 
-            <div class="danger-box">
-                <h4>❌ Mistake #2: Fighting the Index Signal</h4>
-                <p><strong>The error:</strong> "SPY is bearish but my stocks are different, they'll go up anyway."</p>
-                <p><strong>Why it's wrong:</strong> Very few stocks can defy a strong market trend. Rising tide lifts all boats, falling tide sinks them.</p>
-                <p><strong>Example:</strong> September 2022 - Many traders stayed long tech stocks despite clear bearish SPY signals. Market crashed 18%, their "strong" stocks fell 25%+.</p>
-                <p><strong>✅ Correct approach:</strong> If index is bearish, either reduce size dramatically or sit out. Individual stock analysis is secondary to market direction.</p>
-            </div>
-
-            <div class="danger-box">
-                <h4>❌ Mistake #3: Over-Trading on Small Signal Changes</h4>
-                <p><strong>The error:</strong> SPY P/C goes from 1.0 to 1.1, trader immediately sells everything and goes to 100% cash.</p>
-                <p><strong>Why it's wrong:</strong> Not every small change is significant. You need confirmation and extreme readings.</p>
-                <p><strong>Consequence:</strong> Constant whipsawing, excessive trading costs, and missed opportunities.</p>
-                <p><strong>✅ Correct approach:</strong> Wait for extreme readings (P/C >1.3 or <0.7, GEX flipping negative, VIX >25) and get confirmation from multiple sources before making major exposure changes.</p>
-            </div>
-
-            <div class="danger-box">
-                <h4>❌ Mistake #4: Using SPY Options Alone (No Confirmation)</h4>
-                <p><strong>The error:</strong> "SPY P/C is high, I'm going to cash immediately."</p>
-                <p><strong>Why it's wrong:</strong> SPY options can have noise. You need confirmation from GEX, VIX, mega-caps, and 0DTE flow.</p>
-                <p><strong>Example:</strong> False signal - SPY P/C spikes to 1.4 due to hedging before FOMC, but VIX is stable, GEX positive, mega-caps neutral. Not a true bearish signal.</p>
-                <p><strong>✅ Correct approach:</strong> Always use multiple index indicators:
-                    <ul>
-                        <li>SPY/SPX put/call ratio</li>
-                        <li>GEX (critical!)</li>
-                        <li>VIX level</li>
-                        <li>Mega-cap confirmation</li>
-                        <li>0DTE flow (if available)</li>
-                    </ul>
-                </p>
-            </div>
-
-            <div class="danger-box">
-                <h4>❌ Mistake #5: Not Adjusting Position Sizes</h4>
-                <p><strong>The error:</strong> Recognizing market is bearish but still taking full 5% position sizes.</p>
-                <p><strong>Why it's wrong:</strong> If you see the danger but don't adjust your behavior, the knowledge is useless.</p>
-                <p><strong>Consequence:</strong> You'll know you're in a bearish regime but still lose big because position sizes are too large.</p>
-                <p><strong>✅ Correct approach:</strong> Scale position sizes with market signal:
-                    <ul>
-                        <li>Bullish: 3-5% per position</li>
-                        <li>Neutral: 1-2% per position</li>
-                        <li>Bearish: 0.5-1% per position</li>
-                    </ul>
-                </p>
-            </div>
-
-            <div class="danger-box">
-                <h4>❌ Mistake #6: Forgetting Extreme VIX is Contrarian</h4>
-                <p><strong>The error:</strong> VIX spikes to 45 (panic), and trader gets even more bearish and sells everything.</p>
-                <p><strong>Why it's wrong:</strong> Extreme VIX (>40) is often a capitulation signal - the bottom is near.</p>
-                <p><strong>Example:</strong> March 2020 COVID crash - VIX hit 82 on March 16. That was the absolute bottom. Sellers at VIX 82 got crushed as market rallied 50% in 3 months.</p>
-                <p><strong>✅ Correct approach:</strong> Extreme VIX is contrarian:
-                    <ul>
-                        <li>VIX >40: Start looking for longs (everyone panic = opportunity)</li>
-                        <li>VIX <12: Get defensive (complacency = danger)</li>
-                    </ul>
-                </p>
-            </div>
-
-            <div class="danger-box">
-                <h4>❌ Mistake #7: Ignoring Negative GEX Warnings</h4>
-                <p><strong>The error:</strong> SPY GEX goes negative but trader doesn't reduce risk.</p>
-                <p><strong>Why it's wrong:</strong> Negative GEX is one of the most dangerous market conditions. Dealers amplify moves, creating volatility cascades.</p>
-                <p><strong>Historical disasters:</strong>
-                    <ul>
-                        <li>February 2018 Volmageddon: Negative GEX, SPY crashed 10% in 4 days</li>
-                        <li>December 2018: Negative GEX, market fell 19% in 3 months</li>
-                    </ul>
-                </p>
-                <p><strong>✅ Correct approach:</strong> When GEX goes negative:
-                    <ul>
-                        <li>Immediately reduce exposure to 30-40%</li>
-                        <li>Tighten all stops</li>
-                        <li>Expect high volatility</li>
-                        <li>Watch zero gamma level closely</li>
-                    </ul>
-                </p>
-            </div>
-
-            <h3>Best Practices Summary</h3>
-            <div class="success-box">
-                <h4>✅ DO:</h4>
+        <!-- Part 8: Summary & Quiz -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Key Takeaways</h2>
+            <div class="info-box"><div class="info-box-title">Core Principles</div>
                 <ul>
-                    <li>Check index options intelligence every morning (make it routine)</li>
-                    <li>Use multiple confirmation sources (P/C + GEX + VIX + mega-caps)</li>
-                    <li>Adjust position sizes based on market signal</li>
-                    <li>Respect negative GEX warnings (this is critical!)</li>
-                    <li>Remember extreme VIX is contrarian</li>
-                    <li>Let index set exposure, individual stocks determine WHAT</li>
-                    <li>Act on extreme readings (P/C >1.4, VIX >30, GEX <0)</li>
-                </ul>
-
-                <h4>❌ DON'T:</h4>
-                <ul>
-                    <li>Ignore index signals in favor of individual stock analysis</li>
-                    <li>Fight the market regime</li>
-                    <li>Over-trade on small changes</li>
-                    <li>Use single indicator alone (need confirmation)</li>
-                    <li>Keep same position sizes regardless of market signal</li>
-                    <li>Panic at extreme VIX (it's often the opportunity)</li>
-                    <li>Ignore negative GEX (this ends badly)</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- PART 8: SUMMARY & QUIZ -->
-        <div class="section">
-            <h2>Part 8: Summary & Cheat Sheet</h2>
-
-            <h3>Quick Reference Guide</h3>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Market Signal</th>
-                        <th>Index Metrics</th>
-                        <th>Recommended Exposure</th>
-                        <th>Trading Approach</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Strong Bullish</strong></td>
-                        <td>SPY P/C <0.8<br>GEX >$3B<br>VIX <15<br>Mega-caps bullish</td>
-                        <td>90-100%<br>(Fully invested)</td>
-                        <td>Aggressive<br>5% positions<br>Let winners run</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Bullish</strong></td>
-                        <td>SPY P/C <1.0<br>GEX positive<br>VIX 15-20<br>Mega-caps mixed/bullish</td>
-                        <td>80-90%</td>
-                        <td>Normal<br>3% positions<br>Cherry-pick best</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Neutral</strong></td>
-                        <td>SPY P/C 1.0-1.2<br>GEX $0-2B<br>VIX 18-25<br>Mega-caps balanced</td>
-                        <td>60-70%</td>
-                        <td>Selective<br>2% positions<br>Take profits faster</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Bearish</strong></td>
-                        <td>SPY P/C >1.2<br>GEX near zero<br>VIX >25<br>Mega-caps bearish</td>
-                        <td>40-50%</td>
-                        <td>Defensive<br>1% positions<br>Tight stops</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Strong Bearish</strong></td>
-                        <td>SPY P/C >1.5<br>GEX <$0 (negative!)<br>VIX >30<br>All mega-caps bearish</td>
-                        <td>20-30%<br>(Mostly cash)</td>
-                        <td>Survival mode<br>0.5-1% positions<br>Skip most setups</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3>Critical Thresholds to Remember</h3>
-            <div class="formula-box">
-                <strong>SPY Put/Call Ratio:</strong><br>
-                • >1.5 = Extreme bearish (contrarian buy signal if sustained)<br>
-                • >1.2 = Defensive positioning<br>
-                • 0.8-1.2 = Normal range<br>
-                • <0.8 = Bullish positioning<br>
-                • <0.5 = Extreme bullish (complacency warning)<br><br>
-
-                <strong>SPY GEX:</strong><br>
-                • >$5B = Very stable market<br>
-                • $2-5B = Stable, positive gamma<br>
-                • $0-2B = Neutral<br>
-                • <$0 = DANGER! Negative gamma, volatile market<br><br>
-
-                <strong>VIX:</strong><br>
-                • <12 = Extreme complacency (warning)<br>
-                • 12-15 = Low volatility<br>
-                • 15-25 = Normal range<br>
-                • 25-35 = Elevated fear<br>
-                • 35-50 = High fear<br>
-                • >50 = Panic (often capitulation/buy signal)<br><br>
-
-                <strong>SPX 0DTE:</strong><br>
-                • Call/Put ratio >1.5 = Bullish intraday<br>
-                • Call/Put ratio 0.8-1.2 = Neutral<br>
-                • Call/Put ratio <0.7 = Bearish intraday
-            </div>
-
-            <h3>Daily Workflow</h3>
-            <div class="example-box">
-                <h4>Every Trading Morning (9:00-9:25 AM):</h4>
-                <ol>
-                    <li><strong>Check SPY options:</strong> Pull P/C ratio, compare to 5-day avg</li>
-                    <li><strong>Calculate SPY GEX:</strong> Is it positive or negative?</li>
-                    <li><strong>Review VIX:</strong> Current level and trend</li>
-                    <li><strong>Scan mega-caps:</strong> AAPL, MSFT, NVDA, GOOGL flow</li>
-                    <li><strong>Generate signal:</strong> Combine all inputs</li>
-                    <li><strong>Set exposure:</strong> Determine % invested for the day</li>
-                    <li><strong>Adjust positions:</strong> Add/reduce based on signal</li>
-                    <li><strong>Start trading:</strong> With appropriate position sizes</li>
-                </ol>
-            </div>
-
-            <h3>Key Principles</h3>
-            <ul>
-                <li><strong>Index options set WHEN, stock analysis sets WHAT</strong> - Separation of concerns</li>
-                <li><strong>Never fight the index</strong> - Market regime trumps individual stock signals</li>
-                <li><strong>Extreme readings matter most</strong> - P/C >1.5, GEX <0, VIX >40</li>
-                <li><strong>Multiple confirmations required</strong> - Don't act on single indicator</li>
-                <li><strong>Negative GEX is dangerous</strong> - Dealers amplify moves, reduce risk immediately</li>
-                <li><strong>Extreme VIX is contrarian</strong> - VIX >50 = panic = opportunity, VIX <12 = complacency = danger</li>
-                <li><strong>Mega-caps are the market</strong> - AAPL/MSFT/NVDA = 40% of SPY, their flow matters</li>
-                <li><strong>Adjust daily</strong> - Market regime can shift quickly, stay vigilant</li>
-            </ul>
-
-            <h3>Trading Wisdom</h3>
-            <div class="success-box">
-                <p><em>"The market can stay irrational longer than you can stay solvent."</em> - John Maynard Keynes</p>
-
-                <p><strong>Index options intelligence helps you avoid being on the wrong side of irrational markets.</strong></p>
-
-                <p>Key insights:</p>
-                <ul>
-                    <li>You can be right about a stock and still lose if you're wrong about the market</li>
-                    <li>Capital preservation > being fully invested</li>
-                    <li>Missing gains in dangerous markets > losing capital in corrections</li>
-                    <li>Index options give you 24-72 hour warning before major moves</li>
-                    <li>Institutions telegraph their positioning through index options</li>
-                </ul>
-
-                <p class="highlight">The goal isn't to catch every move - it's to survive and compound capital over time. Index options intelligence helps you avoid the big drawdowns that destroy accounts.</p>
-            </div>
-        </div>
-
-        <!-- QUIZ -->
-        <div class="quiz">
-            <h3>📝 Test Your Knowledge</h3>
-
-            <div class="question">
-                <h4>Question 1: You see SPY P/C ratio at 1.55 (vs. 5-day avg of 1.0), SPY GEX at -$1.5B, VIX at 24, and all mega-caps showing heavy put buying. What should you do?</h4>
-                <ul class="options" data-question="q1">
-                    <li data-answer="wrong">A) Ignore it and stay 100% invested - individual stocks are what matter</li>
-                    <li data-answer="wrong">B) Go to 100% cash immediately and wait for market to recover</li>
-                    <li data-answer="correct">C) Reduce exposure to 30-40%, tighten stops, only take A+ setups with small size</li>
-                    <li data-answer="wrong">D) It's just noise, keep trading normally with same position sizes</li>
+                    <li><strong>Index options set WHEN, stock analysis sets WHAT:</strong> Use index signals to control overall exposure.</li>
+                    <li><strong>SPY P/C &gt;1.5 or GEX &lt;$0 = danger:</strong> Reduce exposure immediately.</li>
+                    <li><strong>Extreme VIX is contrarian:</strong> VIX &gt;50 = panic = buy opportunity. VIX &lt;12 = complacency = danger.</li>
+                    <li><strong>Mega-caps confirm index:</strong> AAPL, MSFT, NVDA flow validates SPY signals.</li>
+                    <li><strong>Negative GEX causes flash crashes:</strong> Feb 2018, Dec 2018, March 2020 all had negative GEX.</li>
                 </ul>
             </div>
 
-            <div class="question">
-                <h4>Question 2: SPY GEX just flipped from +$3B to -$0.8B. What does this mean?</h4>
-                <ul class="options" data-question="q2">
-                    <li data-answer="wrong">A) Market will be more stable - good time to increase exposure</li>
-                    <li data-answer="correct">B) Market regime is now dangerous - dealers will amplify moves, expect volatility</li>
-                    <li data-answer="wrong">C) No significance - GEX doesn't impact market behavior</li>
-                    <li data-answer="wrong">D) It's bullish - means more calls were bought</li>
-                </ul>
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question" id="q1">
+                    <p><strong>Q1:</strong> SPY P/C is 1.55, GEX is -$1.5B, VIX is 24, all mega-caps show heavy put buying. What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Ignore it - focus on individual stocks</button>
+                        <button onclick="checkAnswer(this, true)">Reduce exposure to 30-40%, tighten stops, go defensive</button>
+                        <button onclick="checkAnswer(this, false)">Go to 100% cash immediately</button>
+                        <button onclick="checkAnswer(this, false)">It's just noise - keep trading normally</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">All 4 signals firing = strong bearish. Reduce to 30-40% invested, tighten stops, take only A+ setups. Not 100% cash (too extreme), but very defensive.</div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <p><strong>Q2:</strong> SPY GEX flips from +$3B to -$0.8B. What does this mean?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Market will be more stable</button>
+                        <button onclick="checkAnswer(this, true)">Market regime now dangerous - dealers will amplify moves</button>
+                        <button onclick="checkAnswer(this, false)">No significance - GEX doesn't impact market</button>
+                        <button onclick="checkAnswer(this, false)">Bullish signal - means calls being bought</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Negative GEX = dealers short gamma = must sell into declines = amplifies downward moves. Very dangerous. Feb 2018 Volmageddon had this exact pattern.</div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <p><strong>Q3:</strong> VIX spikes to 48 during market crash. What's the correct interpretation?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Extremely bearish - sell everything</button>
+                        <button onclick="checkAnswer(this, true)">Contrarian signal - panic levels often mark bottoms, start looking for longs</button>
+                        <button onclick="checkAnswer(this, false)">Stay defensive until VIX drops to 20</button>
+                        <button onclick="checkAnswer(this, false)">VIX doesn't matter for stock trading</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Extreme VIX (&gt;40) is contrarian. VIX 48 = maximum panic = often near bottom. March 2020: VIX hit 82 on March 16 - that was the bottom. Sellers at VIX 82 got crushed.</div>
+                </div>
+                <div class="quiz-question" id="q4">
+                    <p><strong>Q4:</strong> You have perfect bullish setup on NVDA, but SPY options show strong bearish signal. What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Skip the trade - never trade against index</button>
+                        <button onclick="checkAnswer(this, false)">Take full 5% position - stock setup is too good</button>
+                        <button onclick="checkAnswer(this, true)">Take the trade but reduce size to 1% and use tight stops</button>
+                        <button onclick="checkAnswer(this, false)">Flip and short NVDA instead</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Good stock in bad market = reduced size, not avoided. Take 1% instead of normal 3-5%. Tight stops. Stock might still work despite market headwind.</div>
+                </div>
+                <div class="quiz-question" id="q5">
+                    <p><strong>Q5:</strong> Why are mega-cap options (AAPL, MSFT, NVDA) important for market timing?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">They're not - only SPY matters</button>
+                        <button onclick="checkAnswer(this, true)">They are 40% of SPY - their flow confirms or contradicts index signals</button>
+                        <button onclick="checkAnswer(this, false)">They're more liquid than SPY</button>
+                        <button onclick="checkAnswer(this, false)">They replace the need for SPY analysis</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">AAPL, MSFT, NVDA are ~40% of SPY. If all three show heavy put buying while SPY does too, that confirms the signal. If they're bullish while SPY is bearish, it's a conflicting signal (need caution).</div>
+                </div>
             </div>
+        </section>
+    </main>
 
-            <div class="question">
-                <h4>Question 3: VIX spikes to 48 during a market crash. What's the correct interpretation?</h4>
-                <ul class="options" data-question="q3">
-                    <li data-answer="wrong">A) Extremely bearish - sell everything immediately</li>
-                    <li data-answer="wrong">B) Stay defensive and wait for VIX to come back to 20 before buying</li>
-                    <li data-answer="correct">C) Contrarian signal - panic levels often mark bottoms, start looking for longs</li>
-                    <li data-answer="wrong">D) Doesn't matter - VIX is not useful for stock trading</li>
-                </ul>
-            </div>
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
 
-            <div class="question">
-                <h4>Question 4: You find a perfect bullish setup on NVDA (great technicals, bullish options flow), but SPY options show strong bearish signal. What should you do?</h4>
-                <ul class="options" data-question="q4">
-                    <li data-answer="wrong">A) Skip the trade - never trade against the index signal</li>
-                    <li data-answer="wrong">B) Take the trade with full 5% position size - the stock setup is too good</li>
-                    <li data-answer="correct">C) Take the trade but reduce size to 1% and use tight stops - good stock, bad market</li>
-                    <li data-answer="wrong">D) Flip the trade and short NVDA instead - market is bearish</li>
-                </ul>
-            </div>
-
-            <div class="question">
-                <h4>Question 5: SPX 0DTE shows heavy call buying from 10-11 AM (call/put ratio 1.8). What does this suggest?</h4>
-                <ul class="options" data-question="q5">
-                    <li data-answer="wrong">A) Nothing - 0DTE is just gambling, ignore it</li>
-                    <li data-answer="correct">B) Institutions positioning for bullish intraday move - expect upside</li>
-                    <li data-answer="wrong">C) Bearish signal - too much optimism is dangerous</li>
-                    <li data-answer="wrong">D) It's neutral - need to see put buying for a real signal</li>
-                </ul>
-            </div>
-
-            <button class="submit-quiz" onclick="submitQuiz()">Submit Answers</button>
-
-            <div id="quizResult" class="quiz-result">
-                <h4>Quiz Results:</h4>
-                <p id="quizScore"></p>
-                <p id="quizFeedback"></p>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin: 3rem 0; padding: 2rem; background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(124, 58, 237, 0.1)); border-radius: 12px;">
-            <p style="font-size: 1.1rem; margin-bottom: 1rem;">🎓 <strong>Congratulations!</strong> You've completed Lesson 8.6.1</p>
-            <p style="color: var(--text-secondary);">Master index options intelligence and control your market exposure like a professional trader.</p>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script src="../../../assets/js/shared-scripts.js"></script>
     <script>
-        // Copy code functionality
-        function copyCode(button) {
-            const codeBlock = button.parentElement.nextElementSibling;
-            const code = codeBlock.textContent;
+    function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    }
 
-            navigator.clipboard.writeText(code).then(() => {
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
-                button.classList.add('copied');
+    function checkAnswer(btn, correct) {
+        const question = btn.closest('.quiz-question');
+        const buttons = question.querySelectorAll('.quiz-options button');
+        buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        question.querySelector('.quiz-explanation').style.display = 'block';
+    }
 
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            });
+    function calculateMarketSignal() {
+        const spyPC = parseFloat(document.getElementById('spyPC').value);
+        const spyPC5day = parseFloat(document.getElementById('spyPC5day').value);
+        const spyGEX = parseFloat(document.getElementById('spyGEX').value);
+        const vix = parseFloat(document.getElementById('vixLevel').value);
+        const megaCap = document.getElementById('megaCapSignal').value;
+
+        let bullishScore = 0, bearishScore = 0;
+
+        if (spyPC < 0.8) bullishScore += 2;
+        else if (spyPC > 1.2) bearishScore += 2;
+        if (spyPC > spyPC5day * 1.3) bearishScore += 2;
+        else if (spyPC < spyPC5day * 0.7) bullishScore += 2;
+        if (spyGEX > 3) bullishScore += 1;
+        else if (spyGEX < 0) bearishScore += 3;
+        if (vix < 15) bullishScore += 1;
+        else if (vix > 25) bearishScore += 2;
+        if (vix > 35) { bullishScore += 2; bearishScore -= 2; }
+        if (megaCap === "BULLISH") bullishScore += 2;
+        else if (megaCap === "BEARISH") bearishScore += 2;
+
+        let signal, confidence, exposure, action;
+        if (bullishScore >= 6) {
+            signal = "STRONG BULLISH"; confidence = "HIGH"; exposure = "100%";
+            action = "Fully invested, aggressive trading";
+        } else if (bullishScore >= 4) {
+            signal = "BULLISH"; confidence = "MODERATE"; exposure = "85%";
+            action = "Normal trading, 2-3% positions";
+        } else if (bearishScore >= 6) {
+            signal = "STRONG BEARISH"; confidence = "HIGH"; exposure = "30%";
+            action = "Defensive mode, reduce exposure, tight stops";
+        } else if (bearishScore >= 4) {
+            signal = "BEARISH"; confidence = "MODERATE"; exposure = "50%";
+            action = "Reduce exposure, selective trading";
+        } else {
+            signal = "NEUTRAL"; confidence = "LOW"; exposure = "70%";
+            action = "Balanced approach, take A setups only";
         }
 
-        // Market Signal Calculator
-        function calculateMarketSignal() {
-            const spyPC = parseFloat(document.getElementById('spyPC').value);
-            const spyPC5day = parseFloat(document.getElementById('spyPC5day').value);
-            const spyGEX = parseFloat(document.getElementById('spyGEX').value);
-            const vixLevel = parseFloat(document.getElementById('vixLevel').value);
-            const megaCapSignal = document.getElementById('megaCapSignal').value;
-            const zdte0Signal = document.getElementById('zdte0Signal').value;
+        const resultDiv = document.getElementById('marketResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="color:#a855f7;margin-top:0;">Market Signal Results</h4>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0;">
+                <div><strong style="color:#94a3b8;">P/C Change:</strong> ${(spyPC - spyPC5day).toFixed(2)}</div>
+                <div><strong style="color:#94a3b8;">Bullish Score:</strong> ${bullishScore}</div>
+                <div><strong style="color:#94a3b8;">Bearish Score:</strong> ${bearishScore}</div>
+                <div><strong style="color:#94a3b8;">Market Signal:</strong> ${signal}</div>
+            </div>
+            <div style="padding:10px;border-radius:6px;background:rgba(0,0,0,0.2);margin-top:8px;">
+                <strong style="color:#a855f7;">Confidence: ${confidence}</strong><br>
+                <strong style="color:#22d3ee;">Recommended Exposure: ${exposure}</strong><br>
+                <span style="color:#94a3b8;">${action}</span>
+            </div>
+        `;
+    }
 
-            // Calculate P/C change
-            const pcChange = spyPC - spyPC5day;
-
-            // Scoring system
-            let bullishScore = 0;
-            let bearishScore = 0;
-
-            // 1. SPY P/C analysis
-            if (spyPC < 0.8) bullishScore += 2;
-            else if (spyPC > 1.2) bearishScore += 2;
-
-            // Check for sudden changes
-            if (spyPC > spyPC5day * 1.3) bearishScore += 2;
-            else if (spyPC < spyPC5day * 0.7) bullishScore += 2;
-
-            // 2. GEX analysis
-            if (spyGEX > 3) bullishScore += 1;
-            else if (spyGEX < 0) bearishScore += 3;
-
-            // 3. VIX analysis
-            if (vixLevel < 15) bullishScore += 1;
-            else if (vixLevel > 25) bearishScore += 2;
-
-            // Extreme VIX is contrarian
-            if (vixLevel > 35) {
-                bullishScore += 2;
-                bearishScore = Math.max(0, bearishScore - 2);
+    document.addEventListener('DOMContentLoaded', function() {
+        // SPY P/C Chart
+        const ctx1 = document.getElementById('pcRatioChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                datasets: [{
+                    label: 'SPY Put/Call Ratio',
+                    data: [0.95, 0.98, 1.02, 1.08, 1.45],
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168,85,247,0.1)',
+                    fill: true
+                }, {
+                    label: '5-Day Average',
+                    data: [0.95, 0.95, 0.95, 0.95, 0.95],
+                    borderColor: '#22d3ee',
+                    borderDash: [5, 5],
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                }
             }
-
-            // 4. Mega-cap confirmation
-            if (megaCapSignal === "BULLISH") bullishScore += 2;
-            else if (megaCapSignal === "BEARISH") bearishScore += 2;
-
-            // 5. 0DTE confirmation
-            if (zdte0Signal === "BULLISH") bullishScore += 1;
-            else if (zdte0Signal === "BEARISH") bearishScore += 1;
-
-            // Determine signal and exposure
-            let signal, confidence, exposure, action;
-
-            if (bullishScore >= 6) {
-                signal = "STRONG BULLISH";
-                confidence = "HIGH";
-                exposure = "100%";
-                action = "Fully invested, take all A+ setups, 3-5% position sizes";
-            } else if (bullishScore >= 4) {
-                signal = "BULLISH";
-                confidence = "MODERATE";
-                exposure = "85%";
-                action = "Normal trading, 2-3% position sizes, cherry-pick best setups";
-            } else if (bearishScore >= 6) {
-                signal = "STRONG BEARISH";
-                confidence = "HIGH";
-                exposure = "30%";
-                action = "Defensive mode, reduce to 30% invested, 0.5-1% positions, tight stops";
-            } else if (bearishScore >= 4) {
-                signal = "BEARISH";
-                confidence = "MODERATE";
-                exposure = "50%";
-                action = "Reduce exposure to 50%, 1% position sizes, selective trading";
-            } else {
-                signal = "NEUTRAL";
-                confidence = "LOW";
-                exposure = "70%";
-                action = "Balanced approach, 1-2% position sizes, take A setups only";
-            }
-
-            // Display results
-            document.getElementById('pcChange').textContent = pcChange >= 0 ? `+${pcChange.toFixed(2)}` : pcChange.toFixed(2);
-            document.getElementById('bullishScore').textContent = bullishScore;
-            document.getElementById('bearishScore').textContent = bearishScore;
-            document.getElementById('marketSignal').textContent = signal;
-            document.getElementById('confidence').textContent = confidence;
-            document.getElementById('exposure').textContent = exposure;
-            document.getElementById('action').textContent = action;
-
-            document.getElementById('marketSignalResult').classList.add('show');
-        }
-
-        // Quiz functionality
-        let selectedAnswers = {};
-
-        document.querySelectorAll('.options li').forEach(option => {
-            option.addEventListener('click', function() {
-                const question = this.parentElement.dataset.question;
-
-                // Remove selection from siblings
-                this.parentElement.querySelectorAll('li').forEach(li => {
-                    li.classList.remove('selected');
-                });
-
-                // Add selection to clicked option
-                this.classList.add('selected');
-                selectedAnswers[question] = this.dataset.answer;
-            });
         });
 
-        function submitQuiz() {
-            const totalQuestions = 5;
-            let correctAnswers = 0;
-
-            // Check each question
-            document.querySelectorAll('.options').forEach(optionsList => {
-                const question = optionsList.dataset.question;
-                const selected = selectedAnswers[question];
-
-                optionsList.querySelectorAll('li').forEach(li => {
-                    const answer = li.dataset.answer;
-
-                    if (answer === 'correct') {
-                        li.classList.add('correct');
-                        if (selected === 'correct') {
-                            correctAnswers++;
-                        }
-                    } else if (li.classList.contains('selected')) {
-                        li.classList.add('incorrect');
-                    }
-                });
-            });
-
-            // Calculate score
-            const percentage = (correctAnswers / totalQuestions) * 100;
-
-            // Display results
-            let feedback = '';
-            if (percentage === 100) {
-                feedback = '🎉 Perfect score! You have mastered index options market timing!';
-            } else if (percentage >= 80) {
-                feedback = '✅ Excellent! You have a strong understanding of index options intelligence.';
-            } else if (percentage >= 60) {
-                feedback = '👍 Good job! Review the material to strengthen your understanding.';
-            } else {
-                feedback = '📚 Keep studying! Review the lesson and try again.';
+        // GEX Chart
+        const ctx2 = document.getElementById('gexChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                datasets: [{
+                    label: 'SPY GEX ($B)',
+                    data: [2.5, 1.8, 0.5, -0.3, -1.2],
+                    backgroundColor: ['#10b981', '#10b981', '#f59e0b', '#ef4444', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                }
             }
-
-            document.getElementById('quizScore').textContent = `You scored ${correctAnswers} out of ${totalQuestions} (${percentage}%)`;
-            document.getElementById('quizFeedback').textContent = feedback;
-            document.getElementById('quizResult').classList.add('show');
-
-            // Scroll to results
-            document.getElementById('quizResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        // Create charts
-        window.addEventListener('load', function() {
-            // SPY P/C Ratio History Chart
-            const pcCtx = document.getElementById('pcRatioChart').getContext('2d');
-            new Chart(pcCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-                    datasets: [{
-                        label: 'SPY Put/Call Ratio',
-                        data: [0.95, 0.98, 1.02, 1.08, 1.45],
-                        borderColor: '#a855f7',
-                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }, {
-                        label: '5-Day Average',
-                        data: [0.95, 0.95, 0.95, 0.95, 0.95],
-                        borderColor: '#22d3ee',
-                        borderDash: [5, 5],
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f1f5f9' }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Sudden Defensive Surge on Friday',
-                            color: '#f59e0b'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: { color: '#334155' },
-                            ticks: { color: '#cbd5e1' }
-                        },
-                        x: {
-                            grid: { color: '#334155' },
-                            ticks: { color: '#cbd5e1' }
-                        }
-                    }
-                }
-            });
-
-            // SPY GEX vs Price Chart
-            const gexCtx = document.getElementById('gexChart').getContext('2d');
-            new Chart(gexCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-                    datasets: [{
-                        label: 'SPY GEX ($B)',
-                        data: [2.5, 1.8, 0.5, -0.3, -1.2],
-                        backgroundColor: [
-                            '#10b981',
-                            '#10b981',
-                            '#f59e0b',
-                            '#ef4444',
-                            '#ef4444'
-                        ],
-                        yAxisID: 'y'
-                    }, {
-                        label: 'SPY Price',
-                        data: [448, 450, 451, 452, 452.3],
-                        borderColor: '#22d3ee',
-                        type: 'line',
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f1f5f9' }
-                        },
-                        title: {
-                            display: true,
-                            text: 'GEX Flipped Negative - Warning Signal',
-                            color: '#ef4444'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            position: 'left',
-                            grid: { color: '#334155' },
-                            ticks: { color: '#cbd5e1' },
-                            title: {
-                                display: true,
-                                text: 'GEX ($B)',
-                                color: '#cbd5e1'
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            position: 'right',
-                            grid: { display: false },
-                            ticks: { color: '#22d3ee' },
-                            title: {
-                                display: true,
-                                text: 'SPY Price',
-                                color: '#22d3ee'
-                            }
-                        },
-                        x: {
-                            grid: { color: '#334155' },
-                            ticks: { color: '#cbd5e1' }
-                        }
-                    }
-                }
-            });
-
-            // Exposure Chart
-            const exposureCtx = document.getElementById('exposureChart').getContext('2d');
-            new Chart(exposureCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Strong Bullish', 'Bullish', 'Neutral', 'Bearish', 'Strong Bearish'],
-                    datasets: [{
-                        label: 'Recommended Exposure (%)',
-                        data: [100, 85, 70, 50, 30],
-                        backgroundColor: [
-                            '#10b981',
-                            '#22d3ee',
-                            '#f59e0b',
-                            '#ef4444',
-                            '#7f1d1d'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f1f5f9' }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: { color: '#334155' },
-                            ticks: {
-                                color: '#cbd5e1',
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        },
-                        x: {
-                            grid: { color: '#334155' },
-                            ticks: { color: '#cbd5e1' }
-                        }
-                    }
-                }
-            });
         });
+
+        // Exposure Chart
+        const ctx3 = document.getElementById('exposureChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: ['Strong Bullish', 'Bullish', 'Neutral', 'Bearish', 'Strong Bearish'],
+                datasets: [{
+                    label: 'Recommended Exposure (%)',
+                    data: [100, 85, 70, 50, 30],
+                    backgroundColor: ['#10b981', '#22d3ee', '#f59e0b', '#ef4444', '#7f1d1d']
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' }, max: 100 }
+                }
+            }
+        });
+    });
     </script>
 </body>
 </html>

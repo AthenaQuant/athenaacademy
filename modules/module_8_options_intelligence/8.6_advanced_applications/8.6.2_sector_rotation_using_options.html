@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master sector rotation using options intelligence. Learn to identify which sectors institutions favor using XLK, XLF, XLE options flow and IV analysis.">
+    <title>8.6.2 Sector Rotation Using Options | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../../assets/images/logo.png" type="image/png">
+    <style>
+        .sector-eq { font-size: 1.3rem; color: #a855f7; text-align: center; padding: 18px; background: rgba(168, 85, 247, 0.1); border-radius: 10px; margin: 18px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+        @media (max-width: 768px) { .sector-grid { grid-template-columns: repeat(2, 1fr); } }
+        .sector-card { background: rgba(0,0,0,0.2); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 12px; text-align: center; transition: all 0.3s; }
+        .sector-card:hover { border-color: #a855f7; transform: translateY(-3px); }
+        .sector-card h4 { margin: 0 0 4px 0; color: #22d3ee; font-size: 1rem; }
+        .sector-ticker { color: #94a3b8; font-size: 0.85rem; }
+        .sector-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.88rem; }
+        .sector-table th, .sector-table td { padding: 10px; border: 1px solid rgba(148, 163, 184, 0.2); text-align: center; }
+        .sector-table th { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .sector-table tr:hover { background: rgba(168, 85, 247, 0.1); }
+        .leader { background: rgba(16, 185, 129, 0.15); border-left: 4px solid #10b981; }
+        .laggard { background: rgba(239, 68, 68, 0.15); border-left: 4px solid #ef4444; }
+        .calculator-box { background: rgba(0,0,0,0.3); border-radius: 14px; padding: 22px; margin: 22px 0; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 12px 0; }
+        @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 10px; color: #f1f5f9; width: 100%; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(168, 85, 247, 0.4); }
+        .calc-result { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px; padding: 12px; margin-top: 12px; }
+        .chart-container { position: relative; height: 350px; margin: 20px 0; }
+        .quiz-section { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid rgba(148,163,184,0.2); }
+        .quiz-question { margin: 25px 0; padding: 20px; background: rgba(0,0,0,0.15); border-radius: 10px; }
+        .quiz-options { margin: 15px 0; }
+        .quiz-options button { display: block; width: 100%; text-align: left; padding: 12px 16px; margin: 8px 0; background: rgba(0,0,0,0.3); border: 2px solid rgba(148,163,184,0.3); border-radius: 8px; color: #f1f5f9; cursor: pointer; transition: all 0.2s; }
+        .quiz-options button:hover { border-color: #a855f7; background: rgba(168,85,247,0.1); transform: translateX(4px); }
+        .quiz-explanation { margin-top: 12px; padding: 12px; background: rgba(34,211,238,0.1); border-left: 3px solid #22d3ee; border-radius: 6px; font-size: 0.9rem; color: #cbd5e1; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="../../../index.html" class="nav-home">&larr; Back to Course</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 8.6.2</span><span class="nav-module-title">Sector Rotation Using Options</span></div>
+        <a href="../../../index.html" class="nav-next">Course Home &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 8: Options Market Intelligence</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.6 Advanced Applications</span><span class="breadcrumb-separator">&rsaquo;</span><span>8.6.2 Sector Rotation</span></div>
+        <h1>Sector Rotation Using Options</h1>
+        <p class="module-subtitle">Identify which sectors institutions are positioning for using sector ETF options. Learn XLK, XLF, XLE intelligence to rotate into leaders and avoid laggards.</p>
+        <div class="module-meta"><span class="meta-item">⏱️ 50 min read</span><span class="meta-item">📊 3 Visualizations</span><span class="meta-item">💻 Sector Analyzer</span><span class="meta-item">✅ 5 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should I Care?</h2>
+            <div class="info-box info-box-warning"><div class="info-box-title">November 2023: Wrong Sector, Wrong Trade</div>
+            <p>You carefully selected financials (JPM, BAC, C) based on strong technicals. Allocated 40% of portfolio. Unknown to you: XLF (Financials ETF) options showed massive put buying while XLE (Energy) had aggressive call accumulation. Result: Your financials down 8% over 3 weeks. Energy stocks up 11%. <strong>You underperformed by 19% simply by being in the wrong sector.</strong> Sector ETF options would have told you to rotate from XLF to XLE.</p></div>
+
+            <div class="sector-eq">Sector Signal = f(P/C Ratio, IV Rank, Unusual Activity, Price Momentum) → Allocation</div>
+
+            <div class="card-grid">
+                <div class="card"><h4>Sector > Stock Selection</h4><p>You can pick the best stock in a terrible sector and still lose. Or pick mediocre stock in hot sector and win big. Sector matters more.</p></div>
+                <div class="card"><h4>Institutional Positioning</h4><p>Institutions rotate capital using sector ETF options. XLK heavy call buying = tech exposure increasing.</p></div>
+                <div class="card"><h4>Early Rotation Signals</h4><p>Sector options show rotation 5-10 days before price confirms. Position ahead of the crowd.</p></div>
+                <div class="card"><h4>Risk Management</h4><p>Don't concentrate in sectors institutions are exiting. Spread across leaders.</p></div>
+            </div>
+
+            <h3>The 11 SPDR Sector ETFs</h3>
+            <div class="sector-grid">
+                <div class="sector-card"><h4>Technology</h4><div class="sector-ticker">XLK - 28% of market</div></div>
+                <div class="sector-card"><h4>Financials</h4><div class="sector-ticker">XLF - 13% of market</div></div>
+                <div class="sector-card"><h4>Health Care</h4><div class="sector-ticker">XLV - 12% of market</div></div>
+                <div class="sector-card"><h4>Consumer Disc.</h4><div class="sector-ticker">XLY - 10% of market</div></div>
+                <div class="sector-card"><h4>Communication</h4><div class="sector-ticker">XLC - 9% of market</div></div>
+                <div class="sector-card"><h4>Industrials</h4><div class="sector-ticker">XLI - 8% of market</div></div>
+                <div class="sector-card"><h4>Consumer Staples</h4><div class="sector-ticker">XLP - 6% of market</div></div>
+                <div class="sector-card"><h4>Energy</h4><div class="sector-ticker">XLE - 4% of market</div></div>
+                <div class="sector-card"><h4>Utilities</h4><div class="sector-ticker">XLU - 3% of market</div></div>
+                <div class="sector-card"><h4>Real Estate</h4><div class="sector-ticker">XLRE - 2% of market</div></div>
+                <div class="sector-card"><h4>Materials</h4><div class="sector-ticker">XLB - 2% of market</div></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 2: Building Intuition</h2>
+            <h3>Why Institutions Use Sector ETF Options</h3>
+            <div class="info-box"><div class="info-box-title">Portfolio Manager Perspective</div>
+            <p>You manage $2B and believe technology will outperform. Options: (1) Buy individual tech stocks over weeks with huge market impact, or (2) Buy XLK calls instantly with zero market impact. Result: Institutions use sector ETF options for quick, efficient sector bets.</p></div>
+
+            <h3>What Sector Options Tell You</h3>
+            <table class="sector-table">
+                <thead><tr><th>Signal</th><th>Meaning</th><th>Trading Action</th></tr></thead>
+                <tbody>
+                    <tr class="leader"><td>XLK heavy call buying</td><td>Bullish on tech</td><td>Overweight tech stocks 25-30%</td></tr>
+                    <tr class="laggard"><td>XLF heavy put buying</td><td>Bearish on financials</td><td>Avoid/underweight financials 0-5%</td></tr>
+                    <tr class="leader"><td>XLE unusual call activity</td><td>Energy rotation</td><td>Rotate into energy names</td></tr>
+                    <tr><td>XLP defensive accumulation</td><td>Flight to safety</td><td>Add defensive staples</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Sector Rotation by Economic Cycle</h3>
+            <div class="sector-eq">
+                Early Expansion: XLK, XLY, XLF lead<br>
+                Mid Expansion: XLI, XLB, XLE lead<br>
+                Late Expansion: XLE, XLB, XLRE lead<br>
+                Contraction: XLU, XLP, XLV lead
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+            <h3>Sector Scoring Formula</h3>
+            <div class="sector-eq">Sector Score = (0.30 × P/C Signal) + (0.25 × IV Signal) + (0.25 × UA Signal) + (0.20 × PM Signal)</div>
+            <p>Each signal normalized -10 to +10 (bearish to bullish)</p>
+
+            <h3>Signal Components</h3>
+            <table class="sector-table">
+                <thead><tr><th>Component</th><th>Bullish (>6)</th><th>Neutral (0-6)</th><th>Bearish (<0)</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>P/C Ratio</strong></td><td>&lt;0.7</td><td>0.7-1.3</td><td>&gt;1.3</td></tr>
+                    <tr><td><strong>IV Rank</strong></td><td>&lt;40 (low fear)</td><td>40-60</td><td>&gt;60 (high fear)</td></tr>
+                    <tr><td><strong>Unusual Activity</strong></td><td>&gt;2.5x calls</td><td>Normal</td><td>&gt;2.5x puts</td></tr>
+                    <tr><td><strong>30-day Return</strong></td><td>&gt;+5%</td><td>-2% to +5%</td><td>&lt;-2%</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 4: Numerical Example</h2>
+            <h3>Complete Sector Analysis - November 13, 2023</h3>
+            <div class="info-box"><div class="info-box-title">Market Context</div>
+            <p>SPY slightly red (-0.3%), mixed market day. Scanning all 11 sectors for rotation opportunities.</p></div>
+
+            <h4>Step 1: Scan All Sectors</h4>
+            <table class="sector-table">
+                <thead><tr><th>Sector</th><th>ETF</th><th>P/C</th><th>IV Rank</th><th>Unusual</th><th>Score</th><th>Rank</th></tr></thead>
+                <tbody>
+                    <tr class="leader"><td>Communication</td><td>XLC</td><td>0.58</td><td>18</td><td>Calls 2.8x</td><td><strong>7.8/10</strong></td><td>1 ⭐</td></tr>
+                    <tr class="leader"><td>Technology</td><td>XLK</td><td>0.62</td><td>22</td><td>Calls 3.2x</td><td><strong>7.4/10</strong></td><td>2 ⭐</td></tr>
+                    <tr><td>Consumer Disc</td><td>XLY</td><td>0.75</td><td>35</td><td>Normal</td><td>5.9/10</td><td>3</td></tr>
+                    <tr><td>Industrials</td><td>XLI</td><td>0.95</td><td>48</td><td>Normal</td><td>4.2/10</td><td>4</td></tr>
+                    <tr><td>Health Care</td><td>XLV</td><td>1.05</td><td>52</td><td>Normal</td><td>3.8/10</td><td>5</td></tr>
+                    <tr><td>Financials</td><td>XLF</td><td>1.15</td><td>58</td><td>Puts 1.5x</td><td>2.8/10</td><td>8</td></tr>
+                    <tr><td>Energy</td><td>XLE</td><td>1.25</td><td>65</td><td>Normal</td><td>2.3/10</td><td>9</td></tr>
+                    <tr class="laggard"><td>Utilities</td><td>XLU</td><td>1.48</td><td>72</td><td>Puts 2.1x</td><td><strong>1.2/10</strong></td><td>11 ⚠️</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Step 2: Portfolio Allocation</h4>
+            <div class="info-box info-box-warning"><div class="info-box-title">Recommended Allocation</div>
+            <ul>
+                <li><strong>Overweight (65%):</strong> XLC 25%, XLK 25%, XLY 15%</li>
+                <li><strong>Neutral (20%):</strong> XLI, XLV, XLP opportunistic</li>
+                <li><strong>Avoid (0%):</strong> XLU, XLRE, XLE, XLF</li>
+            </ul></div>
+
+            <h4>Actual Results (Next 2 Weeks)</h4>
+            <ul>
+                <li>XLC (Communication): +6.2%</li>
+                <li>XLK (Technology): +5.8%</li>
+                <li>XLU (Utilities): -3.8% ⚠️</li>
+            </ul>
+            <p><strong>Following sector signals: +4.1% return vs. +0.8% random picking = +3.3% outperformance</strong></p>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 5: Python Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>sector_rotation_intelligence.py</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code class="language-python">"""
+Sector Rotation Intelligence Using Options
+Analyze all 11 SPDR sector ETFs for rotation signals.
+"""
+
+import pandas as pd
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List
+
+class SectorSignal(Enum):
+    STRONG_LEADER = "Strong Leader"
+    LEADER = "Leader"
+    NEUTRAL = "Neutral"
+    LAGGARD = "Laggard"
+    STRONG_LAGGARD = "Strong Laggard"
+
+@dataclass
+class SectorAnalysis:
+    """Single sector intelligence."""
+    sector: str
+    etf: str
+    put_call_ratio: float
+    iv_rank: float
+    unusual_activity_ratio: float
+    price_momentum_30d: float
+    total_score: float
+    classification: SectorSignal
+    recommended_weight: float
+
+SECTORS = {
+    'XLK': 'Technology',
+    'XLF': 'Financials',
+    'XLV': 'Health Care',
+    'XLY': 'Consumer Discretionary',
+    'XLC': 'Communication Services',
+    'XLI': 'Industrials',
+    'XLP': 'Consumer Staples',
+    'XLE': 'Energy',
+    'XLU': 'Utilities',
+    'XLRE': 'Real Estate',
+    'XLB': 'Materials'
+}
+
+def calculate_sector_score(
+    pc_ratio: float,
+    iv_rank: float,
+    unusual_ratio: float,
+    momentum_30d: float
+) -> float:
+    """Calculate sector strength score 0-10."""
+    # P/C signal (-10 to +10)
+    if pc_ratio < 0.7:
+        pc_signal = 8
+    elif pc_ratio < 0.9:
+        pc_signal = 5
+    elif pc_ratio < 1.1:
+        pc_signal = 0
+    elif pc_ratio < 1.3:
+        pc_signal = -5
+    else:
+        pc_signal = -8
+
+    # IV Rank signal
+    if iv_rank < 30:
+        iv_signal = 7
+    elif iv_rank < 50:
+        iv_signal = 3
+    elif iv_rank < 70:
+        iv_signal = -3
+    else:
+        iv_signal = -7
+
+    # Unusual activity
+    if unusual_ratio > 2.5:
+        ua_signal = 8
+    elif unusual_ratio > 1.5:
+        ua_signal = 4
+    elif unusual_ratio < 0.7:
+        ua_signal = -4
+    else:
+        ua_signal = 0
+
+    # Price momentum
+    if momentum_30d > 5:
+        pm_signal = 7
+    elif momentum_30d > 2:
+        pm_signal = 4
+    elif momentum_30d > -2:
+        pm_signal = 0
+    elif momentum_30d > -5:
+        pm_signal = -4
+    else:
+        pm_signal = -7
+
+    # Weighted score
+    score = (0.30 * pc_signal + 0.25 * iv_signal +
+             0.25 * ua_signal + 0.20 * pm_signal)
+
+    # Normalize to 0-10
+    return max(0, min(10, (score + 10) / 2))
+
+def classify_sector(score: float) -> tuple:
+    """Classify sector and recommend weight."""
+    if score >= 7:
+        return SectorSignal.STRONG_LEADER, 0.25
+    elif score >= 6:
+        return SectorSignal.LEADER, 0.15
+    elif score >= 4:
+        return SectorSignal.NEUTRAL, 0.08
+    elif score >= 2:
+        return SectorSignal.LAGGARD, 0.03
+    else:
+        return SectorSignal.STRONG_LAGGARD, 0.0
+
+def analyze_sectors(sector_data: Dict) -> List[SectorAnalysis]:
+    """Analyze all sectors and rank them."""
+    results = []
+
+    for etf, data in sector_data.items():
+        score = calculate_sector_score(
+            data['pc_ratio'],
+            data['iv_rank'],
+            data['unusual_ratio'],
+            data['momentum_30d']
+        )
+
+        classification, weight = classify_sector(score)
+
+        results.append(SectorAnalysis(
+            sector=SECTORS[etf],
+            etf=etf,
+            put_call_ratio=data['pc_ratio'],
+            iv_rank=data['iv_rank'],
+            unusual_activity_ratio=data['unusual_ratio'],
+            price_momentum_30d=data['momentum_30d'],
+            total_score=score,
+            classification=classification,
+            recommended_weight=weight
+        ))
+
+    # Sort by score descending
+    results.sort(key=lambda x: x.total_score, reverse=True)
+    return results
+
+# Example usage
+if __name__ == "__main__":
+    sector_data = {
+        'XLC': {'pc_ratio': 0.58, 'iv_rank': 18, 'unusual_ratio': 2.8, 'momentum_30d': 6.2},
+        'XLK': {'pc_ratio': 0.62, 'iv_rank': 22, 'unusual_ratio': 3.2, 'momentum_30d': 5.8},
+        'XLF': {'pc_ratio': 1.15, 'iv_rank': 58, 'unusual_ratio': 0.7, 'momentum_30d': -1.2},
+        'XLU': {'pc_ratio': 1.48, 'iv_rank': 72, 'unusual_ratio': 0.5, 'momentum_30d': -3.8},
+    }
+
+    results = analyze_sectors(sector_data)
+
+    print("SECTOR ROTATION ANALYSIS")
+    print("=" * 60)
+    for i, result in enumerate(results, 1):
+        print(f"{i}. {result.etf} ({result.sector})")
+        print(f"   Score: {result.total_score:.1f}/10")
+        print(f"   {result.classification.value}")
+        print(f"   Recommended Weight: {result.recommended_weight*100:.0f}%")
+        print()</code></pre>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications</h2>
+
+            <h3>Sector Performance Comparison</h3>
+            <div class="chart-container"><canvas id="sectorPerfChart"></canvas></div>
+
+            <h3>Sector Put/Call Ratios</h3>
+            <div class="chart-container"><canvas id="sectorPCChart"></canvas></div>
+
+            <h3>Recommended Portfolio Allocation</h3>
+            <div class="chart-container"><canvas id="allocationChart"></canvas></div>
+
+            <div class="calculator-box">
+                <h3>Sector Score Calculator</h3>
+                <div class="calc-grid">
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Put/Call Ratio</label><input type="number" id="pcRatio" class="calc-input" value="0.65" step="0.01"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">IV Rank (0-100)</label><input type="number" id="ivRank" class="calc-input" value="25" step="1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">Unusual Activity Ratio</label><input type="number" id="unusualRatio" class="calc-input" value="3.2" step="0.1"></div>
+                    <div><label style="color:#94a3b8;font-size:0.85rem;">30-Day Return (%)</label><input type="number" id="priceChange" class="calc-input" value="8.2" step="0.1"></div>
+                </div>
+                <button class="calc-btn" onclick="calculateSector()">Calculate Sector Score</button>
+                <div class="calc-result" id="sectorResult" style="display:none;"></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 7: Common Mistakes</h2>
+            <div class="card-grid">
+                <div class="card"><h4>Mistake 1: Ignoring Sector Signals</h4><p><strong>Wrong:</strong> Only analyzing individual stocks. <strong>Right:</strong> Sector first, then pick best stocks within leaders.</p></div>
+                <div class="card"><h4>Mistake 2: Equal Weighting</h4><p><strong>Wrong:</strong> 9% in each sector. <strong>Right:</strong> Overweight leaders (25%), underweight laggards (0%).</p></div>
+                <div class="card"><h4>Mistake 3: Fighting Rotation</h4><p><strong>Wrong:</strong> Staying in lagging sectors. <strong>Right:</strong> Follow institutional flow, rotate with them.</p></div>
+                <div class="card"><h4>Mistake 4: One Signal Only</h4><p><strong>Wrong:</strong> Using P/C ratio alone. <strong>Right:</strong> Combine P/C + IV + Unusual Activity + Momentum.</p></div>
+            </div>
+        </section>
+
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary &amp; Key Takeaways</h2>
+            <div class="info-box"><div class="info-box-title">Core Principles</div>
+                <ul>
+                    <li><strong>Sector > Stock:</strong> Being in right sector matters more than picking right stock.</li>
+                    <li><strong>Overweight leaders 60-70%:</strong> Focus capital in top 2-3 sectors.</li>
+                    <li><strong>Avoid laggards entirely:</strong> Don't allocate to bottom 3 sectors.</li>
+                    <li><strong>Sector options lead price:</strong> Rotation shows in options 5-10 days early.</li>
+                    <li><strong>Economic cycle matters:</strong> Different phases favor different sectors.</li>
+                </ul>
+            </div>
+
+            <div class="quiz-section">
+                <h3>Test Your Understanding</h3>
+                <div class="quiz-question">
+                    <p><strong>Q1:</strong> XLK shows P/C 0.62, unusual call buying 3x average, IV rank 22. What should you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Avoid tech - too crowded</button>
+                        <button onclick="checkAnswer(this, true)">Overweight tech stocks 25-30% - strong leader signal</button>
+                        <button onclick="checkAnswer(this, false)">Equal weight with other sectors</button>
+                        <button onclick="checkAnswer(this, false)">Short tech - contrarian play</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">All signals bullish: Low P/C (0.62), unusual call buying, low IV rank. This is STRONG LEADER. Overweight tech 25-30%.</div>
+                </div>
+                <div class="quiz-question">
+                    <p><strong>Q2:</strong> You find perfect setup in financial stock (JPM), but XLF options show heavy put buying. What do you do?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Take full position - individual stock trumps sector</button>
+                        <button onclick="checkAnswer(this, true)">Skip or drastically reduce size - sector headwind too strong</button>
+                        <button onclick="checkAnswer(this, false)">Short JPM instead</button>
+                        <button onclick="checkAnswer(this, false)">Ignore sector signals</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Best stock in bad sector still underperforms. XLF bearish = skip financials entirely or minimal allocation.</div>
+                </div>
+                <div class="quiz-question">
+                    <p><strong>Q3:</strong> What does unusual XLE call buying (3x average) indicate?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Nothing - just speculation</button>
+                        <button onclick="checkAnswer(this, true)">Institutions rotating INTO energy - overweight energy stocks</button>
+                        <button onclick="checkAnswer(this, false)">Energy is overbought - fade the move</button>
+                        <button onclick="checkAnswer(this, false)">Wait for confirmation in price</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Unusual call buying = institutional positioning. Rotate into energy stocks BEFORE price confirms (options lead).</div>
+                </div>
+                <div class="quiz-question">
+                    <p><strong>Q4:</strong> How should you allocate across sectors?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Equal weight all 11 sectors (9% each)</button>
+                        <button onclick="checkAnswer(this, false)">Follow market cap weights</button>
+                        <button onclick="checkAnswer(this, true)">Overweight top 2-3 leaders (60-70%), avoid bottom 3 (0%)</button>
+                        <button onclick="checkAnswer(this, false)">Only invest in #1 ranked sector</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Concentrate in leaders (60-70% in top 2-3), avoid laggards completely (0% in bottom 3), neutral on middle.</div>
+                </div>
+                <div class="quiz-question">
+                    <p><strong>Q5:</strong> Sector rotation analysis should be done how often?</p>
+                    <div class="quiz-options">
+                        <button onclick="checkAnswer(this, false)">Once per quarter</button>
+                        <button onclick="checkAnswer(this, true)">Weekly or bi-weekly - sectors rotate frequently</button>
+                        <button onclick="checkAnswer(this, false)">Only during market corrections</button>
+                        <button onclick="checkAnswer(this, false)">Set it and forget it</button>
+                    </div>
+                    <div class="quiz-explanation" style="display:none;">Sector rotation happens continuously. Scan weekly/bi-weekly to catch rotations early. Leadership changes every few weeks.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:40px 20px; color:#64748b; border-top:1px solid rgba(148,163,184,0.1); margin-top:60px;">
+        <p>&copy; 2025 Quantitative Trading Mastery. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="../../../assets/js/shared-scripts.js"></script>
+    <script>
+    function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    }
+
+    function checkAnswer(btn, correct) {
+        const question = btn.closest('.quiz-question');
+        const buttons = question.querySelectorAll('.quiz-options button');
+        buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+        btn.style.opacity = '1';
+        btn.style.background = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        btn.style.border = correct ? '2px solid #10b981' : '2px solid #ef4444';
+        question.querySelector('.quiz-explanation').style.display = 'block';
+    }
+
+    function calculateSector() {
+        const pc = parseFloat(document.getElementById('pcRatio').value);
+        const iv = parseFloat(document.getElementById('ivRank').value);
+        const ua = parseFloat(document.getElementById('unusualRatio').value);
+        const pm = parseFloat(document.getElementById('priceChange').value);
+
+        let pcSig = pc < 0.7 ? 8 : pc < 0.9 ? 5 : pc < 1.1 ? 0 : pc < 1.3 ? -5 : -8;
+        let ivSig = iv < 30 ? 7 : iv < 50 ? 3 : iv < 70 ? -3 : -7;
+        let uaSig = ua > 2.5 ? 8 : ua > 1.5 ? 4 : ua < 0.7 ? -4 : 0;
+        let pmSig = pm > 5 ? 7 : pm > 2 ? 4 : pm > -2 ? 0 : pm > -5 ? -4 : -7;
+
+        const score = Math.max(0, Math.min(10, ((0.30*pcSig + 0.25*ivSig + 0.25*uaSig + 0.20*pmSig) + 10) / 2));
+
+        let classification, weight, recommendation;
+        if (score >= 7) {
+            classification = "STRONG LEADER ⭐";
+            weight = "25-30%";
+            recommendation = "Primary allocation, focus stock selection here";
+        } else if (score >= 6) {
+            classification = "LEADER";
+            weight = "15-20%";
+            recommendation = "Overweight, favorable for picks";
+        } else if (score >= 4) {
+            classification = "NEUTRAL";
+            weight = "8-10%";
+            recommendation = "Normal weight, take A+ setups only";
+        } else if (score >= 2) {
+            classification = "LAGGARD";
+            weight = "3-5%";
+            recommendation = "Underweight, very selective";
+        } else {
+            classification = "STRONG LAGGARD ⚠️";
+            weight = "0-2%";
+            recommendation = "Avoid this sector";
+        }
+
+        const resultDiv = document.getElementById('sectorResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="color:#a855f7;margin-top:0;">Sector Analysis</h4>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0;">
+                <div><strong style="color:#94a3b8;">Total Score:</strong> ${score.toFixed(1)}/10</div>
+                <div><strong style="color:#94a3b8;">Classification:</strong> ${classification}</div>
+                <div><strong style="color:#94a3b8;">Recommended Weight:</strong> ${weight}</div>
+            </div>
+            <p style="color:#cbd5e1;margin-top:10px;">${recommendation}</p>
+        `;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx1 = document.getElementById('sectorPerfChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['XLC', 'XLK', 'XLY', 'XLI', 'XLV', 'XLP', 'XLB', 'XLF', 'XLE', 'XLRE', 'XLU'],
+                datasets: [{
+                    label: '2-Week Performance (%)',
+                    data: [6.2, 5.8, 3.1, 1.5, 0.8, 0.5, -0.3, -1.2, -1.5, -2.9, -3.8],
+                    backgroundColor: function(context) {
+                        const val = context.parsed.y;
+                        return val > 4 ? '#10b981' : val > 0 ? '#22d3ee' : val > -2 ? '#f59e0b' : '#ef4444';
+                    }
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                }
+            }
+        });
+
+        const ctx2 = document.getElementById('sectorPCChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['XLC', 'XLK', 'XLY', 'XLI', 'XLV', 'XLF', 'XLE', 'XLU'],
+                datasets: [{
+                    label: 'Put/Call Ratio',
+                    data: [0.58, 0.62, 0.75, 0.95, 1.05, 1.15, 1.25, 1.48],
+                    backgroundColor: function(context) {
+                        const val = context.parsed.y;
+                        return val < 0.7 ? '#10b981' : val < 1.1 ? '#22d3ee' : val < 1.3 ? '#f59e0b' : '#ef4444';
+                    }
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                }
+            }
+        });
+
+        const ctx3 = document.getElementById('allocationChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'pie',
+            data: {
+                labels: ['XLC (Comm)', 'XLK (Tech)', 'XLY (Cons Disc)', 'Neutral Sectors', 'Cash'],
+                datasets: [{
+                    data: [25, 25, 15, 20, 15],
+                    backgroundColor: ['#10b981', '#22d3ee', '#a855f7', '#f59e0b', '#cbd5e1']
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } }
+            }
+        });
+    });
+    </script>
+</body>
+</html>
