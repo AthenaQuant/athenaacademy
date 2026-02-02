@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Value Profile scenarios and auction market context. Learn 10 VP scenarios to determine market bias, identify acceptance/rejection, and trade with institutional context.">
+    <title>4.4 VP Scenarios & Auction Market Context | Quantitative Trading Mastery</title>
+    <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="icon" href="../../assets/images/logo.png" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .vp-eq { font-size: 1.2rem; color: #a855f7; text-align: center; padding: 18px; background: rgba(168,85,247,0.1); border-radius: 10px; margin: 18px 0; border: 1px solid rgba(168,85,247,0.3); font-family: 'Courier New', monospace; }
+        .scenario-box { background: linear-gradient(135deg, rgba(168,85,247,0.06), rgba(34,211,238,0.04)); border: 2px solid rgba(168,85,247,0.25); border-radius: 12px; padding: 22px; margin: 25px 0; }
+        .scenario-box h4 { color: #a855f7; margin-top: 0; font-size: 1.15rem; }
+        .scenario-box .scenario-tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; }
+        .tag-bullish { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+        .tag-bearish { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+        .tag-neutral { background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid rgba(251,191,36,0.4); }
+        .tag-strong { background: rgba(16,185,129,0.3); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5); }
+        .tag-reversal { background: rgba(236,72,153,0.2); color: #f472b6; border: 1px solid rgba(236,72,153,0.4); }
+        .vp-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.88rem; }
+        .vp-table th, .vp-table td { padding: 10px; border: 1px solid rgba(148,163,184,0.2); text-align: center; }
+        .vp-table th { background: rgba(168,85,247,0.2); color: #d8b4fe; }
+        .vp-table tr:hover { background: rgba(168,85,247,0.08); }
+        .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 18px 0; }
+        @media (max-width: 768px) { .level-grid { grid-template-columns: repeat(2, 1fr); } }
+        .level-card { background: rgba(0,0,0,0.25); border-radius: 8px; padding: 14px; text-align: center; border: 1px solid rgba(148,163,184,0.15); }
+        .level-card h4 { margin: 0 0 4px 0; font-size: 1rem; }
+        .level-card .level-name { color: #94a3b8; font-size: 0.82rem; }
+        .level-rh h4 { color: #ef4444; }
+        .level-vah h4 { color: #f97316; }
+        .level-poc h4 { color: #a855f7; }
+        .level-val h4 { color: #22d3ee; }
+        .level-rl h4 { color: #3b82f6; }
+        .calculator-box { background: rgba(0,0,0,0.3); border-radius: 14px; padding: 22px; margin: 22px 0; border: 1px solid rgba(168,85,247,0.3); }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 12px 0; }
+        @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+        .calc-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(148,163,184,0.3); border-radius: 6px; padding: 10px; color: #f1f5f9; width: 100%; box-sizing: border-box; }
+        .calc-label { display: block; color: #cbd5e1; font-size: 0.85rem; margin-bottom: 4px; font-weight: 500; }
+        .calc-btn { background: linear-gradient(135deg, #a855f7, #9333ea); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s; width: 100%; margin-top: 8px; }
+        .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(168,85,247,0.4); }
+        .calc-result { background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; padding: 16px; margin-top: 14px; display: none; }
+        .chart-container { position: relative; height: 380px; margin: 20px 0; }
+        .cheat-row { display: grid; grid-template-columns: 80px 1fr 100px 1fr; gap: 8px; padding: 10px; border-bottom: 1px solid rgba(148,163,184,0.15); align-items: center; font-size: 0.88rem; }
+        @media (max-width: 768px) { .cheat-row { grid-template-columns: 1fr 1fr; } }
+        .cheat-row:hover { background: rgba(168,85,247,0.06); }
+        .cheat-header { font-weight: 700; color: #d8b4fe; background: rgba(168,85,247,0.12); border-radius: 6px 6px 0 0; }
+        .quiz-section { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid rgba(148,163,184,0.2); }
+        .quiz-question { margin: 25px 0; padding: 20px; background: rgba(0,0,0,0.15); border-radius: 10px; }
+        .quiz-options { margin: 15px 0; }
+        .quiz-options button { display: block; width: 100%; text-align: left; padding: 12px 16px; margin: 8px 0; background: rgba(0,0,0,0.3); border: 2px solid rgba(148,163,184,0.3); border-radius: 8px; color: #f1f5f9; cursor: pointer; transition: all 0.2s; font-size: 0.92rem; }
+        .quiz-options button:hover { border-color: #a855f7; background: rgba(168,85,247,0.1); transform: translateX(4px); }
+        .quiz-options button.correct { border-color: #22c55e; background: rgba(34,197,94,0.12); }
+        .quiz-options button.incorrect { border-color: #ef4444; background: rgba(239,68,68,0.12); }
+        .quiz-explanation { margin-top: 12px; padding: 12px; background: rgba(34,211,238,0.1); border-left: 3px solid #22d3ee; border-radius: 6px; font-size: 0.9rem; color: #cbd5e1; display: none; }
+    </style>
+</head>
+<body>
+    <nav class="module-nav-header"><div class="container"><div class="nav-content">
+        <a href="../../index.html" class="nav-home">&larr; Back to Course</a>
+        <div class="nav-module-info"><span class="nav-module-number">Module 4.4</span><span class="nav-module-title">VP Scenarios & Auction Market Context</span></div>
+        <a href="../../index.html" class="nav-next">Course Home &rarr;</a>
+    </div></div></nav>
+
+    <header class="module-hero"><div class="container"><div class="module-hero-content">
+        <div class="module-breadcrumb"><span>Module 4: Volume Analysis</span><span class="breadcrumb-separator">&rsaquo;</span><span>4.4 VP Scenarios & Auction Market Context</span></div>
+        <h1>VP Scenarios & Auction Market Context</h1>
+        <p class="module-subtitle">Master 10 Value Profile scenarios to determine market context, predict price behavior, and trade with institutional auction flow.</p>
+        <div class="module-meta"><span class="meta-item">⏱️ 55 min read</span><span class="meta-item">📊 5 Visualizations</span><span class="meta-item">💻 Scenario Analyzer</span><span class="meta-item">✅ 10 Quiz Questions</span></div>
+    </div></div></header>
+
+    <main class="container content-wrapper">
+
+        <!-- ═══════════════════ PART 1 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 1: Why Should You Care?</h2>
+
+            <div class="info-box info-box-warning"><div class="info-box-title">The Context-Blind Trade That Wipes Accounts</div>
+            <p>9:32 AM. ES futures open at 4548 — above yesterday's Value Area High (4545). You think: <em>"Price above value = bullish, go long."</em> You buy immediately. By 10:15 AM price rejects, drops back to 4538 POC, keeps falling to 4530 VAL. You're stopped out for -10 points ($500/contract).</p>
+            <p><strong>What went wrong?</strong> You didn't check whether buyers <em>accepted</em> higher prices. Volume was thin above VAH. No time was spent there. It was a <strong>Scenario 3: Open Above Value + Not Accepted</strong> — a bearish setup, not bullish.</p>
+            <p><strong>If you knew the scenario:</strong> You would have waited 15-30 minutes for acceptance, seen the rejection, and <em>shorted</em> the return to value. Instead of -$500, you'd be +$750.</p></div>
+
+            <div class="vp-eq">Trading Without VP Context = 50% Win Rate (Coin Flip)<br>Trading WITH VP Context = 65-75% Win Rate (Real Edge)</div>
+
+            <div class="card-grid">
+                <div class="card"><h4>Context Is King</h4><p>Where price opens relative to previous value determines the day's likely behavior. Context gives you the bias <em>before</em> you enter.</p></div>
+                <div class="card"><h4>Acceptance vs Rejection</h4><p>Time + Volume at a level = acceptance (trend). Quick rejection = reversal. This distinction is everything.</p></div>
+                <div class="card"><h4>10 Repeating Scenarios</h4><p>Markets cycle through the same 10 VP scenarios. Learn them and you'll recognize the setup within 30 minutes of the open.</p></div>
+                <div class="card"><h4>Institutional Footprint</h4><p>Value Areas reflect where institutions traded. Trading with context means trading with smart money.</p></div>
+            </div>
+
+            <div class="info-box"><div class="info-box-title">Real Example: ES Futures, January 16 2024</div>
+            <p>Previous day VP: VAH 4545, POC 4538, VAL 4530, RH 4550, RL 4525. ES opens at 4547 (above VAH). Buyers hold above 4545 for 45 minutes with increasing volume. <strong>Scenario 1: Open Above Value + Accept Higher.</strong> Context = BULLISH. Buy pullback to 4545. Target: 4550 RH. Result: ES reaches 4551. Win rate on this scenario historically: <strong>72%.</strong></p></div>
+        </section>
+
+        <!-- ═══════════════════ PART 2 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 2: The Intuition — Auction Market Theory</h2>
+
+            <h3>How Markets Actually Work</h3>
+            <p>Markets are continuous two-sided auctions. Buyers and sellers negotiate fair value through price discovery. The Value Profile captures this process:</p>
+
+            <div class="card-grid">
+                <div class="card"><h4>Fair Value</h4><p>The <strong>Value Area</strong> (70% of volume) represents where most participants agreed on price. This is "fair value" for that session.</p></div>
+                <div class="card"><h4>POC = Fairest Price</h4><p>The <strong>Point of Control</strong> is the single price with most volume. It's the price both sides found most acceptable — the balance point.</p></div>
+                <div class="card"><h4>Outside Value = Exploration</h4><p>When price moves outside the Value Area, the market is exploring for new fair value. This is price discovery.</p></div>
+                <div class="card"><h4>Inside Value = Acceptance</h4><p>When price stays within value, the market accepts current fair value. Expect rotation, not trend.</p></div>
+            </div>
+
+            <h3>The 5 Key VP Levels</h3>
+            <div class="level-grid">
+                <div class="level-card level-rh"><h4>RH</h4><div class="level-name">Range High</div><p style="font-size:0.8rem;color:#94a3b8;margin:4px 0 0">Previous day's high</p></div>
+                <div class="level-card level-vah"><h4>VAH</h4><div class="level-name">Value Area High</div><p style="font-size:0.8rem;color:#94a3b8;margin:4px 0 0">Top of fair value = Supply</p></div>
+                <div class="level-card level-poc"><h4>POC</h4><div class="level-name">Point of Control</div><p style="font-size:0.8rem;color:#94a3b8;margin:4px 0 0">Balance point = Magnet</p></div>
+                <div class="level-card level-val"><h4>VAL</h4><div class="level-name">Value Area Low</div><p style="font-size:0.8rem;color:#94a3b8;margin:4px 0 0">Bottom of fair value = Demand</p></div>
+                <div class="level-card level-rl"><h4>RL</h4><div class="level-name">Range Low</div><p style="font-size:0.8rem;color:#94a3b8;margin:4px 0 0">Previous day's low</p></div>
+            </div>
+
+            <h3>Context Determination</h3>
+            <table class="vp-table">
+                <thead><tr><th>Open Location</th><th>Price Action</th><th>Context</th><th>Bias</th></tr></thead>
+                <tbody>
+                    <tr><td>Above VAH</td><td>Buyers accept higher</td><td style="color:#34d399;font-weight:700">BULLISH</td><td>Buy pullbacks to VAH</td></tr>
+                    <tr><td>Above VAH</td><td>Sellers reject, return to value</td><td style="color:#f87171;font-weight:700">BEARISH</td><td>Short the failure</td></tr>
+                    <tr><td>Below VAL</td><td>Sellers accept lower</td><td style="color:#f87171;font-weight:700">BEARISH</td><td>Sell rallies to VAL</td></tr>
+                    <tr><td>Below VAL</td><td>Buyers reject, return to value</td><td style="color:#34d399;font-weight:700">BULLISH</td><td>Buy the failure</td></tr>
+                    <tr><td>In Value</td><td>No breakout, balancing</td><td style="color:#fbbf24;font-weight:700">NEUTRAL</td><td>Fade edges (sell VAH, buy VAL)</td></tr>
+                    <tr><td>In Value</td><td>Fast drive out with volume</td><td style="color:#34d399;font-weight:700">BULLISH/BEARISH</td><td>Trade the breakout direction</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box"><div class="info-box-title">KEY INSIGHT: Acceptance = Time + Volume</div>
+            <p><strong>Acceptance:</strong> Price spends >30 minutes at a level with increasing volume → market agrees on this price → trend continues.<br>
+            <strong>Rejection:</strong> Price spends <15 minutes, volume drops, reverses → market doesn't agree → reversal likely.<br>
+            This single concept separates winning traders from losing ones.</p></div>
+
+            <!-- SVG: VP Levels Diagram -->
+            <div style="margin:30px 0;">
+            <svg viewBox="0 0 700 400" style="width:100%;max-width:700px;display:block;margin:0 auto;">
+                <rect width="700" height="400" rx="12" fill="#0f172a"/>
+                <text x="350" y="28" fill="#a855f7" font-size="16" font-weight="bold" text-anchor="middle">Value Profile Key Levels</text>
+                <!-- Price axis -->
+                <line x1="100" y1="50" x2="100" y2="370" stroke="#334155" stroke-width="1"/>
+                <text x="50" y="75" fill="#ef4444" font-size="12" text-anchor="middle" font-weight="700">RH</text>
+                <line x1="90" y1="70" x2="600" y2="70" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4"/>
+                <text x="620" y="75" fill="#94a3b8" font-size="11">4550</text>
+                <text x="50" y="135" fill="#f97316" font-size="12" text-anchor="middle" font-weight="700">VAH</text>
+                <line x1="90" y1="130" x2="600" y2="130" stroke="#f97316" stroke-width="2"/>
+                <text x="620" y="135" fill="#94a3b8" font-size="11">4545</text>
+                <!-- Value Area fill -->
+                <rect x="100" y="130" width="500" height="120" fill="rgba(168,85,247,0.08)" stroke="none"/>
+                <text x="350" y="195" fill="rgba(168,85,247,0.5)" font-size="13" text-anchor="middle">VALUE AREA (70% Volume)</text>
+                <text x="50" y="200" fill="#a855f7" font-size="12" text-anchor="middle" font-weight="700">POC</text>
+                <line x1="90" y1="195" x2="600" y2="195" stroke="#a855f7" stroke-width="3"/>
+                <text x="620" y="200" fill="#94a3b8" font-size="11">4538</text>
+                <text x="50" y="255" fill="#22d3ee" font-size="12" text-anchor="middle" font-weight="700">VAL</text>
+                <line x1="90" y1="250" x2="600" y2="250" stroke="#22d3ee" stroke-width="2"/>
+                <text x="620" y="255" fill="#94a3b8" font-size="11">4530</text>
+                <text x="50" y="330" fill="#3b82f6" font-size="12" text-anchor="middle" font-weight="700">RL</text>
+                <line x1="90" y1="325" x2="600" y2="325" stroke="#3b82f6" stroke-width="2" stroke-dasharray="8,4"/>
+                <text x="620" y="330" fill="#94a3b8" font-size="11">4525</text>
+                <!-- Volume bars (horizontal histogram) -->
+                <rect x="100" y="65" width="80" height="12" fill="rgba(239,68,68,0.3)" rx="2"/>
+                <rect x="100" y="95" width="140" height="12" fill="rgba(168,85,247,0.3)" rx="2"/>
+                <rect x="100" y="125" width="250" height="12" fill="rgba(168,85,247,0.4)" rx="2"/>
+                <rect x="100" y="155" width="350" height="12" fill="rgba(168,85,247,0.5)" rx="2"/>
+                <rect x="100" y="185" width="480" height="16" fill="rgba(168,85,247,0.7)" rx="2"/>
+                <rect x="100" y="210" width="380" height="12" fill="rgba(168,85,247,0.5)" rx="2"/>
+                <rect x="100" y="240" width="280" height="12" fill="rgba(168,85,247,0.4)" rx="2"/>
+                <rect x="100" y="270" width="160" height="12" fill="rgba(168,85,247,0.3)" rx="2"/>
+                <rect x="100" y="300" width="90" height="12" fill="rgba(168,85,247,0.2)" rx="2"/>
+                <rect x="100" y="320" width="50" height="12" fill="rgba(59,130,246,0.3)" rx="2"/>
+                <!-- Labels -->
+                <text x="350" y="380" fill="#64748b" font-size="11" text-anchor="middle">← Volume Distribution (horizontal) | Price Levels (vertical) →</text>
+            </svg>
+            </div>
+        </section>
+
+        <!-- ═══════════════════ PART 3 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 3: The Mathematics</h2>
+
+            <h3>VP Level Calculations</h3>
+            <pre><code class="language-python"># VP Key Levels from previous day
+RH  = max(previous_day_highs)    # Range High
+VAH = percentile(volume_dist, 85) # Value Area High (top of 70%)
+POC = mode(volume_dist)           # Point of Control (most volume)
+VAL = percentile(volume_dist, 15) # Value Area Low (bottom of 70%)
+RL  = min(previous_day_lows)      # Range Low</code></pre>
+
+            <h3>Zone Definitions</h3>
+            <div class="vp-eq">
+                Value Supply = VAH → RH (resistance zone)<br>
+                Fair Value = VAL → VAH (70% of volume)<br>
+                Value Demand = RL → VAL (support zone)
+            </div>
+
+            <h3>Acceptance Criteria</h3>
+            <pre><code class="language-python"># Acceptance = Time + Volume at a level
+def check_acceptance(price, level, minutes_at_level, volume_ratio):
+    """
+    Determine if price has been accepted at a level.
+
+    Parameters:
+        price: Current price
+        level: VP level to check (VAH, VAL, etc.)
+        minutes_at_level: Time spent near level (within 0.1%)
+        volume_ratio: Current volume / average volume
+
+    Returns:
+        'ACCEPTED' if time > 30 min AND volume > 1.0x
+        'REJECTING' if time < 15 min OR volume < 0.7x
+        'DEVELOPING' otherwise
+    """
+    near_level = abs(price - level) / level < 0.001  # Within 0.1%
+
+    if minutes_at_level > 30 and volume_ratio > 1.0:
+        return "ACCEPTED"
+    elif minutes_at_level < 15 or volume_ratio < 0.7:
+        return "REJECTING"
+    else:
+        return "DEVELOPING"</code></pre>
+
+            <h3>Distance From Value</h3>
+            <pre><code class="language-python"># How far price is from value (strength measure)
+def distance_from_value(current_price, vah, val, rh, rl):
+    """
+    Calculate distance from value area as % of previous range.
+
+    >50% = Very strong context (unlikely to return)
+    20-50% = Moderate (could return on volume)
+    <20% = Weak (likely to return to value)
+    """
+    prev_range = rh - rl
+
+    if current_price > vah:
+        distance = (current_price - vah) / prev_range * 100
+    elif current_price < val:
+        distance = (val - current_price) / prev_range * 100
+    else:
+        distance = 0  # Inside value
+
+    if distance > 50:
+        strength = "VERY_STRONG"
+    elif distance > 20:
+        strength = "MODERATE"
+    else:
+        strength = "WEAK"
+
+    return distance, strength</code></pre>
+        </section>
+
+        <!-- ═══════════════════ PART 4 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 4: The 10 VP Scenarios</h2>
+
+            <!-- SCENARIO 1 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-bullish">BULLISH</span>
+                <h4>Scenario 1: Open Above Value + Accept Higher</h4>
+                <p><strong>Setup:</strong> Price opens above previous VAH. Buyers hold above VAH for >30 minutes with increasing volume. New higher value area forming.</p>
+                <p><strong>Context:</strong> BULLISH — market found new fair value at higher prices. Buyers in control.</p>
+                <p><strong>Trade:</strong> Buy pullbacks to VAH (now support). Target: RH or extensions. Stop: below POC.</p>
+                <pre><code class="language-python">if open_price > prev_vah and current_price > prev_vah and time_above_vah > 30:
+    context = "BULLISH"
+    entry = prev_vah          # Buy pullback to value supply (now support)
+    targets = [prev_rh, prev_rh + (prev_rh - prev_rl) * 0.5]
+    stop = prev_poc            # Below balance point</code></pre>
+            </div>
+
+            <!-- SCENARIO 2 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-reversal">BEARISH REVERSAL</span>
+                <h4>Scenario 2: Open Above Value + Fail at Supply</h4>
+                <p><strong>Setup:</strong> Price opens above VAH (looks bullish), but <em>fails</em> to hold. Rejection volume exceeds acceptance volume. Drops back below VAH.</p>
+                <p><strong>Context:</strong> FAILED BULLISH → BEARISH — sellers overwhelmed at value supply zone.</p>
+                <p><strong>Trade:</strong> Short the failure below VAH. Target: POC, then VAL. Stop: above failed high.</p>
+                <pre><code class="language-python">if open_price > prev_vah and current_price < prev_vah and minutes_elapsed > 30:
+    context = "FAILED_BULLISH_TO_BEARISH"
+    entry = prev_vah          # Short on break below
+    targets = [prev_poc, prev_val]
+    stop = open_price + 2     # Above failed high</code></pre>
+            </div>
+
+            <!-- SCENARIO 3 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-bearish">BEARISH</span>
+                <h4>Scenario 3: Open Above Value + Not Accepted + Return</h4>
+                <p><strong>Setup:</strong> Opens above VAH but buyers don't accept — weak volume, <15 minutes above. Quick return into value area.</p>
+                <p><strong>Context:</strong> BEARISH — failed auction above value. Likely to retrace to demand or break lower.</p>
+                <p><strong>Trade:</strong> Short rallies toward VAH. Target: VAL, then RL. Avoid longs.</p>
+                <pre><code class="language-python">if open_price > prev_vah and current_price < prev_vah and time_above_vah < 15:
+    context = "BEARISH"
+    entry = prev_vah          # Short any rally to rejected level
+    targets = [prev_val, prev_rl]
+    stop = prev_vah + 3       # Just above rejection zone</code></pre>
+            </div>
+
+            <!-- SCENARIO 4 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-strong">BREAKOUT</span>
+                <h4>Scenario 4: Open In Value + Fast Drive Out + Accept</h4>
+                <p><strong>Setup:</strong> Opens within value (VAH-VAL). Decisive move out of value with volume surge. Price accepted outside value.</p>
+                <p><strong>Context:</strong> BULLISH if breaks above VAH, BEARISH if breaks below VAL. Strong directional intent.</p>
+                <p><strong>Trade:</strong> Trade with breakout direction. Retrace to value edge for entry.</p>
+                <pre><code class="language-python">if prev_val < open_price < prev_vah:
+    if current_price > prev_vah and volume_surge and time_above > 20:
+        context = "BULLISH_BREAKOUT"
+        entry = prev_vah      # Buy retrace to breakout level
+        targets = [prev_rh, prev_rh + (prev_rh - prev_rl)]
+    elif current_price < prev_val and volume_surge and time_below > 20:
+        context = "BEARISH_BREAKOUT"
+        entry = prev_val      # Sell rally to breakdown level
+        targets = [prev_rl, prev_rl - (prev_rh - prev_rl)]</code></pre>
+            </div>
+
+            <!-- SCENARIO 5 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-neutral">NEUTRAL</span>
+                <h4>Scenario 5: Open In Value + Accept Value + POC Balancing</h4>
+                <p><strong>Setup:</strong> Opens in value, stays in value. No breakout. Price rotates around POC.</p>
+                <p><strong>Context:</strong> NEUTRAL — market accepts current fair value. Range day expected.</p>
+                <p><strong>Trade:</strong> Fade extremes. Sell at VAH, buy at VAL. POC is the balance pivot. Tight range until breakout.</p>
+                <pre><code class="language-python">if prev_val < open_price < prev_vah and prev_val < current_price < prev_vah:
+    context = "NEUTRAL_BALANCED"
+    # Fade both edges
+    if current_price > prev_poc:
+        trade = "SELL approaching VAH"
+    else:
+        trade = "BUY approaching VAL"
+    pivot = prev_poc  # Key balance point</code></pre>
+            </div>
+
+            <!-- SCENARIO 6 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-neutral">EDGE TEST</span>
+                <h4>Scenario 6: Open Near VAH/VAL + Early Activity</h4>
+                <p><strong>Setup:</strong> Opens within 0.2% of VAH or VAL edge. Immediate activity — either absorption (rejection) or fast drive (breakout).</p>
+                <p><strong>Context:</strong> Wait 5-15 minutes. Absorption + rejection = fade the edge. Break + acceptance = trade the direction.</p>
+                <p><strong>Trade:</strong> Patience required. Let the edge resolve before entering.</p>
+                <pre><code class="language-python">if abs(open_price - prev_vah) < 0.002 * open_price:  # Within 0.2% of VAH
+    if volume_spike and price_breaks_higher:
+        context = "VAH_BREAKOUT"       # → Go to Scenario 1 or 4
+    elif volume_spike and price_rejects:
+        context = "VAH_REJECTION_FADE"  # Sell VAH, target POC</code></pre>
+            </div>
+
+            <!-- SCENARIO 7 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-strong">STRONG BULLISH</span>
+                <h4>Scenario 7: Price Above Range High (RH) + Acceptance</h4>
+                <p><strong>Setup:</strong> Price breaks above previous day's high (RH). Buyers accept with time (>30 min) and volume above RH.</p>
+                <p><strong>Context:</strong> STRONG BULLISH — new territory, range expansion. Higher fair value being discovered.</p>
+                <p><strong>Trade:</strong> Stay long. RH becomes support. Target: 100% extension (RH + previous day range).</p>
+                <pre><code class="language-python">if current_price > prev_rh and time_above_rh > 30 and volume > avg_volume:
+    context = "STRONG_BULLISH"
+    support = prev_rh                             # Previous high = new support
+    target = prev_rh + (prev_rh - prev_rl)        # 100% range extension</code></pre>
+            </div>
+
+            <!-- SCENARIO 8 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-reversal">FAILED BREAKOUT</span>
+                <h4>Scenario 8: Break Above Supply + Weakness + Return</h4>
+                <p><strong>Setup:</strong> Price breaks above VAH/RH but shows weakness — low volume, narrow range, <20 minutes. Drops back to VWAP/POC.</p>
+                <p><strong>Context:</strong> FAILED BREAKOUT → BEARISH. Supply overwhelmed demand at higher prices.</p>
+                <p><strong>Trade:</strong> Short the return to VWAP or POC. Targets: VAL, RL.</p>
+                <pre><code class="language-python">if price_broke_above_supply and current_price < supply_level:
+    weakness = [low_volume, narrow_range, time_above < 20]
+    if sum(weakness) >= 2:
+        context = "FAILED_BREAK_BEARISH"
+        targets = [vwap, prev_poc, prev_val]</code></pre>
+            </div>
+
+            <!-- SCENARIO 9 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-neutral">DYNAMIC</span>
+                <h4>Scenario 9: Developing Value Area (Dynamic S/R)</h4>
+                <p><strong>Setup:</strong> Intraday value area forming in real-time. Creates dynamic VAH, VAL, POC from today's data.</p>
+                <p><strong>Context:</strong> Use developing value for exits and confirmation. Stronger the longer price is away from the developing edge.</p>
+                <p><strong>Trade:</strong> Take profits at developing VAH (longs). Enter at developing VAL (bullish context). Developing POC = intraday balance.</p>
+                <pre><code class="language-python">developing_vah = np.percentile(intraday_volume_prices, 85)
+developing_val = np.percentile(intraday_volume_prices, 15)
+developing_poc = mode(intraday_volume_prices)
+
+edge_strength = min(
+    abs(current_price - developing_vah),
+    abs(current_price - developing_val)
+) / (developing_vah - developing_val)  # 0-0.5 scale</code></pre>
+            </div>
+
+            <!-- SCENARIO 10 -->
+            <div class="scenario-box">
+                <span class="scenario-tag tag-bullish">TARGET</span>
+                <h4>Scenario 10: Virgin POC Above/Below (Magnet Target)</h4>
+                <p><strong>Setup:</strong> Untested POC from previous sessions sits above or below current price. Market has not returned to test this fair value.</p>
+                <p><strong>Context:</strong> Virgin POCs act as magnets — the market tends to return to untested fair value. Use as targets.</p>
+                <p><strong>Trade:</strong> Bullish context → target virgin POC above. Bearish context → target virgin POC below. Expect reaction (acceptance or rejection) when reached.</p>
+                <pre><code class="language-python">def find_virgin_pocs(historical_pocs, current_price, direction):
+    """Find untested POCs in direction of trade."""
+    if direction == "BULLISH":
+        virgin = [p for p in historical_pocs
+                  if p > current_price and not_yet_tested(p)]
+    else:
+        virgin = [p for p in historical_pocs
+                  if p < current_price and not_yet_tested(p)]
+    return sorted(virgin)[:3]  # 3 nearest</code></pre>
+            </div>
+        </section>
+
+        <!-- ═══════════════════ PART 5 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 5: Production Python Implementation</h2>
+
+            <pre><code class="language-python">import pandas as pd
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+
+
+class MarketContext(Enum):
+    """Market context based on VP scenarios."""
+    STRONG_BULLISH = "Strong Bullish"
+    BULLISH = "Bullish"
+    NEUTRAL = "Neutral"
+    BEARISH = "Bearish"
+    STRONG_BEARISH = "Strong Bearish"
+    FAILED_BULLISH = "Failed Bullish"
+    FAILED_BEARISH = "Failed Bearish"
+
+
+@dataclass
+class VPLevels:
+    """Value Profile key levels from previous period."""
+    date: datetime
+    rh: float   # Range High
+    vah: float  # Value Area High
+    poc: float  # Point of Control
+    val: float  # Value Area Low
+    rl: float   # Range Low
+    vwap: Optional[float] = None
+
+
+@dataclass
+class VPScenario:
+    """Complete VP scenario analysis."""
+    scenario_number: int
+    scenario_name: str
+    context: MarketContext
+    confidence: str        # HIGH, MODERATE, LOW
+    bias: str              # LONG, SHORT, NEUTRAL, WAIT
+    entry_zone: List[float]
+    targets: List[float]
+    stops: List[float]
+    key_levels: List[Tuple[float, str]]
+    time_at_level: int     # minutes
+    risk_reward: float
+    trade_description: str
+
+
+def calculate_vp_levels(
+    ohlcv: pd.DataFrame,
+    vp_data: pd.DataFrame
+) -> VPLevels:
+    """
+    Calculate Value Profile levels from OHLCV and volume profile data.
+
+    Parameters
+    ----------
+    ohlcv : pd.DataFrame
+        OHLCV data with columns: open, high, low, close, volume
+    vp_data : pd.DataFrame
+        Volume profile with columns: price, volume
+
+    Returns
+    -------
+    VPLevels
+        Complete VP levels for the period
+    """
+    rh = ohlcv['high'].max()
+    rl = ohlcv['low'].min()
+
+    # POC: price with highest volume
+    poc = vp_data.loc[vp_data['volume'].idxmax(), 'price']
+
+    # Value Area: 70% of total volume centered on POC
+    total_vol = vp_data['volume'].sum()
+    target_vol = total_vol * 0.70
+    sorted_vp = vp_data.sort_values('volume', ascending=False)
+    cumvol = 0
+    value_prices = []
+    for _, row in sorted_vp.iterrows():
+        value_prices.append(row['price'])
+        cumvol += row['volume']
+        if cumvol >= target_vol:
+            break
+
+    vah = max(value_prices)
+    val = min(value_prices)
+
+    # VWAP
+    vwap = (
+        (ohlcv['close'] * ohlcv['volume']).sum()
+        / ohlcv['volume'].sum()
+    )
+
+    return VPLevels(
+        date=ohlcv.index[-1], rh=rh, vah=vah,
+        poc=poc, val=val, rl=rl, vwap=vwap
+    )
+
+
+def _time_near_level(
+    price: float,
+    bars: pd.DataFrame,
+    tol: float = 0.001
+) -> float:
+    """Minutes spent within tolerance of price level."""
+    near = bars[abs(bars['close'] - price) / price < tol]
+    return float(len(near))
+
+
+def identify_scenario(
+    current_price: float,
+    open_price: float,
+    prev: VPLevels,
+    minutes_since_open: float,
+    volume_data: pd.DataFrame
+) -> VPScenario:
+    """
+    Identify current VP scenario and generate trading plan.
+
+    Parameters
+    ----------
+    current_price : float
+        Current market price
+    open_price : float
+        Today's opening price
+    prev : VPLevels
+        Previous period's VP levels
+    minutes_since_open : float
+        Minutes elapsed since market open
+    volume_data : pd.DataFrame
+        Intraday bars with 'close' and 'volume' columns
+
+    Returns
+    -------
+    VPScenario
+        Complete scenario with trading plan
+    """
+    # Derived booleans
+    above_vah = current_price > prev.vah
+    below_val = current_price < prev.val
+    in_value = prev.val <= current_price <= prev.vah
+    opened_above = open_price > prev.vah
+    opened_below = open_price < prev.val
+    opened_in = prev.val <= open_price <= prev.vah
+
+    time_at = _time_near_level(current_price, volume_data)
+    avg_vol = volume_data['volume'].mean()
+    recent_vol = volume_data.tail(10)['volume'].mean()
+    vol_surge = recent_vol > avg_vol * 1.5
+
+    prev_range = prev.rh - prev.rl
+    dist = 0.0
+    if above_vah:
+        dist = (current_price - prev.vah) / prev_range
+    elif below_val:
+        dist = (prev.val - current_price) / prev_range
+
+    # ── Scenario 7: Above RH + Accepted ──
+    if current_price > prev.rh and time_at > 30 and vol_surge:
+        ext = prev.rh + prev_range
+        return VPScenario(
+            7, "Above Range High + Accepted",
+            MarketContext.STRONG_BULLISH, "HIGH", "LONG",
+            [prev.rh, current_price],
+            [ext, ext + prev_range * 0.5],
+            [prev.vah],
+            [(prev.rh, "New Support"), (ext, "100% Extension")],
+            int(time_at), 4.0,
+            "Very bullish. Stay long. RH is new support. Target range extension."
+        )
+
+    # ── Scenario 1: Open Above + Accept Higher ──
+    if opened_above and above_vah and time_at > 30:
+        return VPScenario(
+            1, "Open Above Value + Accept Higher",
+            MarketContext.BULLISH,
+            "HIGH" if dist > 0.3 else "MODERATE", "LONG",
+            [prev.vah, current_price],
+            [prev.rh, prev.rh + prev_range * 0.5],
+            [prev.poc],
+            [(prev.vah, "Support"), (prev.poc, "Major Support"), (prev.rh, "Target")],
+            int(time_at), 3.0,
+            "Buy pullbacks to VAH. Target RH and extensions."
+        )
+
+    # ── Scenario 2: Open Above + Fail at Supply ──
+    if opened_above and not above_vah and minutes_since_open > 30:
+        return VPScenario(
+            2, "Open Above Value + Fail at Supply",
+            MarketContext.FAILED_BULLISH, "HIGH", "SHORT",
+            [prev.vah, open_price],
+            [prev.poc, prev.val],
+            [open_price * 1.005],
+            [(prev.vah, "Failed Breakout"), (prev.poc, "Target 1"), (prev.val, "Target 2")],
+            int(time_at), 2.5,
+            "Short the failure below VAH. Target POC then VAL."
+        )
+
+    # ── Scenario 3: Open Above + Not Accepted ──
+    if opened_above and not above_vah and time_at < 15:
+        return VPScenario(
+            3, "Open Above + Not Accepted + Return",
+            MarketContext.BEARISH, "MODERATE", "SHORT",
+            [prev.vah],
+            [prev.val, prev.rl],
+            [prev.vah * 1.003],
+            [(prev.vah, "Rejection"), (prev.val, "Target"), (prev.rl, "Extended Target")],
+            int(time_at), 2.0,
+            "Short rallies toward VAH. Price returning to value."
+        )
+
+    # ── Scenario 4: Open In Value + Fast Drive Out ──
+    if opened_in and (above_vah or below_val) and vol_surge:
+        if above_vah:
+            return VPScenario(
+                4, "Open In Value + Bullish Breakout",
+                MarketContext.BULLISH,
+                "HIGH" if time_at > 20 else "MODERATE", "LONG",
+                [prev.vah, current_price * 0.998],
+                [prev.rh, prev.rh + prev_range],
+                [prev.poc],
+                [(prev.vah, "Breakout Support"), (prev.rh, "Target")],
+                int(time_at), 3.0,
+                "Buy breakout above VAH or pullback to VAH."
+            )
+        else:
+            return VPScenario(
+                4, "Open In Value + Bearish Breakout",
+                MarketContext.BEARISH,
+                "HIGH" if time_at > 20 else "MODERATE", "SHORT",
+                [current_price * 1.002, prev.val],
+                [prev.rl, prev.rl - prev_range],
+                [prev.poc],
+                [(prev.val, "Breakdown Resistance"), (prev.rl, "Target")],
+                int(time_at), 3.0,
+                "Sell breakdown below VAL or rally to VAL."
+            )
+
+    # ── Scenario 5: Open In Value + Accept Value ──
+    if opened_in and in_value and minutes_since_open > 30:
+        return VPScenario(
+            5, "Open In Value + Accept Value (Neutral)",
+            MarketContext.NEUTRAL, "MODERATE", "NEUTRAL",
+            [prev.val, prev.vah],
+            [prev.vah, prev.val],
+            [prev.rh, prev.rl],
+            [(prev.vah, "Fade Short"), (prev.poc, "Balance"), (prev.val, "Fade Long")],
+            int(time_at), 1.5,
+            "Fade extremes. Sell VAH, buy VAL. POC is pivot."
+        )
+
+    # ── Default: Developing ──
+    return VPScenario(
+        9, "Developing Value Area",
+        MarketContext.NEUTRAL, "LOW", "WAIT",
+        [current_price * 0.998, current_price * 1.002],
+        [prev.vah, prev.val],
+        [prev.rh, prev.rl],
+        [(prev.vah, "Prev VAH"), (prev.poc, "Prev POC"), (prev.val, "Prev VAL")],
+        int(time_at), 2.0,
+        "Wait for clear scenario to emerge."
+    )
+
+
+def generate_plan(s: VPScenario) -> str:
+    """Generate formatted trading plan from scenario."""
+    lines = [
+        f"VP SCENARIO {s.scenario_number}: {s.scenario_name}",
+        "-" * 55,
+        f"CONTEXT   : {s.context.value} ({s.confidence} Confidence)",
+        f"BIAS      : {s.bias}",
+        f"R:R       : 1:{s.risk_reward:.1f}",
+        "",
+        f"ENTRY ZONE: ${s.entry_zone[0]:.2f} - ${s.entry_zone[-1]:.2f}",
+    ]
+    for i, t in enumerate(s.targets, 1):
+        lines.append(f"TARGET {i}  : ${t:.2f}")
+    for i, st in enumerate(s.stops, 1):
+        lines.append(f"STOP {i}    : ${st:.2f}")
+    lines += ["", "KEY LEVELS:"]
+    for lvl, desc in s.key_levels:
+        lines.append(f"  ${lvl:.2f} — {desc}")
+    lines += ["", f"PLAN: {s.trade_description}"]
+    return "\n".join(lines)
+
+
+# ── EXAMPLE ──
+if __name__ == "__main__":
+    prev_vp = VPLevels(
+        date=datetime(2024, 1, 15),
+        rh=4550.0, vah=4545.0, poc=4538.0,
+        val=4530.0, rl=4525.0, vwap=4537.5
+    )
+
+    vol = pd.DataFrame({
+        'close': np.random.normal(4547, 2, 60),
+        'volume': np.random.randint(1000, 5000, 60)
+    })
+
+    scenario = identify_scenario(
+        current_price=4548.0,
+        open_price=4547.0,
+        prev=prev_vp,
+        minutes_since_open=45,
+        volume_data=vol
+    )
+    print(generate_plan(scenario))</code></pre>
+        </section>
+
+        <!-- ═══════════════════ PART 6 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 6: Trading Applications & Visualizations</h2>
+
+            <h3>Pre-Market Routine</h3>
+            <ol>
+                <li><strong>Identify previous day's VP levels</strong> — RH, VAH, POC, VAL, RL on your chart</li>
+                <li><strong>Note where price opens</strong> — Above value? Below value? In value?</li>
+                <li><strong>Watch first 30 minutes</strong> — Is price being accepted or rejected at the level?</li>
+                <li><strong>Identify the scenario</strong> — Match to one of the 10 scenarios</li>
+                <li><strong>Execute the plan</strong> — Entry, targets, and stops are pre-defined</li>
+            </ol>
+
+            <div class="info-box"><div class="info-box-title">Example Workflow: ES Futures, 9:30 AM</div>
+            <p>1) Previous VP: VAH 4545, POC 4538, VAL 4530, RH 4550, RL 4525<br>
+            2) 9:30 AM: ES opens at 4548 (above VAH 4545)<br>
+            3) 9:45 AM: Still above 4545, volume increasing → <strong>Scenario 1 confirmed</strong><br>
+            4) Trade: Buy pullback to 4545, target 4550 RH, stop below 4538 POC<br>
+            5) 10:30 AM: ES reaches 4551. Take profit. <strong>+6 pts / $300 per contract.</strong></p></div>
+
+            <h3>Chart 1: Scenario Win Rates</h3>
+            <div class="chart-container"><canvas id="winRateChart"></canvas></div>
+
+            <h3>Chart 2: Average Lead Time to Target</h3>
+            <div class="chart-container"><canvas id="leadTimeChart"></canvas></div>
+
+            <h3>Chart 3: Context Distribution (ES Futures 2023-2024)</h3>
+            <div class="chart-container"><canvas id="contextDistChart"></canvas></div>
+
+            <h3>Chart 4: Acceptance Time vs Move Strength</h3>
+            <div class="chart-container"><canvas id="acceptanceChart"></canvas></div>
+
+            <h3>Chart 5: Risk:Reward by Scenario</h3>
+            <div class="chart-container"><canvas id="rrChart"></canvas></div>
+        </section>
+
+        <!-- ═══════════════════ PART 7 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 7: Interactive Scenario Analyzer & Common Mistakes</h2>
+
+            <h3>VP Scenario Calculator</h3>
+            <div class="calculator-box">
+                <p style="color:#cbd5e1;margin-top:0;">Enter previous day's VP levels and today's open/current price to identify the active scenario:</p>
+                <div class="calc-grid">
+                    <div><label class="calc-label">Previous RH</label><input class="calc-input" id="cRH" type="number" step="0.25" value="4550"></div>
+                    <div><label class="calc-label">Previous VAH</label><input class="calc-input" id="cVAH" type="number" step="0.25" value="4545"></div>
+                    <div><label class="calc-label">Previous POC</label><input class="calc-input" id="cPOC" type="number" step="0.25" value="4538"></div>
+                    <div><label class="calc-label">Previous VAL</label><input class="calc-input" id="cVAL" type="number" step="0.25" value="4530"></div>
+                    <div><label class="calc-label">Previous RL</label><input class="calc-input" id="cRL" type="number" step="0.25" value="4525"></div>
+                    <div><label class="calc-label">Today's Open</label><input class="calc-input" id="cOpen" type="number" step="0.25" value="4547"></div>
+                    <div><label class="calc-label">Current Price</label><input class="calc-input" id="cCurr" type="number" step="0.25" value="4548"></div>
+                    <div><label class="calc-label">Minutes Since Open</label><input class="calc-input" id="cMin" type="number" value="45" min="0"></div>
+                </div>
+                <button class="calc-btn" onclick="runScenarioCalc()">Identify Scenario</button>
+                <div class="calc-result" id="scenarioResult"></div>
+            </div>
+
+            <h3>Common Mistakes</h3>
+            <div class="card-grid">
+                <div class="card"><h4>❌ Trading Before Confirmation</h4><p><strong>Mistake:</strong> Entering at the open because price is above VAH. <strong>Fix:</strong> Wait 15-30 minutes for acceptance or rejection.</p></div>
+                <div class="card"><h4>❌ Ignoring Time at Level</h4><p><strong>Mistake:</strong> Calling it "accepted" after 5 minutes. <strong>Fix:</strong> Acceptance requires >30 min + volume. Anything less is developing.</p></div>
+                <div class="card"><h4>❌ Fighting the Context</h4><p><strong>Mistake:</strong> Buying when context is bearish (failed above value). <strong>Fix:</strong> Always trade WITH context. If bearish, look for shorts only.</p></div>
+                <div class="card"><h4>❌ Forgetting POC as Magnet</h4><p><strong>Mistake:</strong> Not targeting POC when price returns to value. <strong>Fix:</strong> POC is the balance point — price gravitates there.</p></div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════ PART 8 ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Part 8: Summary & Cheat Sheet</h2>
+
+            <h3>10-Scenario Quick Reference</h3>
+            <div style="background:rgba(0,0,0,0.2);border-radius:10px;overflow:hidden;border:1px solid rgba(148,163,184,0.15);margin:20px 0;">
+                <div class="cheat-row cheat-header"><div>#</div><div>Setup</div><div>Context</div><div>Trade</div></div>
+                <div class="cheat-row"><div style="color:#34d399;font-weight:700">1</div><div>Open &gt; VAH, accept higher</div><div style="color:#34d399">BULLISH</div><div>Buy VAH pullback → RH</div></div>
+                <div class="cheat-row"><div style="color:#f87171;font-weight:700">2</div><div>Open &gt; VAH, fail back below</div><div style="color:#f87171">BEARISH</div><div>Short VAH → POC, VAL</div></div>
+                <div class="cheat-row"><div style="color:#f87171;font-weight:700">3</div><div>Open &gt; VAH, quick return</div><div style="color:#f87171">BEARISH</div><div>Short rally → VAL, RL</div></div>
+                <div class="cheat-row"><div style="color:#34d399;font-weight:700">4</div><div>Open in value, fast drive out</div><div style="color:#34d399">BULL/BEAR</div><div>Trade breakout direction</div></div>
+                <div class="cheat-row"><div style="color:#fbbf24;font-weight:700">5</div><div>Open in value, stay in value</div><div style="color:#fbbf24">NEUTRAL</div><div>Fade edges (sell VAH, buy VAL)</div></div>
+                <div class="cheat-row"><div style="color:#fbbf24;font-weight:700">6</div><div>Open near edge, wait for resolve</div><div style="color:#fbbf24">WAIT</div><div>Patience — let edge resolve</div></div>
+                <div class="cheat-row"><div style="color:#6ee7b7;font-weight:700">7</div><div>Above RH + accepted</div><div style="color:#6ee7b7">STRONG BULL</div><div>Stay long → extension target</div></div>
+                <div class="cheat-row"><div style="color:#f472b6;font-weight:700">8</div><div>Break supply + weakness + return</div><div style="color:#f472b6">REVERSAL</div><div>Short to VWAP/POC/VAL</div></div>
+                <div class="cheat-row"><div style="color:#fbbf24;font-weight:700">9</div><div>Developing value area (intraday)</div><div style="color:#fbbf24">DYNAMIC</div><div>Use dev VAH/VAL for exits</div></div>
+                <div class="cheat-row"><div style="color:#34d399;font-weight:700">10</div><div>Virgin POC above/below</div><div style="color:#34d399">TARGET</div><div>Use as magnet target</div></div>
+            </div>
+
+            <h3>Key Principles</h3>
+            <div class="info-box"><div class="info-box-title">The 5 Rules of VP Context</div>
+            <ol style="margin:0;padding-left:20px;">
+                <li><strong>Acceptance = Time (&gt;30 min) + Volume</strong> — without both, it's not confirmed</li>
+                <li><strong>Context determines bias</strong> — bullish, bearish, or neutral; never fight it</li>
+                <li><strong>POC is always the magnet</strong> — the balance point attracts price during rotations</li>
+                <li><strong>Developing value strengthens with distance</strong> — further from edge = stronger move</li>
+                <li><strong>Trade WITH context, not against</strong> — the single most important rule</li>
+            </ol></div>
+
+            <div class="vp-eq">
+                "Where price opens determines behavior" &bull; "Time + volume = acceptance"<br>
+                "Context is king — follow it" &bull; "POC is the magnet"
+            </div>
+        </section>
+
+        <!-- ═══════════════════ QUIZ ═══════════════════ -->
+        <section class="content-section fade-in">
+            <h2>Knowledge Check</h2>
+            <div class="quiz-section">
+
+                <div class="quiz-question"><p><strong>Q1:</strong> ES opens at 4548, above yesterday's VAH of 4545. After 45 minutes, price is still at 4549 with strong volume. Which scenario is this?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,true,1)">A) Scenario 1: Open Above Value + Accept Higher (Bullish)</button>
+                    <button onclick="checkQ(this,false,1)">B) Scenario 2: Open Above Value + Fail at Supply</button>
+                    <button onclick="checkQ(this,false,1)">C) Scenario 5: Open In Value + Accept Value</button>
+                    <button onclick="checkQ(this,false,1)">D) Scenario 7: Above Range High + Accepted</button>
+                </div><div class="quiz-explanation" id="exp1"><strong>A) Correct.</strong> Price opened above VAH, has been accepted above for 45 min with volume. This is Scenario 1 — BULLISH context. Buy pullbacks to VAH, target RH.</div></div>
+
+                <div class="quiz-question"><p><strong>Q2:</strong> What defines "acceptance" at a price level in auction market theory?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,2)">A) Price touches the level once</button>
+                    <button onclick="checkQ(this,true,2)">B) Time >30 minutes AND increasing volume at the level</button>
+                    <button onclick="checkQ(this,false,2)">C) A single large volume bar</button>
+                    <button onclick="checkQ(this,false,2)">D) Price closing above the level</button>
+                </div><div class="quiz-explanation" id="exp2"><strong>B) Correct.</strong> Acceptance requires BOTH time (>30 min) and volume. A single touch or single bar is insufficient — the market needs to demonstrate sustained agreement at the price.</div></div>
+
+                <div class="quiz-question"><p><strong>Q3:</strong> Price opens above VAH at 4548 but drops back below 4545 within 12 minutes on weak volume. Which scenario?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,3)">A) Scenario 1: Accept Higher</button>
+                    <button onclick="checkQ(this,false,3)">B) Scenario 2: Fail at Supply</button>
+                    <button onclick="checkQ(this,true,3)">C) Scenario 3: Not Accepted + Return to Value</button>
+                    <button onclick="checkQ(this,false,3)">D) Scenario 4: Fast Drive Out</button>
+                </div><div class="quiz-explanation" id="exp3"><strong>C) Correct.</strong> Scenario 3: quick return (<15 min) with weak volume = buyers did NOT accept higher prices. Context turns BEARISH. Short rallies toward VAH.</div></div>
+
+                <div class="quiz-question"><p><strong>Q4:</strong> In Scenario 5 (Neutral, in value), what is the primary trading strategy?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,4)">A) Buy aggressively at POC</button>
+                    <button onclick="checkQ(this,true,4)">B) Fade extremes — sell VAH, buy VAL, pivot on POC</button>
+                    <button onclick="checkQ(this,false,4)">C) Wait for breakout only</button>
+                    <button onclick="checkQ(this,false,4)">D) Short at POC targeting VAL</button>
+                </div><div class="quiz-explanation" id="exp4"><strong>B) Correct.</strong> When context is neutral and price is accepted in value, fade both edges. Sell near VAH, buy near VAL. POC acts as the balance pivot. Range trading until a breakout occurs.</div></div>
+
+                <div class="quiz-question"><p><strong>Q5:</strong> What does the POC (Point of Control) represent in auction market theory?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,5)">A) The highest price of the day</button>
+                    <button onclick="checkQ(this,false,5)">B) The average price</button>
+                    <button onclick="checkQ(this,true,5)">C) The price with the most volume — the fairest price / balance point</button>
+                    <button onclick="checkQ(this,false,5)">D) The closing price</button>
+                </div><div class="quiz-explanation" id="exp5"><strong>C) Correct.</strong> POC = price with highest volume. It's where both buyers and sellers found the most agreement. It acts as a balance point and magnet — price gravitates toward it during rotations.</div></div>
+
+                <div class="quiz-question"><p><strong>Q6:</strong> Price breaks above RH and is accepted above for 40 minutes with heavy volume. What's the context and target?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,6)">A) Bullish, target VAH</button>
+                    <button onclick="checkQ(this,true,6)">B) Strong Bullish, target 100% range extension (RH + previous range)</button>
+                    <button onclick="checkQ(this,false,6)">C) Neutral, wait for pullback</button>
+                    <button onclick="checkQ(this,false,6)">D) Failed breakout, short</button>
+                </div><div class="quiz-explanation" id="exp6"><strong>B) Correct.</strong> Scenario 7: Above RH + Accepted = STRONG BULLISH. RH becomes support. Target the 100% range extension (RH + previous day's range). This is new price discovery territory.</div></div>
+
+                <div class="quiz-question"><p><strong>Q7:</strong> What is a "virgin POC" and why does it matter?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,7)">A) Today's developing POC</button>
+                    <button onclick="checkQ(this,true,7)">B) An untested POC from a previous session that acts as a magnet target</button>
+                    <button onclick="checkQ(this,false,7)">C) The POC from the first hour of trading</button>
+                    <button onclick="checkQ(this,false,7)">D) A POC that was tested and rejected</button>
+                </div><div class="quiz-explanation" id="exp7"><strong>B) Correct.</strong> A virgin POC is an untested fair value from a prior session. Markets tend to return to test these levels — they act as magnets. Use them as targets in directional trades.</div></div>
+
+                <div class="quiz-question"><p><strong>Q8:</strong> Price breaks above VAH but shows narrow range, low volume, and spends only 12 minutes above before returning. This is:</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,8)">A) Scenario 1: Bullish acceptance</button>
+                    <button onclick="checkQ(this,false,8)">B) Scenario 7: Strong bullish</button>
+                    <button onclick="checkQ(this,true,8)">C) Scenario 8: Failed breakout — bearish reversal</button>
+                    <button onclick="checkQ(this,false,8)">D) Scenario 5: Neutral</button>
+                </div><div class="quiz-explanation" id="exp8"><strong>C) Correct.</strong> Scenario 8: Break above supply + weakness (low volume, narrow range, <20 min) + return = failed breakout. Context is BEARISH. Short the return targeting VWAP, POC, VAL.</div></div>
+
+                <div class="quiz-question"><p><strong>Q9:</strong> What is the biggest mistake traders make with VP scenarios?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,true,9)">A) Trading before the scenario is confirmed (not waiting 15-30 min)</button>
+                    <button onclick="checkQ(this,false,9)">B) Using too many VP levels</button>
+                    <button onclick="checkQ(this,false,9)">C) Only trading Scenario 1</button>
+                    <button onclick="checkQ(this,false,9)">D) Ignoring the closing price</button>
+                </div><div class="quiz-explanation" id="exp9"><strong>A) Correct.</strong> The #1 mistake is entering before acceptance/rejection is confirmed. Price above VAH at the open does NOT mean bullish — you must wait for time + volume to confirm the scenario.</div></div>
+
+                <div class="quiz-question"><p><strong>Q10:</strong> ES opens at 4536 (inside value: VAH 4545, VAL 4530). At 10:15 AM, ES breaks above 4545 on a massive volume surge and holds for 25 minutes. Which scenario and what do you do?</p>
+                <div class="quiz-options">
+                    <button onclick="checkQ(this,false,10)">A) Scenario 1 — buy immediately</button>
+                    <button onclick="checkQ(this,true,10)">B) Scenario 4 — Open in value + bullish breakout. Buy pullback to VAH.</button>
+                    <button onclick="checkQ(this,false,10)">C) Scenario 5 — Neutral, fade VAH</button>
+                    <button onclick="checkQ(this,false,10)">D) Scenario 8 — Failed breakout</button>
+                </div><div class="quiz-explanation" id="exp10"><strong>B) Correct.</strong> Scenario 4: Opened in value, fast drive out above VAH with volume surge, holding for 25 min (near acceptance). BULLISH BREAKOUT. Buy pullback to VAH (4545). Target: RH (4550) and extensions.</div></div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="module-footer"><div class="container">
+        <p>&copy; 2024 Athena Academy. All rights reserved.</p>
+    </div></footer>
+
+    <script src="../../assets/js/shared-scripts.js"></script>
+    <script>
+    // ═══════════════ CHARTS ═══════════════
+    const purple = '#a855f7', cyan = '#22d3ee', green = '#10b981', red = '#ef4444', yellow = '#fbbf24', pink = '#ec4899';
+    const gridC = 'rgba(148,163,184,0.1)', tickC = '#94a3b8', titleC = '#f1f5f9';
+
+    // Chart 1: Scenario Win Rates
+    new Chart(document.getElementById('winRateChart'), {
+        type: 'bar',
+        data: {
+            labels: ['S1: Above\n+Accept', 'S2: Above\n+Fail', 'S3: Above\n+Return', 'S4: In\n+Breakout', 'S5: In\n+Neutral', 'S6: Edge\nTest', 'S7: Above\nRH', 'S8: Failed\nBreak', 'S9: Dev\nValue', 'S10: Virgin\nPOC'],
+            datasets: [{
+                label: 'Historical Win Rate (%)',
+                data: [72, 68, 65, 70, 62, 58, 78, 66, 60, 64],
+                backgroundColor: [green, red, red, purple, yellow, yellow, green, pink, yellow, cyan],
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Win Rate by VP Scenario (ES Futures 2022-2024)', color: titleC, font: { size: 14 } } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: tickC, callback: v => v + '%' }, grid: { color: gridC } }, x: { ticks: { color: tickC, font: { size: 10 } }, grid: { display: false } } } }
+    });
+
+    // Chart 2: Lead Time to Target
+    new Chart(document.getElementById('leadTimeChart'), {
+        type: 'bar',
+        data: {
+            labels: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'],
+            datasets: [{
+                label: 'Avg Minutes to First Target',
+                data: [85, 55, 40, 65, 120, 35, 110, 50, 90, 150],
+                backgroundColor: 'rgba(34,211,238,0.7)',
+                borderColor: cyan,
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: titleC } }, title: { display: true, text: 'Average Time to First Target (Minutes)', color: titleC, font: { size: 14 } } }, scales: { y: { beginAtZero: true, ticks: { color: tickC }, grid: { color: gridC }, title: { display: true, text: 'Minutes', color: tickC } }, x: { ticks: { color: tickC }, grid: { display: false } } } }
+    });
+
+    // Chart 3: Context Distribution
+    new Chart(document.getElementById('contextDistChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Bullish (S1,S4↑,S7)', 'Bearish (S2,S3,S4↓,S8)', 'Neutral (S5,S6,S9)', 'Target (S10)'],
+            datasets: [{ data: [32, 28, 30, 10], backgroundColor: [green, red, yellow, cyan], borderWidth: 0 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: titleC, padding: 16 } }, title: { display: true, text: 'Context Distribution — ES Futures (500 Trading Days)', color: titleC, font: { size: 14 } } } }
+    });
+
+    // Chart 4: Acceptance Time vs Move Strength
+    new Chart(document.getElementById('acceptanceChart'), {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Bullish Scenarios',
+                data: [{x:35,y:8},{x:45,y:12},{x:60,y:18},{x:75,y:22},{x:90,y:28},{x:120,y:35},{x:50,y:14},{x:40,y:10},{x:55,y:15},{x:80,y:25}],
+                backgroundColor: green, pointRadius: 6
+            },{
+                label: 'Bearish Scenarios',
+                data: [{x:32,y:7},{x:48,y:13},{x:55,y:16},{x:70,y:20},{x:85,y:26},{x:42,y:11},{x:38,y:9},{x:62,y:17},{x:95,y:30}],
+                backgroundColor: red, pointRadius: 6
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: titleC } }, title: { display: true, text: 'Acceptance Time vs Subsequent Move Size', color: titleC, font: { size: 14 } } }, scales: { x: { ticks: { color: tickC }, grid: { color: gridC }, title: { display: true, text: 'Acceptance Time (minutes)', color: tickC } }, y: { ticks: { color: tickC }, grid: { color: gridC }, title: { display: true, text: 'Move Size (points)', color: tickC } } } }
+    });
+
+    // Chart 5: R:R by Scenario
+    new Chart(document.getElementById('rrChart'), {
+        type: 'bar',
+        data: {
+            labels: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'],
+            datasets: [{
+                label: 'Risk:Reward Ratio',
+                data: [3.0, 2.5, 2.0, 3.0, 1.5, 1.8, 4.0, 2.2, 1.5, 2.5],
+                backgroundColor: 'rgba(168,85,247,0.7)',
+                borderColor: purple,
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Average Risk:Reward by Scenario', color: titleC, font: { size: 14 } } }, scales: { y: { beginAtZero: true, ticks: { color: tickC, callback: v => '1:' + v.toFixed(1) }, grid: { color: gridC } }, x: { ticks: { color: tickC }, grid: { display: false } } } }
+    });
+
+    // ═══════════════ CALCULATOR ═══════════════
+    function runScenarioCalc() {
+        const rh=+document.getElementById('cRH').value, vah=+document.getElementById('cVAH').value;
+        const poc=+document.getElementById('cPOC').value, val=+document.getElementById('cVAL').value;
+        const rl=+document.getElementById('cRL').value, op=+document.getElementById('cOpen').value;
+        const cur=+document.getElementById('cCurr').value, mins=+document.getElementById('cMin').value;
+        const range=rh-rl;
+
+        let sNum=9,sName="Developing",ctx="NEUTRAL",bias="WAIT",conf="LOW",entry="",tgts="",stps="",desc="Wait for clear scenario.";
+        const openAbove=op>vah, openBelow=op<val, openIn=(op>=val&&op<=vah);
+        const curAbove=cur>vah, curBelow=cur<val, curIn=(cur>=val&&cur<=vah);
+
+        if(cur>rh && mins>30){
+            sNum=7;sName="Above RH + Accepted";ctx="STRONG BULLISH";bias="LONG";conf="HIGH";
+            entry=`$${rh.toFixed(2)} (RH = new support)`;
+            tgts=`$${(rh+range).toFixed(2)} (100% ext), $${(rh+range*1.5).toFixed(2)} (150% ext)`;
+            stps=`$${vah.toFixed(2)} (VAH)`;
+            desc="Very bullish. Stay long. RH is new support.";
+        } else if(openAbove && curAbove && mins>30){
+            sNum=1;sName="Open Above + Accept Higher";ctx="BULLISH";bias="LONG";conf=((cur-vah)/range>0.3)?"HIGH":"MODERATE";
+            entry=`$${vah.toFixed(2)} (VAH pullback)`;
+            tgts=`$${rh.toFixed(2)} (RH), $${(rh+range*0.5).toFixed(2)} (extension)`;
+            stps=`$${poc.toFixed(2)} (POC)`;
+            desc="Buy pullbacks to VAH. Target RH and extensions.";
+        } else if(openAbove && !curAbove && mins>30){
+            sNum=2;sName="Open Above + Fail at Supply";ctx="FAILED BULLISH → BEARISH";bias="SHORT";conf="HIGH";
+            entry=`$${vah.toFixed(2)} (VAH break)`;
+            tgts=`$${poc.toFixed(2)} (POC), $${val.toFixed(2)} (VAL)`;
+            stps=`$${(op*1.005).toFixed(2)} (above failed high)`;
+            desc="Short the failure below VAH. Target POC then VAL.";
+        } else if(openAbove && !curAbove && mins<15){
+            sNum=3;sName="Open Above + Not Accepted";ctx="BEARISH";bias="SHORT";conf="MODERATE";
+            entry=`$${vah.toFixed(2)} (rally to VAH)`;
+            tgts=`$${val.toFixed(2)} (VAL), $${rl.toFixed(2)} (RL)`;
+            stps=`$${(vah*1.003).toFixed(2)}`;
+            desc="Short rallies toward VAH. Price returning to value.";
+        } else if(openIn && curAbove && mins>15){
+            sNum=4;sName="Open In Value + Bullish Breakout";ctx="BULLISH";bias="LONG";conf=(mins>25)?"HIGH":"MODERATE";
+            entry=`$${vah.toFixed(2)} (breakout retrace)`;
+            tgts=`$${rh.toFixed(2)} (RH), $${(rh+range).toFixed(2)} (extension)`;
+            stps=`$${poc.toFixed(2)} (POC)`;
+            desc="Buy breakout above VAH or pullback to VAH.";
+        } else if(openIn && curBelow && mins>15){
+            sNum=4;sName="Open In Value + Bearish Breakout";ctx="BEARISH";bias="SHORT";conf=(mins>25)?"HIGH":"MODERATE";
+            entry=`$${val.toFixed(2)} (breakdown rally)`;
+            tgts=`$${rl.toFixed(2)} (RL), $${(rl-range).toFixed(2)} (extension)`;
+            stps=`$${poc.toFixed(2)} (POC)`;
+            desc="Sell breakdown below VAL or rally to VAL.";
+        } else if(openIn && curIn && mins>30){
+            sNum=5;sName="Open In Value + Accept (Neutral)";ctx="NEUTRAL";bias="NEUTRAL";conf="MODERATE";
+            entry=`Sell $${vah.toFixed(2)} / Buy $${val.toFixed(2)}`;
+            tgts=`$${vah.toFixed(2)} (from VAL), $${val.toFixed(2)} (from VAH)`;
+            stps=`$${rh.toFixed(2)} / $${rl.toFixed(2)} (outside value)`;
+            desc="Fade extremes. Sell VAH, buy VAL. POC is pivot.";
+        }
+
+        const col = bias==="LONG"?"#34d399":bias==="SHORT"?"#f87171":"#fbbf24";
+        document.getElementById('scenarioResult').innerHTML = `
+            <h4 style="color:${col};margin:0 0 10px">Scenario ${sNum}: ${sName}</h4>
+            <p><strong>Context:</strong> <span style="color:${col}">${ctx}</span> (${conf})</p>
+            <p><strong>Bias:</strong> ${bias}</p>
+            <p><strong>Entry:</strong> ${entry}</p>
+            <p><strong>Targets:</strong> ${tgts}</p>
+            <p><strong>Stops:</strong> ${stps}</p>
+            <p style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.2);border-radius:6px;"><strong>Plan:</strong> ${desc}</p>`;
+        document.getElementById('scenarioResult').style.display = 'block';
+    }
+
+    // ═══════════════ QUIZ ═══════════════
+    function checkQ(btn, correct, n) {
+        const opts = btn.parentElement.children;
+        for (let o of opts) o.disabled = true;
+        btn.classList.add(correct ? 'correct' : 'incorrect');
+        document.getElementById('exp' + n).style.display = 'block';
+    }
+    </script>
+</body>
+</html>
