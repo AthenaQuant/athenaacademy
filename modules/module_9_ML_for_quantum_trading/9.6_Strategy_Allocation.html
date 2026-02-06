@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about the Strategy Allocation & Capital Weighting Engine in Athena. Understand how dynamically distributing capital across multiple long-only strategies based on regime, performance, and risk boosts efficiency and consistency.">
+  <title>Project 6: Strategy Allocation & Capital Weighting Engine | Athena Quant Trading</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="9.5_Distributional_Return_Modeling.html" class="nav-home">← Back to Project 5</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Project 6</span>
+          <span class="nav-module-title">Strategy Allocation & Capital Weighting Engine</span>
+        </div>
+        <a href="9.7_.Risk_State.html" class="nav-next">Next Project →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Athena Projects: Machine Learning for Quant Trading</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>Project 6: Strategy Allocation & Capital Weighting Engine</span>
+        </div>
+        <h1>Strategy Allocation & Capital Weighting Engine</h1>
+        <p class="module-subtitle">
+          Dynamically allocates capital across multiple long-only strategies based on regime fit, recent performance, correlation, and risk – deciding *which edge gets money* rather than which stock goes up.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💡 Strategic Insights</span>
+          <span class="meta-item">✅ 5 Key Benefits</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          You have three good long-only strategies on mega-caps: one momentum-based, one mean-reversion, one value-tilted. In a strong trend you keep all three fully loaded → correlation spikes and drawdown triples. <strong>Without dynamic allocation, edges fight each other instead of cooperating.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          In Athena this engine:
+          <br>• Gives capital to the strategy best suited to the regime
+          <br>• Reduces exposure when correlations rise
+          <br>• Maximizes portfolio-level expectancy
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        Static or equal-weight allocation across strategies leads to:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Strategy crowding</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            All strategies get hurt simultaneously in regime shifts.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Missed compounding</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Capital sits idle in underperforming edges while winners starve.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Correlation blow-ups</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Hidden concentration during market stress → outsized drawdowns.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters in Athena</div>
+        <p style="margin-bottom: 0;">
+          By treating strategies as a portfolio of edges and allocating capital conditionally (regime fit + performance + risk), Athena achieves higher risk-adjusted returns with smoother equity curves than any single strategy alone. <strong>This is the difference between having good ideas and actually making money from them consistently.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Strategies as Assets</h3>
+          <p>
+            <strong>Think of it as:</strong> Each long-only strategy is like a stock in a portfolio. You don't hold them all equally – you overweight the ones with the best current edge and lowest correlation.
+          </p>
+          <p style="margin-bottom: 0;">
+            Allocation becomes a meta-decision: which edge deserves capital now?
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Regime as Opportunity Filter</h3>
+          <p>
+            <strong>Think of it as:</strong> In a trend regime, momentum gets 60–80% of capital; in consolidation, mean-reversion or low-vol strategies dominate.
+          </p>
+          <p style="margin-bottom: 0;">
+            Capital flows to where probability is highest.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: Fund Manager Rebalancing</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Trend regime</div>
+        <p>Momentum & breakout strategies get majority allocation.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">High-vol / chop regime</div>
+        <p style="margin-bottom: 0;">Defensive, mean-reversion, or volatility-harvesting strategies take over.</p>
+      </div>
+    </section>
+
+    <!-- PART 3: KEY BENEFITS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: Key Benefits in Athena</h2>
+
+      <h3>1. Regime-Optimal Capital Flow</h3>
+      <p>
+        Automatically shifts money to the strategies that historically perform best in the current regime.
+      </p>
+
+      <h3>2. Correlation-Aware Diversification</h3>
+      <p>
+        Reduces simultaneous drawdowns by limiting overlap during stress.
+      </p>
+
+      <h3>3. Higher Portfolio Expectancy</h3>
+      <p>
+        Allocates more to high-Sharpe, high-conviction setups → compounds faster.
+      </p>
+
+      <h3>4. Smoother Equity Curve</h3>
+      <p>
+        Avoids boom-bust cycles of single-strategy reliance.
+      </p>
+
+      <h3>5. Scalability & Robustness</h3>
+      <p>
+        Works with any number of long-only edges; becomes more powerful as you add strategies.
+      </p>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          Dynamic allocation across regime-conditioned strategies typically improves portfolio Sharpe by 0.7–1.5 points and reduces max drawdown by 15–35% vs. equal-weighting.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: WHERE IT HELPS IN ATHENA -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Where It Helps in Athena</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Multi-Strategy Portfolio</h4>
+          <p>Orchestrates capital across momentum, value, quality, low-vol, etc.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Regime Integration</h4>
+          <p>Uses Project 1 labels to bias toward regime-suited edges.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Risk Budgeting</h4>
+          <p>Enforces volatility parity and drawdown limits at portfolio level.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Performance Monitoring</h4>
+          <p>Feeds into decay detection (Project 9) for automatic de-weighting.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 4.5: REAL-WORLD STOCK EXAMPLES -->
+    <section class="content-section fade-in">
+      <h2>Part 4.5: Real-World Stock Examples (2025 Context)</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">SPY vs QQQ (Broad Market vs Tech Tilt)</div>
+        <p>
+          In the tariff-shock volatility of April–May 2025, broad-market mean-reversion and low-vol strategies on SPY outperformed sharply while tech-momentum strategies on QQQ suffered large drawdowns. The allocation engine quickly de-weighted QQQ-heavy momentum edges (dropping to 10–20% of book) and rotated capital toward SPY stability and defensive mean-reversion plays — preserving capital during the worst of the sell-off and positioning for the mid-year broad-market rebound when regime shifted back to neutral/trend.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Nvidia (NVDA)</div>
+        <p style="margin-bottom: 0;">
+          During the strong AI-driven trend regimes of Q3–Q4 2025 (Blackwell ramp, data-center expansion), NVDA momentum-breakout and quality-growth strategies showed exceptional edge with high Sharpe and positive skew. The engine allocated 30–45% of total capital to these high-conviction NVDA-focused edges while reducing exposure to slower-moving value or mean-reversion strategies on the same name — capturing outsized gains during multiple 30–60% advances without over-concentrating during brief high-vol pauses.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 5: SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Summary</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li>Dynamically allocates capital across long-only strategies.</li>
+          <li>Overweights regime-fit, high-expectancy edges.</li>
+          <li>Reduces correlation risk and simultaneous drawdowns.</li>
+          <li>Improves portfolio-level Sharpe and smoothness.</li>
+          <li>Meta-layer that turns a collection of good ideas into a coherent, compounding system in Athena.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="project5_distributional_return.html" class="btn btn-secondary">
+        ← Previous: Distributional Return Modeling
+      </a>
+      <a href="project7_risk_state.html" class="btn btn-primary">
+        Next: Risk State & Drawdown Prediction System →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Project 6: Strategy Allocation & Capital Weighting Engine</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of Athena Quant Trading App
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="9.7_.Risk_State.html">Project 7: Risk State & Drawdown Prediction System</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <style>
+    /* Module-specific styles – identical to previous projects */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

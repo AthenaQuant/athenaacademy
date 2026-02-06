@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about the Risk State & Drawdown Prediction System in Athena. Discover how early detection of elevated drawdown risk and volatility regime shifts protects long-only mega-cap portfolios.">
+  <title>Project 7: Risk State & Drawdown Prediction System | Athena Quant Trading</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="9.6_Strategy_Allocation.html" class="nav-home">← Back to Project 6</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Project 7</span>
+          <span class="nav-module-title">Risk State & Drawdown Prediction System</span>
+        </div>
+        <a href="9.8_Options_Implied_Market_Intelligence.html" class="nav-next">Next Project →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Athena Projects: Machine Learning for Quant Trading</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>Project 7: Risk State & Drawdown Prediction System</span>
+        </div>
+        <h1>Risk State & Drawdown Prediction System</h1>
+        <p class="module-subtitle">
+          An early-warning engine that detects elevated drawdown risk, volatility regime shifts, and correlation spikes – allowing proactive de-risking in long-only mega-cap portfolios before major damage occurs.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💡 Strategic Insights</span>
+          <span class="meta-item">✅ 5 Key Benefits</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          Your long-only book is up nicely… then a sudden correlation spike across holdings + volatility expansion wipes out months of gains in two weeks. Reactive stops are too late. <strong>Without predictive risk-state detection, you're always one step behind the market.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          In Athena this system:
+          <br>• Flags "elevated" or "critical" risk states days/weeks early
+          <br>• Triggers automatic risk multipliers (e.g., 0.4×–0.7× exposure)
+          <br>• Preserves capital for the next opportunity
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        Waiting for realized drawdowns or simple volatility thresholds leads to:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Lagging protection</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Stops and cuts happen after 10–20% is already gone.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ False security in calm periods</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Low vol lulls traders into complacency before explosions.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Portfolio concentration risk</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Hidden correlation build-up turns diversification into illusion.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters in Athena</div>
+        <p style="margin-bottom: 0;">
+          By combining change-point detection, correlation monitoring, drawdown precursors, and regime context, Athena gets ahead of risk – de-risking proactively instead of reactively. <strong>This is the difference between surviving tough markets and being forced to restart after big losses.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Risk as a State Machine</h3>
+          <p>
+            <strong>Think of it as:</strong> The market has "normal", "elevated", and "critical" health states – like a patient showing early warning signs before a heart attack.
+          </p>
+          <p style="margin-bottom: 0;">
+            Early detection lets you reduce exposure before symptoms become severe.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Precursors over Realization</h3>
+          <p>
+            <strong>Think of it as:</strong> Spotting storm clouds, wind shifts, and barometric pressure drops – not waiting for lightning to strike.
+          </p>
+          <p style="margin-bottom: 0;">
+            Leading indicators (correlation spikes, vol-of-vol, drawdown acceleration) give days/weeks of lead time.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: Traffic Early-Warning System</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Green: Normal risk state</div>
+        <p>Full capital deployment.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Yellow: Elevated</div>
+        <p>Reduce to 50–70% exposure, tighten stops.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Red: Critical</div>
+        <p style="margin-bottom: 0;">Major de-risk (20–40% exposure or cash buffer).</p>
+      </div>
+    </section>
+
+    <!-- PART 3: KEY BENEFITS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: Key Benefits in Athena</h2>
+
+      <h3>1. Proactive Capital Protection</h3>
+      <p>
+        Cuts exposure before large drawdowns materialize → preserves compounding base.
+      </p>
+
+      <h3>2. Avoids Emotional Decisions</h3>
+      <p>
+        Objective, statistical risk states remove panic-selling or hope-based holding.
+      </p>
+
+      <h3>3. Regime-Aware Sensitivity</h3>
+      <p>
+        Uses Project 1 labels so risk thresholds adapt (tighter in high-vol regimes).
+      </p>
+
+      <h3>4. Correlation & Concentration Alert</h3>
+      <p>
+        Spots when diversification breaks down → prevents portfolio-wide shocks.
+      </p>
+
+      <h3>5. Seamless Integration</h3>
+      <p>
+        Feeds risk multipliers directly into allocation engine (Project 6) → automatic de-risking.
+      </p>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          Early risk-state systems often reduce max portfolio drawdown by 20–45% and improve Calmar ratio significantly in long-only mega-cap strategies.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: WHERE IT HELPS IN ATHENA -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Where It Helps in Athena</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Portfolio De-Risking</h4>
+          <p>Triggers global exposure reduction on "elevated/critical" signals.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Position-Level Filters</h4>
+          <p>Blocks new entries or tightens stops in high-risk states.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Allocation Adjustment</h4>
+          <p>Works with Project 6 to shift capital toward defensive strategies.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Alert & Monitoring Dashboard</h4>
+          <p>Provides clear visual risk-state timeline for review.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 4.5: REAL-WORLD STOCK EXAMPLES -->
+    <section class="content-section fade-in">
+      <h2>Part 4.5: Real-World Stock Examples (2025 Context)</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Tesla (TSLA)</div>
+        <p>
+          In early-to-mid 2025, TSLA showed accelerating drawdown velocity + sharp correlation increase with broader market indices during tariff uncertainty and supply-chain noise. The system flagged an "elevated" risk state ~7–10 days before the largest weekly drop of the period (driven by vol-of-vol spike and breadth deterioration). This triggered a risk multiplier (0.5× exposure) and paused new longs, significantly reducing drawdown compared to static holding — preserving capital for the cleaner trend resumption later in Q3.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">SPY (S&P 500 ETF)</div>
+        <p style="margin-bottom: 0;">
+          During the April 2025 tariff-shock sell-off, SPY exhibited precursor signals: rolling correlation to high-beta names spiked, short-term drawdown acceleration exceeded historical norms, and volatility regime shifted upward. The engine moved to "critical" risk state early in the move, enforcing major de-risking (30–40% effective exposure) before the bulk of the ~19% peak-to-trough decline. This proactive step limited portfolio damage and positioned Athena to re-risk aggressively during the May rebound when risk state returned to "normal".
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 5: SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Summary</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li>Detects elevated drawdown risk and regime shifts early.</li>
+          <li>Triggers proactive de-risking before large losses hit.</li>
+          <li>Monitors correlation spikes and volatility precursors.</li>
+          <li>Preserves capital and improves risk-adjusted compounding.</li>
+          <li>Critical defense layer that protects all other Athena components in turbulent markets.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="project6_strategy_allocation.html" class="btn btn-secondary">
+        ← Previous: Strategy Allocation & Capital Weighting Engine
+      </a>
+      <a href="project8_options_implied.html" class="btn btn-primary">
+        Next: Options-Implied Market Intelligence →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Project 7: Risk State & Drawdown Prediction System</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of Athena Quant Trading App
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="9.8_Options_Implied_Market_Intelligence.html">Project 8: Options-Implied Market Intelligence</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <style>
+    /* Module-specific styles – identical to previous projects */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

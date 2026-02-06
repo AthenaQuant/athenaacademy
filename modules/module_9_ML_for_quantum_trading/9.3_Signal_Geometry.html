@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about Signal Geometry & Feature Compression in Athena. Discover how linear algebra turns noisy, correlated indicators into clean, independent factors – improving signal quality for long-only mega-cap trading.">
+  <title>Project 3: Signal Geometry & Feature Compression | Athena Quant Trading</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="9.2_Regime_Aware_Forecasting.html" class="nav-home">← Back to Project 2</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Project 3</span>
+          <span class="nav-module-title">Signal Geometry & Feature Compression</span>
+        </div>
+        <a href="9.4_volume_vwap.html" class="nav-next">Next Project →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Athena Projects: Machine Learning for Quant Trading</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>Project 3: Signal Geometry & Feature Compression</span>
+        </div>
+        <h1>Signal Geometry & Feature Compression</h1>
+        <p class="module-subtitle">
+          Transform dozens of overlapping, noisy indicators into a handful of clean, independent market factors using linear algebra – the foundation of robust signal generation in long-only trading.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💡 Strategic Insights</span>
+          <span class="meta-item">✅ 5 Key Benefits</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          You have 15 momentum, volume, and volatility indicators all screaming “buy” on a mega-cap stock — but they’re all highly correlated. You enter big… and get whipsawed because they were all capturing the same crowded trade. <strong>Without compression, redundancy kills edge.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          In Athena, feature compression:
+          <br>• Removes multicollinearity noise
+          <br>• Extracts true independent drivers
+          <br>• Gives cleaner, higher-quality signals
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        Using raw, correlated signals leads to:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Overfitting & fragility</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Models fit noise instead of signal → blows up out-of-sample.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Redundant position sizing</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Multiple similar signals stack exposure unintentionally.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Poor interpretability</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Hard to understand what actually drives the trade.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters in Athena</div>
+        <p style="margin-bottom: 0;">
+          By applying PCA/SVD-style compression, Athena turns chaotic indicator soup into a small set of orthogonal factors — dramatically improving signal-to-noise ratio, robustness, and trust in long-only decisions on liquid mega-caps. <strong>This is where quant edge is born.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Indicators as Noisy Projections</h3>
+          <p>
+            <strong>Think of it as:</strong> Looking at the same 3D object from 15 different camera angles — most angles give almost the same view. Compression finds the few true independent perspectives (principal components).
+          </p>
+          <p style="margin-bottom: 0;">
+            You keep the real geometry of the market, discard redundant noise.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Orthogonal = Uncorrelated Power</h3>
+          <p>
+            <strong>Think of it as:</strong> Instead of 15 overlapping voices shouting the same thing, you get 3–5 clear, independent voices telling different parts of the story.
+          </p>
+          <p style="margin-bottom: 0;">
+            Cleaner signals → better timing and sizing in long-only trades.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: From Crowd Noise to Symphony</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Before: 15 overlapping signals</div>
+        <p>High correlation → multicollinearity → unstable decisions.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">After: 3–5 orthogonal factors</div>
+        <p style="margin-bottom: 0;">Independent drivers → interpretable, stable, high-quality inputs.</p>
+      </div>
+    </section>
+
+    <!-- PART 3: KEY BENEFITS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: Key Benefits in Athena</h2>
+
+      <h3>1. Dramatically Higher Signal-to-Noise</h3>
+      <p>
+        Removes redundant information → signals become much sharper and less noisy.
+      </p>
+
+      <h3>2. Reduced Overfitting Risk</h3>
+      <p>
+        Lower dimensionality + orthogonality → models generalize better out-of-sample.
+      </p>
+
+      <h3>3. Improved Interpretability</h3>
+      <p>
+        Factors often map to intuitive concepts (e.g., “momentum purity”, “volatility sentiment”, “volume conviction”).
+      </p>
+
+      <h3>4. Better Position Sizing & Filtering</h3>
+      <p>
+        Orthogonal inputs allow cleaner weighting — avoids piling on correlated bets.
+      </p>
+
+      <h3>5. Foundation for Downstream ML</h3>
+      <p>
+        Clean, low-dimensional features feed regime models, distributional forecasts, allocation engines.
+      </p>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          In long-only mega-cap strategies, feature compression typically boosts Sharpe by 0.4–0.8 points by eliminating multicollinearity-induced noise.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: WHERE IT HELPS IN ATHENA -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Where It Helps in Athena</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Signal Generation Pipeline</h4>
+          <p>Feeds clean factors into regime-aware models and entry logic.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Feature Store</h4>
+          <p>Maintains a stable, low-dimensional set of inputs for all strategies.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Model Robustness</h4>
+          <p>Reduces variance in downstream ML predictions and allocations.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Explainability Layer</h4>
+          <p>Factors provide interpretable drivers for trade decisions.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 4.5: REAL-WORLD STOCK EXAMPLES -->
+    <section class="content-section fade-in">
+      <h2>Part 4.5: Real-World Stock Examples (2025 Context)</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Meta (META)</div>
+        <p>
+          In 2025, META exhibited frequent periods of high correlation between momentum indicators, ad-revenue sentiment proxies, and volatility-of-volatility measures during AI/ad-spend rotation waves. Raw signals often gave conflicting or redundant “strong buy” readings, leading to oversized entries just before sharp mean-reversion moves. Compression distilled these into 3 dominant orthogonal factors (e.g., “pure momentum”, “sentiment overcrowding”, “structural growth”), allowing Athena to filter out noise from overcrowding and focus on high-conviction structural signals — resulting in better-timed longs during Q3–Q4 recovery phases.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">SPY (S&P 500 ETF)</div>
+        <p style="margin-bottom: 0;">
+          During the volatile 2025 tariff-driven sell-off and subsequent rebound (April–June), dozens of technical and macro-proxies (RSI, MACD variants, VIX term structure, breadth indicators) were extremely correlated in risk-on/risk-off rotations. Without compression, signals piled up redundantly, causing over-aggressive re-risking too early in chop. PCA-style decomposition extracted clean factors (e.g., “broad risk appetite”, “volatility persistence”, “liquidity/tape strength”), enabling Athena to wait for alignment across independent drivers before increasing long exposure — capturing more of the mid-year rally with lower drawdown risk.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 5: SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Summary</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li>Transforms noisy, correlated indicators into clean, orthogonal factors.</li>
+          <li>Removes multicollinearity → sharper, more robust signals.</li>
+          <li>Improves interpretability and downstream model performance.</li>
+          <li>Critical for avoiding redundant bets in long-only mega-cap trading.</li>
+          <li>Serves as the signal-quality backbone of the entire Athena system.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="project2_return_structure.html" class="btn btn-secondary">
+        ← Previous: Return Structure & Regime-Aware Forecasting
+      </a>
+      <a href="project4_vwap_volume.html" class="btn btn-primary">
+        Next: VWAP & Volume Reaction Probability Model →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Project 3: Signal Geometry & Feature Compression</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of Athena Quant Trading App
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="9.4_volume_vwap.html">Project 4: VWAP & Volume Reaction Probability Model</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <style>
+    /* Module-specific styles – identical to previous projects */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

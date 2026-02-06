@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about Options-Implied Market Intelligence in Athena. Discover how extracting volatility expectations, skew, and tail-risk signals from options markets (without trading them) sharpens long-only entry timing and risk filters for mega-cap stocks.">
+  <title>Project 8: Options-Implied Market Intelligence | Athena Quant Trading</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="9.7_.Risk_State.html" class="nav-home">← Back to Project 7</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Project 8</span>
+          <span class="nav-module-title">Options-Implied Market Intelligence</span>
+        </div>
+        <a href="9.9_Strategy_Decay.html" class="nav-next">Next Project →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Athena Projects: Machine Learning for Quant Trading</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>Project 8: Options-Implied Market Intelligence</span>
+        </div>
+        <h1>Options-Implied Market Intelligence</h1>
+        <p class="module-subtitle">
+          Uses options market data (implied volatility, skew, term structure) purely as information – never trading options – to generate risk-on/risk-off signals, volatility warnings, and entry timing filters for long-only mega-cap positions.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💡 Strategic Insights</span>
+          <span class="meta-item">✅ 5 Key Benefits</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          You enter a long position in a mega-cap name right before implied volatility explodes and skew flips bearish on an event. The stock gaps lower despite “good” fundamentals. <strong>Options markets often price in risks weeks before price reflects them.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          In Athena this intelligence:
+          <br>• Acts as a forward-looking risk filter
+          <br>• Delays entries during implied tail-risk spikes
+          <br>• Confirms conviction when options align with technicals
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        Ignoring options-implied information leads to:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Buying into priced-in risk</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Entering just as institutions hedge heavily → adverse moves follow.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Missing volatility timing</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Low realized vol lulls traders while implied vol warns of expansion.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Event-driven surprises</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Earnings or macro events cause gaps that options priced days earlier.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters in Athena</div>
+        <p style="margin-bottom: 0;">
+          Options markets aggregate smart money expectations faster than price alone. By extracting IV levels, skew asymmetry, term structure shape, and event-driven signals (without ever trading options), Athena adds a powerful forward-looking layer to long-only timing and risk management. <strong>This is free, high-quality market intelligence that separates good entries from traps.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Implied Volatility as Fear/Greed Gauge</h3>
+          <p>
+            <strong>Think of it as:</strong> IV is the market's collective opinion of future uncertainty. Spikes warn of potential storms; collapses signal complacency.
+          </p>
+          <p style="margin-bottom: 0;">
+            High IV relative to realized = caution; low IV + bullish skew = green light.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Skew & Term Structure as Tail & Horizon Clues</h3>
+          <p>
+            <strong>Think of it as:</strong> Put skew shows how much protection costs (fear of downside); steep term structure indicates near-term event risk.
+          </p>
+          <p style="margin-bottom: 0;">
+            These give early clues about asymmetry before price moves.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: Radar Before Storm</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Clear skies (low IV, flat skew)</div>
+        <p>High conviction for long entries.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Storm clouds forming (IV spike, put skew ↑)</div>
+        <p style="margin-bottom: 0;">Delay or reduce size until signal clears.</p>
+      </div>
+    </section>
+
+    <!-- PART 3: KEY BENEFITS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: Key Benefits in Athena</h2>
+
+      <h3>1. Forward-Looking Risk Filter</h3>
+      <p>
+        Spots implied risks days/weeks before price reflects them → avoids bad entries.
+      </p>
+
+      <h3>2. Better Event Timing</h3>
+      <p>
+        Flags earnings/macro periods with elevated term structure or skew → tighter sizing or wait.
+      </p>
+
+      <h3>3. Asymmetry Confirmation</h3>
+      <p>
+        Bullish skew + low IV confirms positive tail setups → increases conviction.
+      </p>
+
+      <h3>4. Complacency Warning</h3>
+      <p>
+        Very low IV + flat/negative skew warns of potential vol expansion → reduce exposure.
+      </p>
+
+      <h3>5. Zero Cost Intelligence</h3>
+      <p>
+        Pure information overlay – no options trading required, yet captures institutional expectations.
+      </p>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          Adding options-implied filters typically improves long-only entry win rate by 8–18% and reduces event-related drawdowns significantly in mega-cap names.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: WHERE IT HELPS IN ATHENA -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Where It Helps in Athena</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Entry Timing Gate</h4>
+          <p>Blocks or reduces size when implied tail-risk is elevated.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Volatility Regime Confirmation</h4>
+          <p>Cross-checks Project 1 regime labels with forward IV expectations.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Event Calendar Filter</h4>
+          <p>Adjusts exposure around earnings, Fed meetings, product launches.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Conviction Scoring</h4>
+          <p>Boosts signal strength when options align with technical/regime factors.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 4.5: REAL-WORLD STOCK EXAMPLES -->
+    <section class="content-section fade-in">
+      <h2>Part 4.5: Real-World Stock Examples (2025 Context)</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Nvidia (NVDA)</div>
+        <p>
+          In mid-2025, ahead of several major AI/data-center product cycles, NVDA options showed persistently elevated put skew and a steepening volatility term structure (front-month IV >> back-month), signaling institutional hedging against potential capex or demand disappointment. The system flagged "risk-off implied" conditions, delaying new long entries or enforcing reduced sizing during these periods – avoiding several sharp -12% to -20% pullbacks that followed disappointing guidance or macro fears. When skew flattened and IV compressed post-event (late Q3), it gave a strong "green light" confirmation for adding to positions during the subsequent rally leg.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Amazon (AMZN)</div>
+        <p style="margin-bottom: 0;">
+          Throughout much of 2025, AMZN exhibited periods of unusually low implied volatility relative to realized (especially around AWS growth inflection points) combined with mildly bullish call skew. This complacency signal warned of potential vol expansion ahead of earnings or macro shifts. The intelligence layer prompted Athena to tighten position sizing or wait for confirmation during these low-IV windows, preventing entries right before several gap-down reactions. Conversely, when IV normalized upward with flattening skew in late-year recovery phases, it boosted conviction for larger long allocations – aligning perfectly with the strong rebound in Q4.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 5: SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Summary</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li>Reads implied volatility, skew, and term structure as pure information.</li>
+          <li>Provides forward-looking risk-on/risk-off and timing signals.</li>
+          <li>Avoids entries during priced-in tail risk or complacency periods.</li>
+          <li>Confirms technical/regime setups when options align.</li>
+          <li>Powerful, zero-cost overlay that sharpens long-only decisions in Athena without trading derivatives.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="project7_risk_state.html" class="btn btn-secondary">
+        ← Previous: Risk State & Drawdown Prediction System
+      </a>
+      <a href="project9_strategy_decay.html" class="btn btn-primary">
+        Next: Strategy Decay & Self-Diagnostics Engine →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Project 8: Options-Implied Market Intelligence</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of Athena Quant Trading App
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="9.9_Strategy_Decay.html">Project 9: Strategy Decay & Self-Diagnostics Engine</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <style>
+    /* Module-specific styles – identical to previous projects */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

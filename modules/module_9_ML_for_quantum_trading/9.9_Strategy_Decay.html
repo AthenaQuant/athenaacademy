@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about the Strategy Decay & Self-Diagnostics Engine in Athena – the final piece. Understand how continuous monitoring detects loss of edge, statistical drift, or regime misalignment so long-only strategies stay healthy over time.">
+  <title>Project 9: Strategy Decay & Self-Diagnostics Engine | Athena Quant Trading</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="9.8_Options_Implied_Market_Intelligence.html" class="nav-home">← Back to Project 8</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Project 9</span>
+          <span class="nav-module-title">Strategy Decay & Self-Diagnostics Engine</span>
+        </div>
+        <a href="../../index.html" class="nav-next">Back to Athena Overview →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Athena Projects: Machine Learning for Quant Trading</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>Project 9: Strategy Decay & Self-Diagnostics Engine</span>
+        </div>
+        <h1>Strategy Decay & Self-Diagnostics Engine</h1>
+        <p class="module-subtitle">
+          The guardian that continuously monitors every long-only strategy for signs of decay, statistical drift, regime misalignment, or loss of edge – triggering alerts, pauses, retraining, or retirement before performance silently erodes.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💡 Strategic Insights</span>
+          <span class="meta-item">✅ 5 Key Benefits</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          A once-profitable momentum strategy on mega-caps quietly starts losing edge over months — hit rate drops, Sharpe falls, drawdowns increase — but you keep running it at full size because nothing “feels” broken yet. <strong>Decay is silent until it's expensive.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          In Athena this engine:
+          <br>• Detects degradation statistically before large PnL damage
+          <br>• Triggers objective actions (pause, retrain, reduce weight)
+          <br>• Keeps the overall book healthy long-term
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        Most traders miss slow decay because:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ No early-warning system</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Performance drifts gradually → realized only after big losses.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Emotional attachment</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            “It worked before, it’ll come back” → capital tied up in dying edges.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Regime mismatch blindness</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Strategies stop working when market regime permanently shifts.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters in Athena</div>
+        <p style="margin-bottom: 0;">
+          Markets evolve. Edges die. Athena treats every strategy as a living organism that needs constant health checks. This final layer ensures long-term survival and compounding by catching decay early and acting decisively. <strong>Without self-diagnostics, even the best quant system eventually fails.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Strategy as a Living Signal</h3>
+          <p>
+            <strong>Think of it as:</strong> A strategy is like a muscle — it atrophies if not used properly, gets injured in regime shifts, or loses strength over time. Diagnostics are regular health scans + blood tests.
+          </p>
+          <p style="margin-bottom: 0;">
+            Catch problems early → intervene before performance collapses.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Decay Signals Are Subtle & Cumulative</h3>
+          <p>
+            <strong>Think of it as:</strong> Not one big failure, but creeping changes: hit rate -5%, average win shrinks, drawdown speed increases, regime alignment weakens.
+          </p>
+          <p style="margin-bottom: 0;">
+            Statistical monitoring catches these trends long before PnL screams.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: Car Dashboard Warning Lights</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Green: Healthy</div>
+        <p>Full allocation, normal monitoring.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Yellow: Early decay detected</div>
+        <p>Reduce weight, start retraining investigation.</p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Red: Clear loss of edge</div>
+        <p style="margin-bottom: 0;">Pause or retire strategy.</p>
+      </div>
+    </section>
+
+    <!-- PART 3: KEY BENEFITS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: Key Benefits in Athena</h2>
+
+      <h3>1. Early Decay Detection</h3>
+      <p>
+        Spots degradation months before large PnL impact → preserves capital.
+      </p>
+
+      <h3>2. Objective Decision-Making</h3>
+      <p>
+        Removes emotion — health scores and action thresholds are statistical.
+      </p>
+
+      <h3>3. Regime-Alignment Monitoring</h3>
+      <p>
+        Flags when a strategy no longer matches current market regime.
+      </p>
+
+      <h3>4. Automated Lifecycle Management</h3>
+      <p>
+        Pause, retrain, reduce weight, or retire strategies automatically or semi-automatically.
+      </p>
+
+      <h3>5. Long-Term Compounding Protection</h3>
+      <p>
+        Prevents dead-weight strategies from dragging down overall performance.
+      </p>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          Continuous diagnostics typically extend the profitable lifespan of long-only edges by 2–4× and reduce the cost of “zombie” strategies by 60–80%.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: WHERE IT HELPS IN ATHENA -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Where It Helps in Athena</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Strategy Health Dashboard</h4>
+          <p>Central view of every edge's current status and decay score.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Automatic Weight Adjustment</h4>
+          <p>Feeds decay signals directly into Project 6 allocation engine.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Retraining Triggers</h4>
+          <p>Flags when parameters need updating due to drift.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Post-Mortem & Learning Loop</h4>
+          <p>Records why edges died → improves future strategy design.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 4.5: REAL-WORLD STOCK EXAMPLES -->
+    <section class="content-section fade-in">
+      <h2>Part 4.5: Real-World Stock Examples (2025 Context)</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Meta (META)</div>
+        <p>
+          After a strong rebound phase in mid-2025 driven by ad-revenue recovery and AI integrations, several momentum and growth-tilted strategies on META began showing subtle but persistent decay: hit rate dropped ~8–12% over 3–4 months, average win size compressed, and alignment with the dominant regime weakened during late-year consolidation. The diagnostics engine flagged "yellow → moderate decay" early (before major PnL impact), reduced allocation weight by 40–60%, and triggered a parameter review — preventing the strategy from turning into a capital drag during the choppier Q4 action and preserving edge for cleaner setups later.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Tesla (TSLA)</div>
+        <p style="margin-bottom: 0;">
+          In the extended 2025 consolidation environment (~$420–$480+ range for much of the year), many breakout and trend-following strategies on TSLA exhibited clear statistical drift: increasing false breakout rate, deteriorating expectancy, and growing mismatch with the persistent consolidation regime. The self-diagnostics layer detected "red → significant decay" around mid-year, automatically paused or heavily de-weighted these edges, and shifted capital toward mean-reversion or range-bound plays that were healthier in that regime — avoiding months of bleeding performance and allowing the system to wait for a cleaner trend resumption later in the year.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 5: SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Summary</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li>Continuously monitors every strategy for decay, drift, and edge loss.</li>
+          <li>Detects problems statistically long before large PnL damage.</li>
+          <li>Triggers objective actions: reduce weight, pause, retrain, retire.</li>
+          <li>Protects long-term compounding by eliminating zombie strategies.</li>
+          <li>The final, essential layer that turns Athena from a collection of edges into a self-healing, adaptive quant trading system.</li>
+        </ul>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">End of the 9-Project Athena Roadmap</div>
+        <p style="margin-bottom: 0;">
+          Congratulations — you've now covered the full stack: from regime awareness → signal quality → tactical timing → probabilistic sizing → capital orchestration → risk defense → forward intelligence → long-term health monitoring.
+        </p>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="project8_options_implied.html" class="btn btn-secondary">
+        ← Previous: Options-Implied Market Intelligence
+      </a>
+      <a href="../../index.html" class="btn btn-primary">
+        Back to Athena Project Overview →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Project 9: Strategy Decay & Self-Diagnostics Engine</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Final module – Part of Athena Quant Trading App
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            <a href="../../index.html">Return to Main Dashboard</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <style>
+    /* Module-specific styles – identical to previous projects */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>

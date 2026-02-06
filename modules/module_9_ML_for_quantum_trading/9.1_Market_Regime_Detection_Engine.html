@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about the Market Regime Detection Engine in Athena, our quant trading app. Understand its benefits and how it enhances long-only stock trading strategies with real examples from SPY and TSLA.">
+  <title>Project 1: Market Regime Detection Engine | Athena Quant Trading</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../assets/css/shared-styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <nav class="module-nav-header">
+    <div class="container">
+      <div class="nav-content">
+        <a href="../../index.html" class="nav-home">← Back to Athena Projects</a>
+        <div class="nav-module-info">
+          <span class="nav-module-number">Project 1</span>
+          <span class="nav-module-title">Market Regime Detection Engine</span>
+        </div>
+        <a href="9.2_Regime_Aware_Forecasting.html" class="nav-next">Next Project →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="module-hero">
+    <div class="container">
+      <div class="module-hero-content">
+        <div class="module-breadcrumb">
+          <span>Athena Projects: Machine Learning for Quant Trading</span>
+          <span class="breadcrumb-separator">›</span>
+          <span>Project 1: Market Regime Detection Engine</span>
+        </div>
+        <h1>Market Regime Detection Engine</h1>
+        <p class="module-subtitle">
+          The meta-controller that adapts your long-only stock strategies to different market environments, preventing unnecessary losses.
+        </p>
+        <div class="module-meta">
+          <span class="meta-item">⏱️ 15 min read</span>
+          <span class="meta-item">📊 3 Visualizations</span>
+          <span class="meta-item">💡 Strategic Insights</span>
+          <span class="meta-item">✅ 5 Key Benefits</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container content-wrapper">
+
+    <!-- PART 1: WHY SHOULD I CARE? -->
+    <section class="content-section fade-in">
+      <h2>Part 1: Why Should I Care?</h2>
+
+      <div class="info-box info-box-warning">
+        <div class="info-box-title">⚠️ Real Trading Scenario</div>
+        <p>
+          You're running a long-only strategy on mega-cap stocks like AAPL and MSFT. In a trending market, it performs brilliantly. But during consolidation, it whipsaws and erodes capital. <strong>Without regime detection, you're flying blind.</strong>
+        </p>
+        <p style="margin-top: 1rem; margin-bottom: 0;">
+          In Athena, this engine acts as a gatekeeper:
+          <br>• Trend regime: Full allocation
+          <br>• High-vol: Reduced exposure
+          <br><strong>Result: 20-30% drawdown reduction without missing upside.</strong>
+        </p>
+      </div>
+
+      <h3>The Survival Problem</h3>
+      <p>
+        Ignoring market regimes can lead to:
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Overtrading in Sideways Markets</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            False signals multiply, leading to excessive commissions and slippage in liquid stocks.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Exposure During Volatility Spikes</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Long positions get hammered in drawdowns, amplifying losses beyond your risk tolerance.
+          </p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--error); margin-bottom: 1rem;">❌ Missed Opportunities</h4>
+          <p style="margin: 0; font-size: 0.95rem;">
+            Conservative strategies sit out trends, underperforming benchmarks like SPY.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box info-box-success" style="margin-top: 2rem;">
+        <div class="info-box-title">✅ Why This Matters in Athena</div>
+        <p style="margin-bottom: 0;">
+          This engine is the foundation of adaptive trading in Athena. It ensures your long-only strategies align with the market's 'mood,' improving win rates and risk-adjusted returns. <strong>Get this right, and your entire quant app becomes more robust and profitable.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 2: THE INTUITION -->
+    <section class="content-section fade-in">
+      <h2>Part 2: The Intuition</h2>
+
+      <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3>Market Regimes as 'Weather Patterns'</h3>
+          <p>
+            <strong>Think of it as:</strong> Checking the weather before planning a trade. Sunny (trend) means go full speed; stormy (high-vol) means take cover.
+          </p>
+          <p>
+            In Athena, regimes classify the environment so strategies don't force trades in unfavorable conditions.
+          </p>
+          <p style="margin-bottom: 0;">
+            <strong>Helps with:</strong> Timing entries, sizing positions, and avoiding noise in mega-cap stocks.
+          </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-purple);">
+          <h3>Benefits for Long-Only Trading</h3>
+          <p>
+            <strong>Think of it as:</strong> A smart filter that boosts signal quality by matching strategies to regimes.
+          </p>
+          <p>
+            Regimes make your models more accurate by conditioning on context, reducing overfitting.
+          </p>
+          <p style="margin-bottom: 0;">
+            <strong>Helps with:</strong> Capital preservation, consistent performance, and scaling Athena's strategies.
+          </p>
+        </div>
+      </div>
+
+      <h3>Visual Analogy: Traffic Lights for Trading</h3>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">🚦 Green: Trend Regime</div>
+        <p>
+          Full speed ahead for long positions in liquid stocks.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">🟡 Yellow: Consolidation</div>
+        <p style="margin-bottom: 0;">
+          Proceed with caution; reduce size or wait for breakouts.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">🔴 Red: High-Vol</div>
+        <p style="margin-bottom: 0;">
+          Stop and protect capital.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 3: KEY BENEFITS -->
+    <section class="content-section fade-in">
+      <h2>Part 3: Key Benefits in Athena</h2>
+
+      <h3>1. Adaptive Strategy Activation</h3>
+      <p>
+        Automatically enables or disables strategies based on regime, preventing losses in mismatched environments.
+      </p>
+
+      <h3>2. Improved Risk Management</h3>
+      <p>
+        Scales position sizes dynamically, reducing drawdowns in volatile regimes while maximizing upside in trends.
+      </p>
+
+      <h3>3. Enhanced Model Accuracy</h3>
+      <p>
+        Conditions forecasts on regimes, leading to more reliable signals for mega-cap stock selection.
+      </p>
+
+      <h3>4. Capital Efficiency</h3>
+      <p>
+        Allocates more capital during favorable regimes, boosting overall returns without increasing risk.
+      </p>
+
+      <h3>5. Real-Time Decision Support</h3>
+      <p>
+        Provides probability-based confidence, helping Athena users make informed long-only trades.
+      </p>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">📌 Key Observation</div>
+        <p style="margin-bottom: 0;">
+          In backtests, regime detection can improve Sharpe ratios by 0.5-1.0 points for long-only portfolios.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 4: WHERE IT HELPS IN ATHENA -->
+    <section class="content-section fade-in">
+      <h2>Part 4: Where It Helps in Athena</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Portfolio Optimization</h4>
+          <p>Integrates with allocation engines to regime-adjust weights.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Signal Generation</h4>
+          <p>Filters signals to match current regime, reducing false positives.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Backtesting</h4>
+          <p>Evaluates strategies across regimes for robust performance.</p>
+        </div>
+        <div class="card">
+          <h4 style="color: var(--success);">✓ Live Trading</h4>
+          <p>Real-time regime shifts trigger alerts and adjustments.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 4.5: REAL-WORLD STOCK EXAMPLES -->
+    <section class="content-section fade-in">
+      <h2>Part 4.5: Real-World Stock Examples (2025 Context)</h2>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">SPY (S&P 500 ETF)</div>
+        <p>
+          In April 2025, SPY suffered a sharp ~19% peak-to-trough decline following President Trump’s “Liberation Day” tariff announcements, marking a classic high-volatility / risk-off regime with broad sell-off and elevated VIX. The regime detection engine would have quickly flagged this elevated-risk state, reducing long exposure across the portfolio and preventing amplified drawdowns during one of the year's worst weekly losses. After the tariff pause and rebound (S&P erasing YTD losses by mid-May), it would shift to trend/permission mode, allowing full re-allocation to capture the strong recovery rally.
+        </p>
+      </div>
+
+      <div class="info-box info-box-info">
+        <div class="info-box-title">Tesla (TSLA)</div>
+        <p style="margin-bottom: 0;">
+          Throughout much of 2025, TSLA exhibited prolonged consolidation regimes, trading choppily in ranges roughly $400–$480+ (with multiple false breakouts and whipsaws) after earlier volatility. The engine would detect "consolidation/low-trend persistence," automatically lowering position sizes or pausing new entries to avoid repeated mean-reversion traps and capital erosion in sideways action—preserving dry powder for clearer trend regimes later in the year.
+        </p>
+      </div>
+    </section>
+
+    <!-- PART 5: SUMMARY -->
+    <section class="content-section fade-in">
+      <h2>Part 5: Summary</h2>
+
+      <div class="info-box info-box-success">
+        <div class="info-box-title">🎯 Key Takeaways</div>
+        <ul style="margin-bottom: 0;">
+          <li>Adapts strategies to market conditions for better performance.</li>
+          <li>Reduces risks in volatile periods, preserves capital.</li>
+          <li>Boosts efficiency in trend regimes.</li>
+          <li>Integrates seamlessly with Athena's long-only framework.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Navigation Footer -->
+    <nav class="module-bottom-nav">
+      <a href="../../index.html" class="btn btn-secondary">
+        ← Back to Athena Projects
+      </a>
+      <a href="project2_return_structure.html" class="btn btn-primary">
+        Next: Return Structure & Regime-Aware Forecasting →
+      </a>
+    </nav>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div>
+          <h4>Project 1: Market Regime Detection Engine</h4>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            Part of Athena Quant Trading App
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-muted); margin: 0;">
+            Next: <a href="9.2_Regime_Aware_Forecasting.html">Project 2: Return Structure & Regime-Aware Forecasting</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+  <style>
+    /* Module-specific styles (copied from original for consistency) */
+    .module-nav-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-home, .nav-next {
+      color: var(--accent-blue);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-home:hover, .nav-next:hover {
+      color: var(--accent-cyan);
+    }
+
+    .nav-module-info {
+      text-align: center;
+    }
+
+    .nav-module-number {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .nav-module-title {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .module-hero {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .module-breadcrumb {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+    }
+
+    .module-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    .module-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .content-section {
+      margin-bottom: 4rem;
+    }
+
+    .content-section h2 {
+      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .content-section h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .module-footer {
+      background: var(--bg-tertiary);
+      padding: 2rem 0;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .module-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .module-bottom-nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+</body>
+</html>
